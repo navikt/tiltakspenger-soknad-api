@@ -26,9 +26,7 @@ import no.nav.tiltakspenger.soknad.api.antivirus.AvServiceImpl
 import no.nav.tiltakspenger.soknad.api.auth.installAuthentication
 import no.nav.tiltakspenger.soknad.api.featuretoggling.setupUnleash
 import no.nav.tiltakspenger.soknad.api.health.healthRoutes
-import no.nav.tiltakspenger.soknad.api.joark.JoarkClient
-import no.nav.tiltakspenger.soknad.api.joark.JoarkServiceImpl
-import no.nav.tiltakspenger.soknad.api.joark.TokenServiceImpl
+import no.nav.tiltakspenger.soknad.api.joark.JoarkService
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
 import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
@@ -81,12 +79,7 @@ fun Application.soknadApi(metricsCollector: MetricsCollector = MetricsCollector(
                 client = httpClientCIO(timeout = 30L),
             ),
         ),
-        joarkService = JoarkServiceImpl(
-            joark = JoarkClient(
-                config = environment.config,
-                tokenService = TokenServiceImpl(),
-            ),
-        ),
+        joarkService = JoarkService(environment.config),
     )
     val avService: AvService = AvServiceImpl(
         av = AvClient(

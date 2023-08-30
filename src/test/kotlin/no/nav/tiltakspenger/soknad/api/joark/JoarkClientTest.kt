@@ -33,13 +33,13 @@ internal class JoarkClientTest {
         }
 
         val client = httpClientGeneric(mock)
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
         val config = ApplicationConfig("application.test.conf")
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {
@@ -62,8 +62,8 @@ internal class JoarkClientTest {
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
 
 //        val joarkResonse = JoarkClient.JoarkResponse(
 //            journalpostId = journalpostId,
@@ -76,7 +76,7 @@ internal class JoarkClientTest {
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {
@@ -99,15 +99,15 @@ internal class JoarkClientTest {
             )
         }
 
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
 
         val client = httpClientGeneric(mock)
         val config = ApplicationConfig("application.test.conf")
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {
@@ -130,15 +130,15 @@ internal class JoarkClientTest {
             )
         }
 
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
 
         val client = httpClientGeneric(mock)
         val config = ApplicationConfig("application.test.conf")
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {
@@ -162,8 +162,8 @@ internal class JoarkClientTest {
             )
         }
 
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
 
 //        val joarkResonse = JoarkClient.JoarkResponse(
 //            journalpostId = journalpostId,
@@ -176,7 +176,7 @@ internal class JoarkClientTest {
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {
@@ -200,8 +200,8 @@ internal class JoarkClientTest {
             )
         }
 
-        val mockTokenService = mockk<TokenService>()
-        coEvery { mockTokenService.getToken(any()) } returns "token"
+        val mockJoarkCredentialsClient = mockk<JoarkCredentialsClient>()
+        coEvery { mockJoarkCredentialsClient.getToken() } returns "token"
 
         val joarkResonse = JoarkClient.JoarkResponse(
             journalpostId = null,
@@ -214,7 +214,7 @@ internal class JoarkClientTest {
         val joarkClient = JoarkClient(
             config = config,
             client = client,
-            tokenService = mockTokenService,
+            joarkCredentialsClient = mockJoarkCredentialsClient,
         )
 
         runTest {

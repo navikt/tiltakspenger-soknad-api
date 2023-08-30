@@ -22,10 +22,12 @@ class ClientConfig(
                     clientConfig.propertyToStringOrNull("authentication.client_secret"),
                     clientConfig.propertyToStringOrNull("authentication.client_jwk"),
                 )
+                val cacheEnabled = clientConfig.propertyToString("cache_enabled").toBoolean()
                 clientConfig.propertyToString(CLIENT_NAME) to OAuth2Client(
                     httpClient = httpClient,
                     wellKnownUrl = wellKnownUrl,
                     clientAuthProperties = clientAuth,
+                    cacheConfig = OAuth2CacheConfig(cacheEnabled),
                 )
             }
 

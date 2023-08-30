@@ -4,7 +4,7 @@ val ktorVersion = "2.3.3"
 val kotestVersion = "5.6.1"
 val jacksonVersion = "2.15.2"
 val kotlinxCoroutinesVersion = "1.7.3"
-val tokenSupportVersion = "3.1.3"
+val tokenSupportVersion = "3.1.4"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.10.0"
 val unleashVersion = "8.3.0"
@@ -14,7 +14,7 @@ plugins {
     distribution
     kotlin("jvm") version "1.9.10"
     id("ca.cutterslade.analyze") version "1.9.1"
-    id("com.diffplug.spotless") version "6.20.0"
+    id("com.diffplug.spotless") version "6.21.0"
 }
 
 repositories {
@@ -74,7 +74,10 @@ dependencies {
     implementation("org.apache.pdfbox:pdfbox:2.0.28")
 
     // Apache Tika
-    implementation("org.apache.tika:tika-core:2.8.0")
+    implementation("org.apache.tika:tika-core:2.9.0")
+
+    // Caffeine
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

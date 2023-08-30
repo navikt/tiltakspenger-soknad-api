@@ -23,19 +23,19 @@ internal const val joarkPath = "rest/journalpostapi/v1/journalpost"
 class JoarkClient(
     private val config: ApplicationConfig,
     private val client: HttpClient = httpClientWithRetry(timeout = 30L),
-    private val tokenService: TokenService,
-) : Joark {
+    private val joarkCredentialsClient: JoarkCredentialsClient = JoarkCredentialsClient(config),
+) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
     private val joarkEndpoint = config.property("endpoints.joark").getString()
 
-    override suspend fun opprettJournalpost(
+    suspend fun opprettJournalpost(
         dokumentInnhold: Journalpost,
         callId: String,
     ): String {
         try {
             log.info("Starter journalføring av søknad")
-            val token = tokenService.getToken(config = config)
+            val token = joarkCredentialsClient.getToken()
             val res = client.post("$joarkEndpoint/$joarkPath") {
                 accept(ContentType.Application.Json)
                 header("X-Correlation-ID", INDIVIDSTONAD)
