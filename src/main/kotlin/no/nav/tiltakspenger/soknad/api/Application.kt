@@ -10,12 +10,9 @@ import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.callid.CallId
-import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.requestvalidation.RequestValidation
-import io.ktor.server.request.httpMethod
-import io.ktor.server.request.path
 import io.ktor.server.routing.routing
 import io.prometheus.client.hotspot.DefaultExports
 import mu.KotlinLogging
@@ -151,7 +148,7 @@ internal fun Application.installCallLogging() {
         generate { randomUUID().toString() }
     }
     install(CallLogging) {
-        callIdMdc("call-id")
+        /*callIdMdc("call-id")
         filter { call ->
             call.request.path().startsWith("/$SØKNAD_PATH")
             call.request.path().startsWith("/$PERSONALIA_PATH")
@@ -162,6 +159,6 @@ internal fun Application.installCallLogging() {
             val req = call.request
             val userAgent = call.request.headers["User-Agent"]
             "Status: $status, HTTP method: $httpMethod, User agent: $userAgent req: $req"
-        }
+        }*/
     }
 }
