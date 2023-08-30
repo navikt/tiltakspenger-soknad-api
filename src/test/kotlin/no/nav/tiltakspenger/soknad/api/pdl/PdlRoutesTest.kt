@@ -52,7 +52,7 @@ internal class PdlRoutesTest {
         issuer: String = "tokendings",
         clientId: String = "testClientId",
         claims: Map<String, String> = mapOf(
-            "acr" to "Level4",
+            "acr" to "idporten-loa-high",
             "pid" to testFødselsnummer,
         ),
     ): SignedJWT {
@@ -156,7 +156,7 @@ internal class PdlRoutesTest {
     }
 
     @Test
-    fun `get på personalia-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
+    fun `get på personalia-endepunkt skal returnere 401 dersom token mangler acr=idporten-loa-high claim`() {
         val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
 
         testApplication {

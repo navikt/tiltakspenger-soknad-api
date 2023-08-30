@@ -12,7 +12,7 @@ fun søknad(
 ) = SøknadDTO(
     id = UUID.randomUUID(),
     versjon = "4",
-    acr = "Level4",
+    acr = "idporten-loa-high",
     spørsmålsbesvarelser = spørsmålsbesvarelser,
     vedleggsnavn = listOf("test.pdf"),
     personopplysninger = personopplysninger,

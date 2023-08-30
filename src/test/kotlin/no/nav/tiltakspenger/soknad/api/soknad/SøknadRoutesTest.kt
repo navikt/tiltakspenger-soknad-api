@@ -45,7 +45,7 @@ internal class SøknadRoutesTest {
     @AfterAll
     fun after() = mockOAuth2Server.shutdown()
 
-    fun issueTestToken(acr: String = "Level4", expiry: Long = 3600): SignedJWT {
+    fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): SignedJWT {
         return mockOAuth2Server.issueToken(
             issuerId = "tokendings",
             audience = "audience",
