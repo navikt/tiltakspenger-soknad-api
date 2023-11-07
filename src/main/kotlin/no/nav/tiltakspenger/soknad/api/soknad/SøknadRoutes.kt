@@ -37,15 +37,15 @@ fun Route.søknadRoutes(
         metricsCollector.ANTALL_SØKNADER_SOM_PROSESSERES.inc()
         try {
             val innsendingTidspunkt = LocalDateTime.now()
-            val (søknad, vedlegg) = søknadService.taInnSøknadSomMultipart(call.receiveMultipart())
+            val (spørsmålsbesvarelser, vedlegg) = søknadService.taInnSøknadSomMultipart(call.receiveMultipart())
             avService.gjørVirussjekkAvVedlegg(vedlegg)
             val fødselsnummer = call.fødselsnummer() ?: throw IllegalStateException("Mangler fødselsnummer")
             val acr = call.acr() ?: "Ingen Level"
             val subjectToken = call.token()
             val person = pdlService.hentPersonaliaMedBarn(fødselsnummer, subjectToken, call.callId!!)
-            val journalpostId =
-                søknadService.opprettDokumenterOgArkiverIJoark(
-                    søknad,
+            val søknadResponse =
+                søknadService.opprettDokumenterOgSendTilDokument(
+                    spørsmålsbesvarelser,
                     fødselsnummer,
                     person,
                     vedlegg,
@@ -53,10 +53,6 @@ fun Route.søknadRoutes(
                     innsendingTidspunkt,
                     call.callId!!,
                 )
-            val søknadResponse = SøknadResponse(
-                journalpostId = journalpostId,
-                innsendingTidspunkt = innsendingTidspunkt,
-            )
             metricsCollector.ANTALL_SØKNADER_MOTTATT_COUNTER.inc()
             metricsCollector.ANTALL_SØKNADER_SOM_PROSESSERES.dec()
             requestTimer.observeDuration()

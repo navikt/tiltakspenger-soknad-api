@@ -15,8 +15,7 @@ import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import kotlinx.coroutines.runBlocking
-import no.nav.tiltakspenger.soknad.api.joark.JoarkService
-import no.nav.tiltakspenger.soknad.api.pdf.PdfService
+import no.nav.tiltakspenger.soknad.api.dokument.DokumentService
 import no.nav.tiltakspenger.soknad.api.soknad.validering.defaultPeriode
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
@@ -29,11 +28,8 @@ import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 internal class SøknadServiceTest {
-    private val mockPdfService = mockk<PdfService>().also { mock ->
-        coEvery { mock.lagPdf(any()) }
-    }
-    private val mockJoarkService = mockk<JoarkService>().also { mock ->
-        coEvery { mock.sendPdfTilJoark(any(), any(), any(), any(), any()) }
+    private val mockDokumentService = mockk<DokumentService>().also { mock ->
+        coEvery { mock.sendSøknadTilDokument(any(), any()) }
     }
 
     private val gyldigSpørsmålsbesvarelser = spørsmålsbesvarelser()
@@ -45,8 +41,7 @@ internal class SøknadServiceTest {
     }
 
     private val søknadService = SøknadServiceImpl(
-        pdfService = mockPdfService,
-        joarkService = mockJoarkService,
+        dokumentService = mockDokumentService,
     )
 
     @Test

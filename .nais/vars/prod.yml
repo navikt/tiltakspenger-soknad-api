@@ -3,20 +3,16 @@ kafka:
 cluster: prod-gcp
 endpoints:
   pdl: https://pdl-api.prod-fss-pub.nais.io/graphql
-  pdf: http://tiltakspenger-pdfgen
-  joark: https://dokarkiv.prod-fss-pub.nais.io
+  dokument: http://tiltakspenger-dokument
   tiltakspengerarena: https://tiltakspenger-arena.prod-fss-pub.nais.io
   av: http://clamav.nais-system/scan
 outboundExternalUrls:
   pdl: pdl-api.prod-fss-pub.nais.io
-  dokarkiv: dokarkiv.prod-fss-pub.nais.io
   tiltakspengerarena: tiltakspenger-arena.prod-fss-pub.nais.io
 audience:
   pdl: prod-fss:pdl:pdl-api
-  joark: prod-fss:teamdokumenthandtering:dokarkiv
   tiltakspengerarena: prod-fss:tpts:tiltakspenger-arena
 scope:
   pdl: api://prod-fss.pdl.pdl-api/.default
-  joark: api://prod-fss.teamdokumenthandtering.dokarkiv/.default
 unleash:
   environment: production
