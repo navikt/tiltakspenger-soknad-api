@@ -73,7 +73,7 @@ dependencies {
     implementation("no.nav.security:token-client-core:$tokenSupportVersion")
 
     // PDF handling
-    implementation("org.apache.pdfbox:pdfbox:2.0.28")
+    implementation("org.apache.pdfbox:pdfbox:3.0.2")
 
     // Apache Tika
     implementation("org.apache.tika:tika-core:2.9.1")
