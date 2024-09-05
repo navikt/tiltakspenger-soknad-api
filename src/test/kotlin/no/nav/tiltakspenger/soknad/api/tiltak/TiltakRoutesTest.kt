@@ -1,5 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.nimbusds.jwt.SignedJWT
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -30,6 +33,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 
@@ -181,7 +185,11 @@ internal class TiltakRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    jackson {
+                        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                        registerModule(JavaTimeModule())
+                        registerModule(KotlinModule.Builder().build())
+                    }
                 }
             }
 
@@ -330,8 +338,8 @@ internal class TiltakRoutesTest {
                     typeNavn = "typenavn",
                     arrangørnavn = arrangør,
                 ),
-                deltakelseFom = null,
-                deltakelseTom = null,
+                deltakelseFom = LocalDate.now().minusDays(10),
+                deltakelseTom = LocalDate.now().plusDays(10),
                 deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
                 deltakelseDagerUke = null,
                 kilde = "Komet",

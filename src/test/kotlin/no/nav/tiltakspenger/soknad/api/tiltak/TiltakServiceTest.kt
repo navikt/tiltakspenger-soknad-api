@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 
@@ -85,8 +86,8 @@ internal class TiltakServiceTest {
                     typeNavn = "typenavn",
                     arrangørnavn = arrangør,
                 ),
-                deltakelseFom = null,
-                deltakelseTom = null,
+                deltakelseFom = LocalDate.now().minusDays(10),
+                deltakelseTom = LocalDate.now().plusDays(10),
                 deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
                 deltakelseDagerUke = null,
                 deltakelseProsent = null,
