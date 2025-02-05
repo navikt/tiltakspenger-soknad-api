@@ -41,9 +41,6 @@ TILTAKSPENGER_TILTAK_ENDPOINT_URL=http://localhost:8484
 TOKEN_X_CLIENT_ID=localhost:tpts:tiltakspenger-soknad-api
 TOKEN_X_PRIVATE_JWK=<din jwk>
 TOKEN_X_WELL_KNOWN_URL=http://host.docker.internal:6969/tokendings/.well-known/openid-configuration
-UNLEASH_ENVIRONMENT=development
-UNLEASH_SERVER_API_TOKEN=token
-UNLEASH_SERVER_API_URL=http://localhost:8484/unleash
 ```
 
 ## Bygging og denslags
