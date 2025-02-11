@@ -12,7 +12,7 @@ val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.13.0"
 val unleashVersion = "9.3.1"
 val pdfboxVersion = "3.0.4"
-val felleslibVersion = "0.0.352"
+val felleslibVersion = "0.0.358"
 val flywayVersjon = "11.3.1"
 val testContainersVersion = "1.20.4"
 
