@@ -25,6 +25,6 @@ jobs:
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: ${{ inputs.NAIS_ENV }}-gcp
-          RESOURCE: .nais/nais.yml,.nais/unleash-apitoken.yml
+          RESOURCE: .nais/nais.yml
           VAR: image=${{ inputs.IMAGE }}
           VARS: .nais/vars/${{ inputs.NAIS_ENV }}.yml

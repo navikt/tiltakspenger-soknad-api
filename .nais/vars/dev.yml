@@ -26,8 +26,6 @@ scope:
   pdl: api://dev-fss.pdl.pdl-api/.default
   dokarkiv: api://dev-fss.teamdokumenthandtering.dokarkiv/.default
   vedtak: api://dev-gcp.tpts.tiltakspenger-saksbehandling-api/.default
-unleash:
-  environment: development
 sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: false
