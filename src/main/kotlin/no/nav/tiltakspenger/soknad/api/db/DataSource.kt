@@ -2,10 +2,7 @@ package no.nav.tiltakspenger.soknad.api.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import mu.KotlinLogging
 import no.nav.tiltakspenger.soknad.api.Configuration.database
-
-private val LOG = KotlinLogging.logger {}
 
 object DataSource {
     private val config = database()

@@ -10,17 +10,17 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 import no.nav.tiltakspenger.soknad.api.objectMapper
-import org.slf4j.LoggerFactory
 
 class ArbeidsfordelingClient(
     private val httpClient: HttpClient = httpClientWithRetry(timeout = 5L),
     private val baseUrl: String,
     private val getToken: suspend () -> AccessToken,
 ) {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    private val log = KotlinLogging.logger {}
 
     suspend fun hentArbeidsfordeling(request: ArbeidsfordelingRequest): String {
         val response = httpClient.post("$baseUrl/api/v1/arbeidsfordeling/enheter/bestmatch") {

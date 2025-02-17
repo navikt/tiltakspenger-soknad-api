@@ -22,13 +22,12 @@ import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import java.time.LocalDateTime
 
-val LOG = KotlinLogging.logger { }
-
 fun Route.søknadRoutes(
     nySøknadService: NySøknadService,
     avService: AvService,
     metricsCollector: MetricsCollector,
 ) {
+    val log = KotlinLogging.logger { }
     post(SØKNAD_PATH) {
         val requestTimer = metricsCollector.søknadsmottakLatencySeconds.startTimer()
         try {
@@ -89,7 +88,7 @@ fun Route.søknadRoutes(
                 }
 
                 else -> {
-                    LOG.error("Noe gikk galt ved post av søknad ${exception.message}", exception)
+                    log.error("Noe gikk galt ved post av søknad ${exception.message}", exception)
                     metricsCollector.antallFeiledeInnsendingerCounter.inc()
                     requestTimer.observeDuration()
                     call.respondText(
@@ -100,5 +99,5 @@ fun Route.søknadRoutes(
                 }
             }
         }
-    }.also { LOG.info { "satt opp endepunkt /soknad" } }
+    }.also { log.info { "satt opp endepunkt /soknad" } }
 }

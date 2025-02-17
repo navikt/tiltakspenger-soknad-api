@@ -21,7 +21,7 @@ object Configuration {
                 "application.httpPort" to 8080.toString(),
                 "DB_JDBC_URL" to System.getenv("DB_JDBC_URL"),
                 "ELECTOR_PATH" to System.getenv("ELECTOR_PATH"),
-                "logback.configurationFile" to "egenLogback.xml",
+                "logback.configurationFile" to "logback.xml",
             ),
         )
     private val localProperties =

@@ -29,13 +29,13 @@ internal class TaskExecutor(
             initialDelay: Duration = 1.minutes,
             intervall: Duration = 60.seconds,
         ): TaskExecutor {
-            val logger = KotlinLogging.logger { }
+            val log = KotlinLogging.logger { }
             return TaskExecutor(
                 startStoppableJob(
                     jobName = "Jobb som kjører hvert 60. sekund",
                     initialDelay = initialDelay.toJavaDuration(),
                     intervall = intervall.toJavaDuration(),
-                    logger = logger,
+                    logger = log,
                     sikkerLogg = sikkerlogg,
                     // Ref callIdMdc("call-id") i VedtakApi.kt
                     mdcCallIdKey = "call-id",
@@ -49,7 +49,7 @@ internal class TaskExecutor(
                                 Either.catch {
                                     it(correlationId)
                                 }.mapLeft {
-                                    logger.error(it) { "Feil ved kjøring av task. correlationId: $correlationId" }
+                                    log.error(it) { "Feil ved kjøring av task. correlationId: $correlationId" }
                                 }
                             }
                         }

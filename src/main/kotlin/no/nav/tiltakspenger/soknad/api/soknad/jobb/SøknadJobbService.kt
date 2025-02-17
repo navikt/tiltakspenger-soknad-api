@@ -1,9 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb
 
+import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.logging.sikkerlogg
-import no.nav.tiltakspenger.soknad.api.log
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
@@ -18,6 +18,7 @@ class SøknadJobbService(
     private val journalforingService: JournalforingService,
     private val saksbehandlingApiKlient: SaksbehandlingApiKlient,
 ) {
+    private val log = KotlinLogging.logger {}
     suspend fun hentEllerOpprettSaksnummer(correlationId: CorrelationId) {
         søknadRepo.hentSoknaderUtenSaksnummer().forEach { soknad ->
             log.info { "Henter eller oppretter saksnummer for søknad med id ${soknad.id}" }

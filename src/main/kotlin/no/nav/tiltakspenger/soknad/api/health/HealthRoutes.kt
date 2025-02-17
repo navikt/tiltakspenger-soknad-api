@@ -2,21 +2,19 @@ package no.nav.tiltakspenger.soknad.api.health
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import mu.KotlinLogging
 
-val LOG = KotlinLogging.logger { }
-
 fun Route.healthRoutes(healthChecks: List<HealthCheck>) {
+    val log = KotlinLogging.logger { }
     route("/isalive") {
         get {
             val failedHealthChecks = healthChecks.filter { it.status() == HealthStatus.UNHEALTHY }
             if (failedHealthChecks.isNotEmpty()) {
-                LOG.warn { "Failed health checks: $failedHealthChecks" }
+                log.warn { "Failed health checks: $failedHealthChecks" }
                 call.respondText(
                     text = "DEAD",
                     contentType = ContentType.Text.Plain,
@@ -30,10 +28,10 @@ fun Route.healthRoutes(healthChecks: List<HealthCheck>) {
                 )
             }
         }
-    }.also { LOG.info { "satt opp endepunkt /isalive" } }
+    }.also { log.info { "satt opp endepunkt /isalive" } }
     route("/isready") {
         get {
             call.respondText(text = "READY", contentType = ContentType.Text.Plain)
         }
-    }.also { LOG.info { "satt opp endepunkt /isready" } }
+    }.also { log.info { "satt opp endepunkt /isready" } }
 }

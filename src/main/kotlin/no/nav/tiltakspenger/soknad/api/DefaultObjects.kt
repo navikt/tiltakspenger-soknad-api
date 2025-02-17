@@ -15,11 +15,8 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.jackson.jackson
-import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import java.time.Duration
-
-private val LOG = KotlinLogging.logger {}
 
 private const val SIXTY_SECONDS = 60L
 fun httpClientCIO(timeout: Long = SIXTY_SECONDS) = HttpClient(CIO).config(timeout)

@@ -1,9 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing
 
+import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
-import no.nav.tiltakspenger.soknad.api.log
 import no.nav.tiltakspenger.soknad.api.pdf.PdfService
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
@@ -13,6 +13,7 @@ class JournalforingService(
     private val pdfService: PdfService,
     private val dokarkivService: DokarkivService,
 ) {
+    private val log = KotlinLogging.logger {}
     suspend fun opprettDokumenterOgArkiverIDokarkiv(
         spørsmålsbesvarelser: SpørsmålsbesvarelserDTO,
         fnr: String,

@@ -12,12 +12,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 import no.nav.tiltakspenger.soknad.api.objectMapper
 import no.nav.tiltakspenger.soknad.api.pdl.INDIVIDSTONAD
-import org.slf4j.LoggerFactory
 
 // https://confluence.adeo.no/display/BOA/opprettJournalpost
 // swagger: https://dokarkiv-q2.dev.intern.nav.no/swagger-ui/index.html#/
@@ -29,7 +29,7 @@ class DokarkivClient(
     private val baseUrl: String,
     private val getToken: suspend () -> AccessToken,
 ) {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    private val log = KotlinLogging.logger {}
 
     suspend fun opprettJournalpost(
         request: JournalpostRequest,
