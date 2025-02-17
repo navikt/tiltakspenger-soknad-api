@@ -28,7 +28,7 @@ class SøknadJobbService(
                     correlationId,
                 )
             } catch (e: Exception) {
-                log.error(e) { "Hent saksnummer-jobb: Feil ved henting av saksnummer for søknadId ${soknad.id}, ${e.message}" }
+                log.error(e) { "Hent saksnummer-jobb: Feil ved henting av saksnummer for søknadId ${soknad.id}" }
                 return@forEach
             }
             søknadRepo.oppdater(soknad.copy(saksnummer = saksnummer))

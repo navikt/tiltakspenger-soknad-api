@@ -33,12 +33,12 @@ class ArbeidsfordelingClient(
         if (response.status.isSuccess()) {
             val enheter = response.body<List<NavEnhet>>()
             if (enheter.isEmpty()) {
-                log.error("Fant ingen enheter")
+                log.error { "Fant ingen enheter" }
                 throw IllegalArgumentException("Fant ingen enheter")
             }
             return enheter.first().enhetNr
         }
-        log.error("Kall mot norg2 for å hente arbeidsfordeling feilet med statuskode ${response.status}")
+        log.error { "Kall mot norg2 for å hente arbeidsfordeling feilet med statuskode ${response.status}" }
         throw RuntimeException("Kunne ikke hente arbeidsfordeling")
     }
 }

@@ -7,6 +7,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
 import no.nav.tiltakspenger.soknad.api.fødselsnummer
@@ -20,6 +21,7 @@ data class TiltakDto(
 )
 
 fun Route.tiltakRoutes(tiltakService: TiltakService, metricsCollector: MetricsCollector, pdlService: PdlService) {
+    val log = KotlinLogging.logger { }
     get(TILTAK_PATH) {
         try {
             val fødselsnummer = call.fødselsnummer()
@@ -39,7 +41,8 @@ fun Route.tiltakRoutes(tiltakService: TiltakService, metricsCollector: MetricsCo
 
             call.respond(tiltakDto)
         } catch (e: Exception) {
-            sikkerlogg.error { e.stackTraceToString() }
+            log.error(RuntimeException("Trigger exception for enklere debugging.")) { "Ukjent feil under tiltakroute, se sikkerlogg for mer kontekst." }
+            sikkerlogg.error(e) { "Ukjent feil under tiltakroute" }
             metricsCollector.antallFeilVedHentTiltakCounter.inc()
             call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
         }

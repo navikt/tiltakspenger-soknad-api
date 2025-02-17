@@ -27,14 +27,14 @@ fun httpClientWithRetry(timeout: Long = SIXTY_SECONDS) = httpClientCIO(timeout).
             maxRetries = 3
             retryIf { request, response ->
                 if (response.status.value.let { it in 500..599 }) {
-                    sikkerlogg.warn("Http-kall feilet med ${response.status.value}. Kjører retry")
+                    sikkerlogg.warn { "Http-kall feilet med ${response.status.value}. Kjører retry" }
                     true
                 } else {
                     false
                 }
             }
             retryOnExceptionIf { request, throwable ->
-                sikkerlogg.warn("Kastet exception ved http-kall: ${throwable.message}")
+                sikkerlogg.warn(throwable) { "Kastet exception ved http-kall: ${throwable.message}" }
                 true
             }
             constantDelay(100, 0, false)
@@ -64,7 +64,7 @@ private fun HttpClient.config(timeout: Long) = this.config {
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                sikkerlogg.debug(message)
+                sikkerlogg.debug { message }
             }
         }
         level = LogLevel.INFO

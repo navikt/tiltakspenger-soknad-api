@@ -40,7 +40,7 @@ fun Route.pdlRoutes(pdlService: PdlService, tiltakService: TiltakService, metric
             call.respond(personDTO)
         } catch (e: Exception) {
             metricsCollector.antallFeilVedHentPersonaliaCounter.inc()
-            sikkerlogg.error("Feil under pdlRoute", e)
+            sikkerlogg.error(e) { "Feil under pdlRoute" }
             call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
         }
     }

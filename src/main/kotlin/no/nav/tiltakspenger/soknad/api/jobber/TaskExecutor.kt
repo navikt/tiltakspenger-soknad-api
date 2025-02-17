@@ -48,7 +48,7 @@ internal class TaskExecutor(
                                 // Vi ønsker ikke at en task skal spenne ben for andre tasks.
                                 Either.catch {
                                     it(correlationId)
-                                }.mapLeft {
+                                }.onLeft {
                                     log.error(it) { "Feil ved kjøring av task. correlationId: $correlationId" }
                                 }
                             }

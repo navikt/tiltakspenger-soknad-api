@@ -28,11 +28,11 @@ class PdlClientTokenX(
     private val log = KotlinLogging.logger {}
 
     suspend fun fetchSøker(fødselsnummer: String, subjectToken: String, callId: String): Result<SøkerRespons> {
-        log.info("Henter token for å snakke med PDL")
+        log.info { "fetchSøker: Henter token for å snakke med PDL" }
         val tokenResponse = oauth2ClientTokenX.tokenExchange(subjectToken, pdlAudience)
-        log.info("Token-respons mottatt")
+        log.info { "fetchSøker: Token-respons mottatt" }
         val token = tokenResponse.getAccessTokenOrThrow()
-        log.info("Token-exchange OK")
+        log.info { "fetchSøker: Token-exchange OK" }
         val pdlResponse: Result<SøkerRespons> = kotlin.runCatching {
             httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)
@@ -47,12 +47,16 @@ class PdlClientTokenX(
         return pdlResponse
     }
 
-    suspend fun fetchAdressebeskyttelse(fødselsnummer: String, subjectToken: String, callId: String): Result<AdressebeskyttelseRespons> {
-        log.info("Henter token for å snakke med PDL")
+    suspend fun fetchAdressebeskyttelse(
+        fødselsnummer: String,
+        subjectToken: String,
+        callId: String,
+    ): Result<AdressebeskyttelseRespons> {
+        log.debug { "fetchAdressebeskyttelse: Henter token for å snakke med PDL" }
         val tokenResponse = oauth2ClientTokenX.tokenExchange(subjectToken, pdlAudience)
-        log.info("Token-respons mottatt")
+        log.debug { "fetchAdressebeskyttelse:Token-respons mottatt" }
         val token = tokenResponse.getAccessTokenOrThrow()
-        log.info("Token-exchange OK")
+        log.debug { "fetchAdressebeskyttelse: Token-exchange OK" }
         val pdlResponse: Result<AdressebeskyttelseRespons> = kotlin.runCatching {
             httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)

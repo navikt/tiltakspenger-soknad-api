@@ -24,9 +24,9 @@ class PdlCredentialsClient(
     private val log = KotlinLogging.logger {}
 
     suspend fun fetchBarn(ident: String, callId: String): Result<SøkersBarnRespons> {
-        log.info("Henter credentials for å snakke med PDL")
+        log.info { "fetchBarn: Henter credentials for å snakke med PDL" }
         val token = oauth2CredentialsClient.clientCredentials(pdlScope).token
-        log.info("Hent credentials OK")
+        log.info { "fetchBarn: Hent credentials OK" }
         return kotlin.runCatching {
             httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)

@@ -2,7 +2,6 @@ package no.nav.tiltakspenger.soknad.api.tiltak
 
 import io.ktor.server.config.ApplicationConfig
 import mu.KotlinLogging
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 
 class TiltakService(
     applicationConfig: ApplicationConfig,
@@ -22,8 +21,6 @@ class TiltakService(
                 }
             }
         }
-        log.error { "Noe gikk galt under kall til tiltakspenger-tiltak " }
-        sikkerlogg.error { "Exception ved kall mot tiltakspenger-tiltak: ${result.exceptionOrNull()}" }
-        throw IllegalStateException("Noe gikk galt under kall til tiltakspenger-tiltak")
+        throw IllegalStateException("Noe gikk galt under kall til tiltakspenger-tiltak", result.exceptionOrNull())
     }
 }

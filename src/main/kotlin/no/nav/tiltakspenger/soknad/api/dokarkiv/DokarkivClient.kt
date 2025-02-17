@@ -37,9 +37,9 @@ class DokarkivClient(
         callId: String,
     ): String {
         try {
-            log.info("Henter credentials for å arkivere i dokarkiv")
+            log.info { "Henter credentials for å arkivere i dokarkiv" }
             val token = getToken().token
-            log.info("Hent credentials til arkiv OK. Starter journalføring av søknad")
+            log.info { "Hent credentials til arkiv OK. Starter journalføring av søknad" }
             val res = client.post("$baseUrl/$DOKARKIV_PATH") {
                 accept(ContentType.Application.Json)
                 header("X-Correlation-ID", INDIVIDSTONAD)
@@ -50,24 +50,21 @@ class DokarkivClient(
                 setBody(objectMapper.writeValueAsString(request))
             }
             val response = res.call.body<DokarkivResponse>()
-            log.info("Vi har opprettet journalpost med id: ${response.journalpostId} for søknad $søknadId")
+            log.info { "Vi har opprettet journalpost med id: ${response.journalpostId} for søknad $søknadId" }
 
             if (request.kanFerdigstilleAutomatisk() && !response.journalpostferdigstilt) {
-                log.error("Journalpost ${response.journalpostId} for søknad $søknadId ble opprettet, men ikke ferdigstilt")
-                throw IllegalStateException("Journalpost kunne ikke ferdigstilles automatisk")
+                throw IllegalStateException("DokarkivClient: Journalpost ${response.journalpostId} for søknad $søknadId ble opprettet, men ikke ferdigstilt")
             }
             return response.journalpostId
         } catch (throwable: Throwable) {
             if (throwable is ClientRequestException && throwable.response.status == HttpStatusCode.Conflict) {
                 val response = throwable.response.call.body<DokarkivResponse>()
-                log.info("Søknad med id $søknadId har allerede blitt journalført (409 Conflict) med journalpostId ${response.journalpostId}")
+                log.info { "Søknad med id $søknadId har allerede blitt journalført (409 Conflict) med journalpostId ${response.journalpostId}" }
                 return response.journalpostId
             }
             if (throwable is IllegalStateException) {
-                log.error("Vi fikk en IllegalStateException i DokarkivClient", throwable)
-                throw throwable
+                throw RuntimeException("DokarkivClient: Fikk en IllegalStateException", throwable)
             } else {
-                log.error("DokarkivClient: Fikk en ukjent exception.", throwable)
                 throw RuntimeException("DokarkivClient: Fikk en ukjent exception.", throwable)
             }
         }

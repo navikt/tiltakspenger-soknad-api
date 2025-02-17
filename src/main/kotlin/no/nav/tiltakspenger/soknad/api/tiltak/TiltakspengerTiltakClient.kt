@@ -25,11 +25,11 @@ class TiltakspengerTiltakClient(
     private val log = KotlinLogging.logger {}
 
     suspend fun fetchTiltak(subjectToken: String): Result<List<TiltakDTO>> {
-        log.info("Henter token for å snakke med tiltakspenger-tiltak")
+        log.debug { "fetchTiltak: Henter token for å snakke med tiltakspenger-tiltak" }
         val tokenResponse = oauth2ClientTokenX.tokenExchange(subjectToken, tiltakspengerTiltakAudience)
-        log.info("Token-respons mottatt")
+        log.debug { "fetchTiltak:Token-respons mottatt" }
         val token = tokenResponse.getAccessTokenOrThrow()
-        log.info("Token til tiltakspenger-tiltak mottatt OK")
+        log.debug { "fetchTiltak: Token til tiltakspenger-tiltak mottatt OK" }
         return kotlin.runCatching {
             httpClient.get("$tiltakspengerTiltakEndpoint/tokenx/tiltak") {
                 accept(ContentType.Application.Json)

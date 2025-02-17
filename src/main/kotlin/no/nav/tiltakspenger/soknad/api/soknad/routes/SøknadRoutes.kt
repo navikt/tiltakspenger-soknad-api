@@ -76,7 +76,7 @@ fun Route.søknadRoutes(
                 is UninitializedPropertyAccessException,
                 is RequestValidationException,
                 -> {
-                    sikkerlogg.error("Ugyldig søknad ${exception.message}", exception)
+                    sikkerlogg.error(exception) { "Ugyldig søknad: ${exception.message}" }
                     metricsCollector.antallFeiledeInnsendingerCounter.inc()
                     metricsCollector.antallUgyldigeSøknaderCounter.inc()
                     requestTimer.observeDuration()
@@ -88,7 +88,7 @@ fun Route.søknadRoutes(
                 }
 
                 else -> {
-                    log.error("Noe gikk galt ved post av søknad ${exception.message}", exception)
+                    log.error(exception) { "Noe gikk galt ved post av søknad ${exception.message}" }
                     metricsCollector.antallFeiledeInnsendingerCounter.inc()
                     requestTimer.observeDuration()
                     call.respondText(

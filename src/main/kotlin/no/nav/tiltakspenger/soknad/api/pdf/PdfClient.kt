@@ -36,7 +36,7 @@ class PdfClient(
 
     override suspend fun genererPdf(søknad: Søknad): ByteArray {
         try {
-            log.info("Starter generering av søknadspdf")
+            log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
             return client.post("$pdfEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE") {
                 accept(ContentType.Application.Json)
                 header("X-Correlation-ID", UUID.randomUUID())
@@ -44,20 +44,19 @@ class PdfClient(
                 setBody(objectMapper.writeValueAsString(søknad))
             }.body()
         } catch (throwable: Throwable) {
-            log.error("Feilet å lage PDF for søknad ${søknad.id}", throwable)
-            throw RuntimeException("Feilet å lage PDF for søknad ${søknad.id}", throwable)
+            throw RuntimeException("PdfClient: Feilet å lage PDF for søknad ${søknad.id}", throwable)
         }
     }
 
     override suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): List<Vedlegg> {
         return vedlegg.map {
-            log.info("Starter konvertering av vedlegg}")
+            log.info { "Starter konvertering av vedlegg}" }
             val contentType = it.dokument.detect()
             when (contentType) {
                 APPLICATON_PDF -> {
-                    log.info("Oppdaget PDF-vedlegg, konverterer til bilde")
+                    log.info { "Oppdaget PDF-vedlegg, konverterer til bilde" }
                     val bilder = PdfTools.konverterPdfTilBilder(it.dokument)
-                    log.info("Konverterer bilder tilbake til PDF")
+                    log.info { "Konverterer bilder tilbake til PDF" }
                     val enkeltsider = bilder.map { bilde ->
                         genererPdfFraBilde(Bilde(ContentType.Image.PNG, bilde.data))
                     }
@@ -66,13 +65,13 @@ class PdfClient(
                 }
 
                 IMAGE_PNG -> {
-                    log.info("Oppdaget PNG-vedlegg, konverterer til PDF")
+                    log.info { "Oppdaget PNG-vedlegg, konverterer til PDF" }
                     val pdfFraBilde = genererPdfFraBilde(Bilde(ContentType.Image.PNG, it.dokument))
                     Vedlegg("$${it.filnavn}-konvertert.pdf", "application/pdf", pdfFraBilde)
                 }
 
                 IMAGE_JPEG -> {
-                    log.info("Oppdaget JPEG-vedlegg, konverterer til PDF")
+                    log.info { "Oppdaget JPEG-vedlegg, konverterer til PDF" }
                     val pdfFraBilde = genererPdfFraBilde(Bilde(ContentType.Image.JPEG, it.dokument))
                     Vedlegg("$${it.filnavn}-konvertert.pdf", "application/pdf", pdfFraBilde)
                 }
@@ -93,8 +92,10 @@ class PdfClient(
                 setBody(ByteArrayContent(bilde.data))
             }.body()
         } catch (throwable: Throwable) {
-            log.error("Feilet å generere PDF fra bilde med Content-Type ${bilde.type}", throwable)
-            throw RuntimeException("Feilet å generere PDF fra bilde med Content-Type ${bilde.type}", throwable)
+            throw RuntimeException(
+                "PdfClient: Feilet å generere PDF fra bilde med Content-Type ${bilde.type}",
+                throwable,
+            )
         }
     }
 }

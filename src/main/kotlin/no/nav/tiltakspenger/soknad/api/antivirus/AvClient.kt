@@ -8,15 +8,12 @@ import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.server.config.ApplicationConfig
-import mu.KotlinLogging
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 class AvClient(
     config: ApplicationConfig,
     private val client: HttpClient,
 ) : AntiVirus {
-
-    private val log = KotlinLogging.logger { }
     private val avEndpoint = config.property("endpoints.av").getString()
     override suspend fun scan(vedleggsListe: List<Vedlegg>): List<AvSjekkResultat> {
         try {
@@ -36,8 +33,10 @@ class AvClient(
                 },
             ).body()
         } catch (throwable: Throwable) {
-            log.error("Kallet til antivirusinstans feilet $throwable")
-            throw RuntimeException("Kallet til antivirusinstans feilet $throwable")
+            throw RuntimeException(
+                "Kallet til antivirusinstans feilet. Message: ${throwable.message}",
+                throwable,
+            )
         }
     }
 }
