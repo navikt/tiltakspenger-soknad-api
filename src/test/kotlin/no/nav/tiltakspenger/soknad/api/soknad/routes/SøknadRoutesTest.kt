@@ -40,6 +40,7 @@ internal class SøknadRoutesTest {
     private val avServiceMock = mockk<AvService>().also { mock ->
         coEvery { mock.gjørVirussjekkAvVedlegg(any()) } returns Unit
     }
+
     companion object {
         private val mockOAuth2Server = MockOAuth2Server()
 
@@ -174,6 +175,7 @@ internal class SøknadRoutesTest {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
         coEvery { taInnSøknadSomMultipart(any()) } returns Pair(mockk(), emptyList())
         val søknadRepoMock = mockk<SøknadRepo>().also { mock ->
+            coEvery { mock.hentBrukersSøknader(any(), any()) } returns emptyList()
             coEvery { mock.lagre(any()) } returns Unit
         }
         val nySøknadService = NySøknadService(søknadRepoMock)

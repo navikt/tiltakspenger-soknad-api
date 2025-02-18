@@ -112,4 +112,21 @@ internal class SøknadRepoTest {
         val søknaderSomIkkeErSendtTilSaksbehandlingApi = søknadRepo.hentSøknaderSomSkalSendesTilSaksbehandlingApi()
         søknaderSomIkkeErSendtTilSaksbehandlingApi.size shouldBe 0
     }
+
+    @Test
+    fun `hent brukers søknader`() {
+        val nå = LocalDateTime.now()
+        val fnr = "12345678910"
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = nå,
+            eier = Applikasjonseier.Tiltakspenger,
+            fnr = fnr,
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        val brukersSøknader = søknadRepo.hentBrukersSøknader(fnr, Applikasjonseier.Tiltakspenger)
+        brukersSøknader.size shouldBe 1
+        brukersSøknader.first().fnr shouldBe fnr
+        brukersSøknader.first().eier shouldBe Applikasjonseier.Tiltakspenger
+    }
 }

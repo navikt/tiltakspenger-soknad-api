@@ -4,4 +4,22 @@ package no.nav.tiltakspenger.soknad.api.soknad
 enum class Applikasjonseier {
     Arena,
     Tiltakspenger,
+    ;
+
+    fun toDb(): String {
+        return when (this) {
+            Arena -> "arena"
+            Tiltakspenger -> "tp"
+        }
+    }
+
+    companion object {
+        fun toApplikasjonseier(eier: String): Applikasjonseier {
+            return when (eier) {
+                "arena" -> Arena
+                "tp" -> Tiltakspenger
+                else -> throw IllegalStateException("Ukjent eier i databasen: $eier. Forventet: ['arena','tp']")
+            }
+        }
+    }
 }
