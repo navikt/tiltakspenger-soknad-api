@@ -14,8 +14,10 @@ class NySøknadService(
     fun nySøknad(
         nySøknadCommand: NySøknadCommand,
     ): Either<KunneIkkeMottaNySøknad, Unit> {
-        val eier: Applikasjonseier = if (Configuration.isProd()) {
-            // kommentar jah: Vi defaulter til Arena fram til vi tar over ruting. For MVP-brukerne våre endrer vi dette flagget direkte i databasen.
+        // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før.
+        // Flagget endres manuelt for MVP-brukerne våre.
+        val brukerHarSøknaderSomEiesAvTiltakspenger = søknadRepo.hentBrukersSøknader(nySøknadCommand.fnr, Applikasjonseier.Tiltakspenger).isNotEmpty()
+        val eier: Applikasjonseier = if (Configuration.isProd() && !brukerHarSøknaderSomEiesAvTiltakspenger) {
             Applikasjonseier.Arena
         } else {
             Applikasjonseier.Tiltakspenger

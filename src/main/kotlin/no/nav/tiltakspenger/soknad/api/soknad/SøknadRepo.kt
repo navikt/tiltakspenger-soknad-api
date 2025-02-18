@@ -32,10 +32,7 @@ class SøknadRepo {
                             "journalfort" to dto.journalført,
                             "journalpostId" to dto.journalpostId,
                             "opprettet" to dto.opprettet,
-                            "eier" to when (dto.eier) {
-                                Applikasjonseier.Arena -> "arena"
-                                Applikasjonseier.Tiltakspenger -> "tp"
-                            },
+                            "eier" to dto.eier.toDb(),
                             "saksnummer" to dto.saksnummer,
                         ),
                     ).asUpdate,
@@ -71,11 +68,15 @@ class SøknadRepo {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
+                        //language=SQL
                         """
                            select * from søknad 
                              where saksnummer is null
-                             and eier = 'tp'
+                             and eier = :tp
                         """.trimIndent(),
+                        mapOf(
+                            "tp" to Applikasjonseier.Tiltakspenger.toDb(),
+                        ),
                     ).map { row ->
                         row.toSøknadDbDto()
                     }.asList,
@@ -89,11 +90,15 @@ class SøknadRepo {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
+                        //language=SQL
                         """
                             select * from søknad 
                             where journalført is null
-                            and (saksnummer is not null or eier = 'arena')
+                            and (saksnummer is not null or eier = :arena)
                         """.trimIndent(),
+                        mapOf(
+                            "arena" to Applikasjonseier.Arena.toDb(),
+                        ),
                     ).map { row ->
                         row.toSøknadDbDto()
                     }.asList,
@@ -107,12 +112,39 @@ class SøknadRepo {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
+                        //language=SQL
                         """
                            select * from søknad 
                              where journalført is not null 
                              and sendt_til_vedtak is null
-                             and eier = 'tp'
+                             and eier = :tp
                         """.trimIndent(),
+                        mapOf(
+                            "tp" to Applikasjonseier.Tiltakspenger.toDb(),
+                        ),
+                    ).map { row ->
+                        row.toSøknadDbDto()
+                    }.asList,
+                )
+            }
+        }
+    }
+
+    fun hentBrukersSøknader(fnr: String, eier: Applikasjonseier): List<MottattSøknad> {
+        return sessionOf(DataSource.hikariDataSource).use {
+            it.transaction { transaction ->
+                transaction.run(
+                    queryOf(
+                        //language=SQL
+                        """
+                           select * from søknad 
+                             where fnr = :fnr 
+                             and eier = :eier
+                        """.trimIndent(),
+                        mapOf(
+                            "fnr" to fnr,
+                            "eier" to eier.toDb(),
+                        ),
                     ).map { row ->
                         row.toSøknadDbDto()
                     }.asList,
@@ -155,11 +187,7 @@ class SøknadRepo {
             journalført = localDateTimeOrNull("journalført"),
             journalpostId = stringOrNull("journalpostId"),
             opprettet = localDateTime("opprettet"),
-            eier = when (val e = string("eier")) {
-                "arena" -> Applikasjonseier.Arena
-                "tp" -> Applikasjonseier.Tiltakspenger
-                else -> throw IllegalStateException("Ukjent eier i databasen: $e. Forventet: ['arena','tp']")
-            },
+            eier = Applikasjonseier.toApplikasjonseier(string("eier")),
             saksnummer = stringOrNull("saksnummer"),
         )
     }
