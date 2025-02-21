@@ -14,9 +14,9 @@ outboundExternalUrls:
   dokarkiv: dokarkiv.prod-fss-pub.nais.io
   norg2: norg2.prod-fss-pub.nais.io
 scope:
-  pdl: prod-fss.pdl.pdl-api
-  dokarkiv: prod-fss.teamdokumenthandtering.dokarkiv
-  vedtak: prod-gcp.tpts.tiltakspenger-saksbehandling-api
+  pdl: prod-fss:pdl:pdl-api
+  dokarkiv: prod-fss:teamdokumenthandtering:dokarkiv
+  vedtak: prod-gcp:tpts:tiltakspenger-saksbehandling-api
   norg2: prod-fss:org:norg2
   tiltakspengertiltak: prod-gcp:tpts:tiltakspenger-tiltak
 sqlInstances:
