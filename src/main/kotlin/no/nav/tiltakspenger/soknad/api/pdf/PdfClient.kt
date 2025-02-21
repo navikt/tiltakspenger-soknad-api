@@ -9,7 +9,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.ByteArrayContent
 import io.ktor.http.contentType
-import io.ktor.server.config.ApplicationConfig
 import mu.KotlinLogging
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.objectMapper
@@ -28,11 +27,10 @@ internal const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
 internal const val SOKNAD_TEMPLATE = "soknad"
 
 class PdfClient(
-    config: ApplicationConfig,
+    private val pdfEndpoint: String,
     private val client: HttpClient,
 ) : PdfGenerator {
     private val log = KotlinLogging.logger {}
-    private val pdfEndpoint = config.property("endpoints.pdf").getString()
 
     override suspend fun genererPdf(søknad: Søknad): ByteArray {
         try {

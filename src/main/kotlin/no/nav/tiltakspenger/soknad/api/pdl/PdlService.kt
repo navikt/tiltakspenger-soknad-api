@@ -1,13 +1,11 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
-import io.ktor.server.config.ApplicationConfig
 import mu.KotlinLogging
 import java.time.LocalDate
 
 class PdlService(
-    applicationConfig: ApplicationConfig,
-    private val pdlClientTokenX: PdlClientTokenX = PdlClientTokenX(config = applicationConfig),
-    private val pdlClientCredentials: PdlCredentialsClient = PdlCredentialsClient(config = applicationConfig),
+    private val pdlClientTokenX: PdlClientTokenX,
+    private val pdlClientCredentials: PdlCredentialsClient,
 ) {
     private val log = KotlinLogging.logger {}
 

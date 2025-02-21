@@ -1,7 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.kotest.matchers.shouldBe
-import io.ktor.server.config.ApplicationConfig
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -150,7 +149,6 @@ internal class PdlServiceTest {
     private val mockedCredentialsClient = mockk<PdlCredentialsClient>()
 
     private val pdlService = PdlService(
-        ApplicationConfig("application.test.conf"),
         pdlClientTokenX = mockedTokenXClient,
         pdlClientCredentials = mockedCredentialsClient,
     )

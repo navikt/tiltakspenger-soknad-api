@@ -1,11 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import io.ktor.server.config.ApplicationConfig
 import mu.KotlinLogging
 
 class TiltakService(
-    applicationConfig: ApplicationConfig,
-    private val tiltakspengerTiltakClient: TiltakspengerTiltakClient = TiltakspengerTiltakClient(config = applicationConfig),
+    private val tiltakspengerTiltakClient: TiltakspengerTiltakClient,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -21,6 +19,7 @@ class TiltakService(
                 }
             }
         }
+        log.error { "Noe gikk galt under kall til tiltakspenger-tiltak" }
         throw IllegalStateException("Noe gikk galt under kall til tiltakspenger-tiltak", result.exceptionOrNull())
     }
 }

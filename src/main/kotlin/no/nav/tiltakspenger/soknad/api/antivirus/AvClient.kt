@@ -7,14 +7,12 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.server.config.ApplicationConfig
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 class AvClient(
-    config: ApplicationConfig,
+    private val avEndpoint: String,
     private val client: HttpClient,
 ) : AntiVirus {
-    private val avEndpoint = config.property("endpoints.av").getString()
     override suspend fun scan(vedleggsListe: List<Vedlegg>): List<AvSjekkResultat> {
         try {
             return client.submitFormWithBinaryData(

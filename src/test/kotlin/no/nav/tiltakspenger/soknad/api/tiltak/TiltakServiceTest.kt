@@ -1,6 +1,5 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import io.ktor.server.config.ApplicationConfig
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -15,7 +14,6 @@ internal class TiltakServiceTest {
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
 
     private val tiltakService = TiltakService(
-        applicationConfig = ApplicationConfig("application.test.conf"),
         tiltakspengerTiltakClient = tiltakspengerTiltakClient,
     )
 

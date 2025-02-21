@@ -7,11 +7,10 @@ val ktorVersion = "3.1.0"
 val kotestVersion = "5.9.1"
 val jacksonVersion = "2.18.2"
 val kotlinxCoroutinesVersion = "1.10.1"
-val tokenSupportVersion = "5.0.16"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.13.0"
 val pdfboxVersion = "3.0.4"
-val felleslibVersion = "0.0.365"
+val felleslibVersion = "0.0.368"
 val flywayVersjon = "11.3.2"
 val testContainersVersion = "1.20.4"
 
@@ -87,10 +86,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.postgresql:postgresql:42.7.5")
     implementation("com.github.seratch:kotliquery:1.9.1")
-
-    // TokenX
-    implementation("no.nav.security:token-validation-ktor-v3:$tokenSupportVersion")
-    implementation("no.nav.security:token-client-core:$tokenSupportVersion")
 
     // PDF handling
     implementation("org.apache.pdfbox:pdfbox:$pdfboxVersion")

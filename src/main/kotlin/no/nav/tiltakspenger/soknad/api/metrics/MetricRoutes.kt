@@ -2,7 +2,6 @@ package no.nav.tiltakspenger.soknad.api.metrics
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.response.respondTextWriter
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
