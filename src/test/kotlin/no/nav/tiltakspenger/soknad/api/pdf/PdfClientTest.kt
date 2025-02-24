@@ -8,8 +8,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.server.config.ApplicationConfig
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.soknad.api.httpClientGeneric
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
@@ -17,7 +15,6 @@ import org.junit.jupiter.api.Test
 
 internal class PdfClientTest {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `får tilbake en pdf hvis alt går ok`() {
         val pdf = "dette er innholdet i pdf vi får tilbake fra pdfGen".toByteArray()
@@ -29,9 +26,8 @@ internal class PdfClientTest {
             )
         }
         val client = httpClientGeneric(mock)
-        val config = ApplicationConfig("application.test.conf")
         val pdfClient = PdfClient(
-            config = config,
+            pdfEndpoint = "http://pdf",
             client = client,
         )
 
@@ -42,7 +38,6 @@ internal class PdfClientTest {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `kaster en feil hvis generering av pdf ikke går ok`() {
         val pdf = "".toByteArray()
@@ -54,9 +49,8 @@ internal class PdfClientTest {
             )
         }
         val client = httpClientGeneric(mock)
-        val config = ApplicationConfig("application.test.conf")
         val pdfClient = PdfClient(
-            config = config,
+            pdfEndpoint = "http://pdf",
             client = client,
         )
 

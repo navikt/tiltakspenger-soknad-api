@@ -11,35 +11,31 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.testing.testApplication
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
+import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
+import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
+import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.PersonDTO
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
+import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class SøknadRoutesTest {
-
-    private val pdlServiceMock = mockk<PdlService>().also { mock ->
-        coEvery { mock.hentPersonaliaMedBarn(any(), any(), any()) } returns PersonDTO(
-            fornavn = "fornavn",
-            mellomnavn = null,
-            etternavn = "etternavn",
-            barn = emptyList(),
-            harFylt18År = true,
-        )
-    }
-    private val avServiceMock = mockk<AvService>().also { mock ->
-        coEvery { mock.gjørVirussjekkAvVedlegg(any()) } returns Unit
-    }
+    private val texasClient = mockk<TexasClient>()
+    private val pdlService = mockk<PdlService>()
+    private val avService = mockk<AvService>(relaxed = true)
 
     companion object {
         private val mockOAuth2Server = MockOAuth2Server()
@@ -53,22 +49,29 @@ internal class SøknadRoutesTest {
         fun after(): Unit = mockOAuth2Server.shutdown()
     }
 
-    private fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuerId = "tokendings",
-            audience = "audience",
-            claims = mapOf(
-                "acr" to acr,
-                "pid" to "123",
-            ),
-            expiry = expiry,
+    @BeforeEach
+    fun setupMocks() {
+        clearMocks(texasClient, pdlService)
+        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT
+        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns PersonDTO(
+            fornavn = "fornavn",
+            mellomnavn = null,
+            etternavn = "etternavn",
+            barn = emptyList(),
+            harFylt18År = true,
         )
     }
 
     @Test
     fun `post med ugyldig token skal gi 401`() {
+        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+            active = false,
+            error = "Ugyldig token",
+        )
         testApplication {
-            configureTestApplication()
+            configureTestApplication(
+                texasClient = texasClient,
+            )
             val response = client.post("/soknad") {
                 header("Authorization", "Bearer ugyldigtoken")
                 setBody(
@@ -86,9 +89,15 @@ internal class SøknadRoutesTest {
     @Test
     fun `post med token som har ugyldig acr claim skal gi 401`() {
         val token = issueTestToken(acr = "Level3")
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
-            configureTestApplication()
+            configureTestApplication(
+                texasClient = texasClient,
+            )
             val response = client.post("/soknad") {
                 header("Authorization", "Bearer ${token.serialize()}")
                 setBody(
@@ -106,9 +115,15 @@ internal class SøknadRoutesTest {
     @Test
     fun `post med token som har expiret utenfor leeway skal gi 401`() {
         val token = issueTestToken(expiry = -60L)
+        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+            active = false,
+            error = "Utløpt",
+        )
 
         testApplication {
-            configureTestApplication()
+            configureTestApplication(
+                texasClient = texasClient,
+            )
             val response = client.post("/soknad") {
                 header("Authorization", "Bearer ${token.serialize()}")
                 setBody(
@@ -128,9 +143,15 @@ internal class SøknadRoutesTest {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
         coEvery { taInnSøknadSomMultipart(any()) } throws BadRequestException("1")
         val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
-            configureTestApplication()
+            configureTestApplication(
+                texasClient = texasClient,
+            )
             val response = client.post("/soknad") {
                 header("Authorization", "Bearer ${token.serialize()}")
                 setBody(
@@ -153,9 +174,15 @@ internal class SøknadRoutesTest {
             listOf("Kvalifisering fra dato må være tidligere eller lik til dato"),
         )
         val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
-            configureTestApplication()
+            configureTestApplication(
+                texasClient = texasClient,
+            )
             val response = client.post("/soknad") {
                 header("Authorization", "Bearer ${token.serialize()}")
                 setBody(
@@ -181,11 +208,16 @@ internal class SøknadRoutesTest {
         val nySøknadService = NySøknadService(søknadRepoMock)
 
         val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
             configureTestApplication(
-                avService = avServiceMock,
-                pdlService = pdlServiceMock,
+                texasClient = texasClient,
+                avService = avService,
+                pdlService = pdlService,
                 nySøknadService = nySøknadService,
             )
             val response = client.post("/soknad") {
@@ -200,5 +232,17 @@ internal class SøknadRoutesTest {
             }
             assertEquals(HttpStatusCode.Created, response.status)
         }
+    }
+
+    private fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): SignedJWT {
+        return mockOAuth2Server.issueToken(
+            issuerId = "tokendings",
+            audience = "audience",
+            claims = mapOf(
+                "acr" to acr,
+                "pid" to "12345678910",
+            ),
+            expiry = expiry,
+        )
     }
 }

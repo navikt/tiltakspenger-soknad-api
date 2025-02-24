@@ -5,27 +5,20 @@ endpoints:
   pdl: https://pdl-api.dev-fss-pub.nais.io/graphql
   pdf: http://tiltakspenger-pdfgen
   dokarkiv: https://dokarkiv-q2.dev-fss-pub.nais.io
-  tiltakspengerarena: https://tiltakspenger-arena.dev-fss-pub.nais.io
   tiltakspengertiltak: http://tiltakspenger-tiltak
   tiltakspengervedtak: http://tiltakspenger-saksbehandling-api
   av: http://clamav.nais-system/scan
   norg2: https://norg2.dev-fss-pub.nais.io
-
 outboundExternalUrls:
   pdl: pdl-api.dev-fss-pub.nais.io
   dokarkiv: dokarkiv-q2.dev-fss-pub.nais.io
-  tiltakspengerarena: tiltakspenger-arena.dev-fss-pub.nais.io
   norg2: norg2.dev-fss-pub.nais.io
-audience:
+scope:
   pdl: dev-fss:pdl:pdl-api
   dokarkiv: dev-fss:teamdokumenthandtering:dokarkiv
-  tiltakspengerarena: dev-fss:tpts:tiltakspenger-arena
-  tiltakspengertiltak: dev-gcp:tpts:tiltakspenger-tiltak
+  vedtak: dev-gcp:tpts:tiltakspenger-saksbehandling-api
   norg2: dev-fss:org:norg2
-scope:
-  pdl: api://dev-fss.pdl.pdl-api/.default
-  dokarkiv: api://dev-fss.teamdokumenthandtering.dokarkiv/.default
-  vedtak: api://dev-gcp.tpts.tiltakspenger-saksbehandling-api/.default
+  tiltakspengertiltak: dev-gcp:tpts:tiltakspenger-tiltak
 sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: false

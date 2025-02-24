@@ -10,29 +10,33 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.testing.testApplication
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
+import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
+import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
 
 internal class PdlRoutesTest {
+    private val texasClient = mockk<TexasClient>()
+    private val pdlService = mockk<PdlService>()
+    private val tiltakservice = mockk<TiltakService>(relaxed = true)
     private val mockOAuth2Server = MockOAuth2Server()
 
-    @BeforeAll
-    fun setup() = mockOAuth2Server.start(8080)
-
-    @AfterAll
-    fun after() = mockOAuth2Server.shutdown()
+    private val testFødselsnummer = "12345678910"
 
     private val mockedPerson = Person(
         fornavn = "foo",
@@ -43,33 +47,25 @@ internal class PdlRoutesTest {
         erDød = false,
     )
 
-    private val mockedPdlService = mockk<PdlService>().also { mock ->
-        coEvery { mock.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO()
+    @BeforeEach
+    fun setupMocks() {
+        clearMocks(texasClient, pdlService)
+        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO()
     }
 
-    val testFødselsnummer = "123"
+    @BeforeAll
+    fun setup() = mockOAuth2Server.start(8080)
 
-    private fun issueTestToken(
-        issuer: String = "tokendings",
-        clientId: String = "testClientId",
-        claims: Map<String, String> = mapOf(
-            "acr" to "idporten-loa-high",
-            "pid" to testFødselsnummer,
-        ),
-    ): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuer,
-            clientId,
-            DefaultOAuth2TokenCallback(
-                audience = listOf("audience"),
-                claims = claims,
-            ),
-        )
-    }
+    @AfterAll
+    fun after() = mockOAuth2Server.shutdown()
 
     @Test
     fun `get på personalia-endepunkt skal svare med personalia fra PDLService hvis tokenet er gyldig og validerer ok`() {
         val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
             val client = createClient {
@@ -77,8 +73,11 @@ internal class PdlRoutesTest {
                     jackson()
                 }
             }
-
-            configureTestApplication(pdlService = mockedPdlService, tiltakService = mockk<TiltakService>(relaxed = true))
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
             runBlocking {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
@@ -96,6 +95,10 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal kalle på PDLService med fødselsnummeret som ligger bakt inn i pid claim i tokenet`() {
         val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
 
         testApplication {
             val client = createClient {
@@ -104,13 +107,17 @@ internal class PdlRoutesTest {
                 }
             }
 
-            configureTestApplication(pdlService = mockedPdlService, tiltakService = mockk<TiltakService>(relaxed = true))
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
             runBlocking {
                 client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${token.serialize()}")
                 }
-                coVerify { mockedPdlService.hentPersonaliaMedBarn(testFødselsnummer, any(), any(), any()) }
+                coVerify { pdlService.hentPersonaliaMedBarn(testFødselsnummer, any(), any(), any()) }
             }
         }
     }
@@ -124,7 +131,11 @@ internal class PdlRoutesTest {
                 }
             }
 
-            configureTestApplication(pdlService = mockedPdlService, tiltakService = mockk<TiltakService>(relaxed = true))
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
             runBlocking {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
@@ -137,6 +148,10 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal returnere 401 dersom token kommer fra ugyldig issuer`() {
         val tokenMedUgyldigIssuer = issueTestToken(issuer = "ugyldigIssuer")
+        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+            active = false,
+            error = "Ugyldig issuer",
+        )
 
         testApplication {
             val client = createClient {
@@ -145,7 +160,11 @@ internal class PdlRoutesTest {
                 }
             }
 
-            configureTestApplication(pdlService = mockedPdlService, tiltakService = mockk<TiltakService>(relaxed = true))
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
             runBlocking {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
@@ -159,6 +178,10 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
         val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
+        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = tokenMedManglendeClaim.jwtClaimsSet.claims["pid"].toString(),
+            acr = "",
+        )
 
         testApplication {
             val client = createClient {
@@ -167,7 +190,11 @@ internal class PdlRoutesTest {
                 }
             }
 
-            configureTestApplication(pdlService = mockedPdlService, tiltakService = mockk<TiltakService>(relaxed = true))
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
             runBlocking {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
@@ -176,5 +203,23 @@ internal class PdlRoutesTest {
                 assertEquals(HttpStatusCode.Unauthorized, response.status)
             }
         }
+    }
+
+    private fun issueTestToken(
+        issuer: String = "tokendings",
+        clientId: String = "testClientId",
+        claims: Map<String, String> = mapOf(
+            "acr" to "idporten-loa-high",
+            "pid" to testFødselsnummer,
+        ),
+    ): SignedJWT {
+        return mockOAuth2Server.issueToken(
+            issuer,
+            clientId,
+            DefaultOAuth2TokenCallback(
+                audience = listOf("audience"),
+                claims = claims,
+            ),
+        )
     }
 }

@@ -6,6 +6,7 @@ metadata:
   labels:
     team: tpts
   annotations:
+    texas.nais.io/enabled: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
@@ -59,41 +60,32 @@ spec:
       external:
         - host: {{outboundExternalUrls.pdl}}
         - host: {{outboundExternalUrls.dokarkiv}}
-        - host: {{outboundExternalUrls.tiltakspengerarena}}
         - host: {{outboundExternalUrls.norg2}}
   env:
     - name: PDL_ENDPOINT_URL
       value: {{ endpoints.pdl }}
-    - name: PDL_AUDIENCE
-      value: {{ audience.pdl }}
     - name: PDL_SCOPE
       value: {{ scope.pdl }}
     - name: DOKARKIV_ENDPOINT_URL
       value: {{ endpoints.dokarkiv }}
-    - name: DOKARKIV_AUDIENCE
-      value: {{ audience.dokarkiv }}
     - name: DOKARKIV_SCOPE
       value: {{ scope.dokarkiv }}
     - name: VEDTAK_SCOPE
       value: {{ scope.vedtak }}
+    - name: TILTAKSPENGER_VEDTAK_ENDPOINT_URL
+      value: {{ endpoints.tiltakspengervedtak }}
     - name: PDF_ENDPOINT_URL
       value: {{ endpoints.pdf }}
     - name: AV_ENDPOINT_URL
       value: {{ endpoints.av }}
-    - name: TILTAKSPENGER_ARENA_ENDPOINT_URL
-      value: {{ endpoints.tiltakspengerarena }}
-    - name: TILTAKSPENGER_VEDTAK_ENDPOINT_URL
-      value: {{ endpoints.tiltakspengervedtak }}
-    - name: TILTAKSPENGER_ARENA_AUDIENCE
-      value: {{ audience.tiltakspengerarena }}
     - name: TILTAKSPENGER_TILTAK_ENDPOINT_URL
       value: {{ endpoints.tiltakspengertiltak }}
-    - name: TILTAKSPENGER_TILTAK_AUDIENCE
-      value: {{ audience.tiltakspengertiltak }}
+    - name: TILTAKSPENGER_TILTAK_SCOPE
+      value: {{ scope.tiltakspengertiltak }}
     - name: NORG2_ENDPOINT_URL
       value: {{ endpoints.norg2 }}
-    - name: NORG2_AUDIENCE
-      value: {{ audience.norg2 }}
+    - name: NORG2_SCOPE
+      value: {{ scope.norg2 }}
   resources:
     limits:
       memory: 2048Mi
