@@ -35,10 +35,12 @@ fun Route.søknadRoutes(
     route(SØKNAD_PATH) {
         install(TexasAuth) { client = texasClient }
         post {
+            log.info { "Mottatt kall til $SØKNAD_PATH" }
             val requestTimer = metricsCollector.søknadsmottakLatencySeconds.startTimer()
             try {
                 val innsendingTidspunkt = LocalDateTime.now()
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart())
+                log.info { "Utfører virussjekk" }
                 avService.gjørVirussjekkAvVedlegg(vedlegg)
                 val fødselsnummer = call.fnr()
                 val acr = call.acr()
