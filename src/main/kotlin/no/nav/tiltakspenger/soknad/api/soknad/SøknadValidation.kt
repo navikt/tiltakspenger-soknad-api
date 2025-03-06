@@ -263,7 +263,7 @@ fun validerAndreUtbetalinger(søknad: SpørsmålsbesvarelserDTO, tiltaksperiode:
     return feilmeldinger
 }
 
-val navnMaxLength = 25
+val navnMaxLength = 1000
 
 fun validerBarnetillegg(barnetillegg: Barnetillegg): List<String> {
     val feilmeldinger = mutableListOf<String>()
@@ -274,8 +274,7 @@ fun validerBarnetillegg(barnetillegg: Barnetillegg): List<String> {
     }
     val harEtBarnMedFødselsdatoFramITid = manueltRegistrerteBarn.any { it.fødselsdato.isSameOrAfter(LocalDate.now().plusDays(1)) }
     if (harEtBarnMedForLangtNavn) {
-        // TODO post-mvp jah: Seriously? 25 tegn maks etternavn? Denne feilen inntraff i prod 2. oktober.
-        feilmeldinger.add("Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 25 tegn")
+        feilmeldinger.add("Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn")
     }
     if (harEtBarnMedFødselsdatoFramITid) {
         feilmeldinger.add("Manuelt registrert barn er ugyldig: fødselsdato kan ikke registreres fram i tid")

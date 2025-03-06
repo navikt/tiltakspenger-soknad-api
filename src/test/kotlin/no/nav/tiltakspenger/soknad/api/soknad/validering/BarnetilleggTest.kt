@@ -16,11 +16,11 @@ internal class BarnetilleggTest {
                     mockManueltRegistrertBarn(
                         fornavn = "Test Test Test Test Test Test Test Test",
                         mellomnavn = "Test",
-                        etternavn = "Test",
+                        etternavn = "a".toString().repeat(1001),
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 25 tegn"
+        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
@@ -31,26 +31,26 @@ internal class BarnetilleggTest {
                     mockManueltRegistrertBarn(
                         fornavn = "Test",
                         mellomnavn = "Test Test Test Test Test Test Test Test",
-                        etternavn = "Test",
+                        etternavn = "a".toString().repeat(1001),
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 25 tegn"
+        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
-    fun `etternavn på manuelt registrerte barn, skal ikke overskride maksgrense på 25 tegn`() {
+    fun `etternavn på manuelt registrerte barn, skal ikke overskride maksgrense på 1000 tegn`() {
         mockSpørsmålsbesvarelser(
             barnetillegg = mockBarnetillegg(
                 manueltRegistrerteBarnSøktBarnetilleggFor = listOf(
                     mockManueltRegistrertBarn(
                         fornavn = "Test",
                         mellomnavn = "Test",
-                        etternavn = "Test Test Test Test Test Test Test Test",
+                        etternavn = "a".toString().repeat(1001),
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 25 tegn"
+        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
