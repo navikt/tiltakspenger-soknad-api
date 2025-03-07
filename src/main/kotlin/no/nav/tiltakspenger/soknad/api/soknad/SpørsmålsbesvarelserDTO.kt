@@ -1,11 +1,11 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import no.nav.tiltakspenger.libs.common.SaniterStringForPdfgen.saniter
 import no.nav.tiltakspenger.soknad.api.deserialize
 import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
 import no.nav.tiltakspenger.soknad.api.serialize
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
-import no.nav.tiltakspenger.soknad.api.util.StringSanitizer
 import java.security.InvalidParameterException
 import java.time.LocalDate
 
@@ -32,9 +32,9 @@ class ManueltRegistrertBarn(
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
 ) {
-    val fornavn: String = StringSanitizer.sanitize(fornavn)
-    val mellomnavn: String? = mellomnavn?.let { StringSanitizer.sanitize(mellomnavn) }
-    val etternavn: String = StringSanitizer.sanitize(etternavn)
+    val fornavn: String = saniter(fornavn)
+    val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
+    val etternavn: String = saniter(etternavn)
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
 }
@@ -46,9 +46,9 @@ class RegistrertBarn(
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
 ) {
-    val fornavn: String? = fornavn?.let { StringSanitizer.sanitize(fornavn) }
-    val mellomnavn: String? = mellomnavn?.let { StringSanitizer.sanitize(mellomnavn) }
-    val etternavn: String? = etternavn?.let { StringSanitizer.sanitize(etternavn) }
+    val fornavn: String? = fornavn?.let { saniter(fornavn) }
+    val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
+    val etternavn: String? = etternavn?.let { saniter(etternavn) }
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
 }
@@ -76,10 +76,10 @@ class Tiltak(
     type: String,
     typeNavn: String,
 ) {
-    val aktivitetId: String = StringSanitizer.sanitize(aktivitetId)
-    val arrangør: String = StringSanitizer.sanitize(arrangør)
-    val type: String = StringSanitizer.sanitize(type)
-    val typeNavn: String = StringSanitizer.sanitize(typeNavn)
+    val aktivitetId: String = saniter(aktivitetId)
+    val arrangør: String = saniter(arrangør)
+    val type: String = saniter(type)
+    val typeNavn: String = saniter(typeNavn)
     val arenaRegistrertPeriode: Deltakelsesperiode? = arenaRegistrertPeriode
     val periode: Periode = periode
 

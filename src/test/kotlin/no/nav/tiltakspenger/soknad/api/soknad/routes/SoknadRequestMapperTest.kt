@@ -19,16 +19,10 @@ import io.mockk.mockkStatic
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.asByteChannel
-import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Introduksjonsprogram
-import no.nav.tiltakspenger.soknad.api.soknad.ManueltRegistrertBarn
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
-import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
-import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
-import no.nav.tiltakspenger.soknad.api.soknad.validering.defaultPeriode
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
-import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import no.nav.tiltakspenger.soknad.api.util.Detect
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -138,83 +132,6 @@ class SoknadRequestMapperTest {
 
         runBlocking {
             assertThrows<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData) }
-        }
-    }
-
-    @Test
-    fun `taInnSøknadSomMultipart escaper potensiell XSS`() {
-        val mockedTiltak = Tiltak(
-            aktivitetId = "<script>blabla</script>",
-            periode = defaultPeriode(),
-            arenaRegistrertPeriode = Deltakelsesperiode(
-                fra = LocalDate.of(2025, 1, 1),
-                til = LocalDate.of(2025, 1, 1),
-            ),
-            arrangør = "<script>arrangør</script>",
-            typeNavn = "<script>typeNavn</script>",
-            type = "<script>type</script>",
-        )
-
-        val mockedBarnetillegg =
-            Barnetillegg(
-                manueltRegistrerteBarnSøktBarnetilleggFor = listOf(
-                    ManueltRegistrertBarn(
-                        fornavn = "<script>a",
-                        mellomnavn = "<script>b",
-                        etternavn = "<script>c",
-                        fødselsdato = LocalDate.of(2023, 1, 1),
-                        oppholdInnenforEøs = true,
-                    ),
-                ),
-                registrerteBarnSøktBarnetilleggFor = listOf(
-                    RegistrertBarn(
-                        fornavn = "<script>a",
-                        mellomnavn = "<script>b",
-                        fødselsdato = LocalDate.of(2023, 1, 1),
-                        etternavn = "<script>c",
-                        oppholdInnenforEøs = true,
-                    ),
-                ),
-            )
-
-        val mockMultiPartData = MockMultiPartData(
-            mutableListOf(
-                PartData.FormItem(
-                    spørsmålsbesvarelser(tiltak = mockedTiltak, barnetillegg = mockedBarnetillegg).toJsonString(),
-                    {},
-                    Headers.build {
-                        append(HttpHeaders.ContentType, "application/json")
-                        append(
-                            HttpHeaders.ContentDisposition,
-                            ContentDisposition("søknad", listOf(HeaderValueParam("name", "søknad"))),
-                        )
-                    },
-                ),
-            ),
-        )
-
-        runBlocking {
-            val (spørsmålsbesvarelser) = taInnSøknadSomMultipart(mockMultiPartData)
-            assertEquals(
-                spørsmålsbesvarelser.tiltak.arrangør,
-                """&amp;lt;script&amp;gt;arrangør&amp;lt;\\\/script&amp;gt;""",
-            )
-            assertEquals(spørsmålsbesvarelser.tiltak.type, """&amp;lt;script&amp;gt;type&amp;lt;\\\/script&amp;gt;""")
-            assertEquals(
-                spørsmålsbesvarelser.tiltak.typeNavn,
-                """&amp;lt;script&amp;gt;typeNavn&amp;lt;\\\/script&amp;gt;""",
-            )
-
-            val manueltRegistrertBarn =
-                spørsmålsbesvarelser.barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.get(0)
-            assertEquals(manueltRegistrertBarn.fornavn, "&amp;lt;script&amp;gt;a")
-            assertEquals(manueltRegistrertBarn.mellomnavn, "&amp;lt;script&amp;gt;b")
-            assertEquals(manueltRegistrertBarn.etternavn, "&amp;lt;script&amp;gt;c")
-
-            val registrertBarn = spørsmålsbesvarelser.barnetillegg.registrerteBarnSøktBarnetilleggFor.get(0)
-            assertEquals(registrertBarn.fornavn, "&amp;lt;script&amp;gt;a")
-            assertEquals(registrertBarn.mellomnavn, "&amp;lt;script&amp;gt;b")
-            assertEquals(registrertBarn.etternavn, "&amp;lt;script&amp;gt;c")
         }
     }
 }
