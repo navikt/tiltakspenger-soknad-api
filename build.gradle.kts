@@ -10,7 +10,7 @@ val kotlinxCoroutinesVersion = "1.10.1"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.13.0"
 val pdfboxVersion = "3.0.4"
-val felleslibVersion = "0.0.395"
+val felleslibVersion = "0.0.396"
 val flywayVersjon = "11.3.4"
 val testContainersVersion = "1.20.5"
 
@@ -68,7 +68,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
-    // Arrowe
+    // Arrow
     implementation("io.arrow-kt:arrow-core:2.0.1")
 
     // Prometheus
