@@ -1,5 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import arrow.core.Either
+import arrow.core.getOrElse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
@@ -10,6 +12,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import mu.KotlinLogging
+import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
@@ -23,14 +26,14 @@ class PdlClientTokenX(
 ) {
     private val log = KotlinLogging.logger {}
 
-    suspend fun fetchSøker(fødselsnummer: String, subjectToken: String, callId: String): Result<SøkerRespons> {
+    suspend fun fetchSøker(fødselsnummer: String, subjectToken: String, callId: String): SøkerRespons {
         log.info { "fetchSøker: Henter token for å snakke med PDL" }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = pdlScope,
         )
         log.info { "fetchSøker: Token-exchange OK" }
-        val pdlResponse: Result<SøkerRespons> = kotlin.runCatching {
+        return Either.catch {
             httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)
                 header("Tema", INDIVIDSTONAD)
@@ -39,23 +42,26 @@ class PdlClientTokenX(
                 bearerAuth(token.token)
                 contentType(ContentType.Application.Json)
                 setBody(hentPersonQuery(fødselsnummer))
-            }.body()
+            }.body<SøkerRespons>()
+        }.getOrElse {
+            log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "PdlClientTokenX(fetchSøker): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
+            sikkerlogg.error(it) { "PdlClientTokenX(fetchSøker): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId." }
+            throw it
         }
-        return pdlResponse
     }
 
     suspend fun fetchAdressebeskyttelse(
         fødselsnummer: String,
         subjectToken: String,
         callId: String,
-    ): Result<AdressebeskyttelseRespons> {
+    ): AdressebeskyttelseRespons {
         log.debug { "fetchAdressebeskyttelse:Token-respons mottatt" }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = pdlScope,
         )
         log.debug { "fetchAdressebeskyttelse: Token-exchange OK" }
-        val pdlResponse: Result<AdressebeskyttelseRespons> = kotlin.runCatching {
+        return Either.catch {
             httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)
                 header("Tema", INDIVIDSTONAD)
@@ -64,8 +70,11 @@ class PdlClientTokenX(
                 bearerAuth(token.token)
                 contentType(ContentType.Application.Json)
                 setBody(hentAdressebeskyttelseQuery(fødselsnummer))
-            }.body()
+            }.body<AdressebeskyttelseRespons>()
+        }.getOrElse {
+            log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
+            sikkerlogg.error(it) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId." }
+            throw it
         }
-        return pdlResponse
     }
 }
