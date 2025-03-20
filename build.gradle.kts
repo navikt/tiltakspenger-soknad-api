@@ -10,7 +10,7 @@ val kotlinxCoroutinesVersion = "1.10.1"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.13.0"
 val pdfboxVersion = "3.0.4"
-val felleslibVersion = "0.0.409"
+val felleslibVersion = "0.0.413"
 val flywayVersjon = "11.4.0"
 val testContainersVersion = "1.20.6"
 
@@ -35,7 +35,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("ch.qos.logback:logback-classic:1.5.18")
     implementation("net.logstash.logback:logstash-logback-encoder:8.0")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.5")
     implementation("org.jetbrains:annotations:26.0.2")
     implementation("com.natpryce:konfig:1.6.10.0")
     implementation("com.github.navikt.tiltakspenger-libs:soknad-dtos:$felleslibVersion")
