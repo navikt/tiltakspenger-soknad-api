@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 class TiltakService(
     private val tiltakspengerTiltakClient: TiltakspengerTiltakClient,

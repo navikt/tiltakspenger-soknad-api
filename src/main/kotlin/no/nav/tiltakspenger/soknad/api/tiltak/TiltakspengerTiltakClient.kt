@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
@@ -7,7 +8,6 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry

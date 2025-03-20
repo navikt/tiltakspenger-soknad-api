@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.domain.Søknad

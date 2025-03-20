@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.antivirus
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 

@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.arbeidsfordeling.ArbeidsfordelingClient
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.arbeidsfordeling.ArbeidsfordelingRequest

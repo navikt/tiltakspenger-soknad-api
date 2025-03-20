@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.arbeidsfordeling
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
@@ -10,7 +11,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 import no.nav.tiltakspenger.soknad.api.objectMapper

@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.pdl
 
 import arrow.core.Either
 import arrow.core.getOrElse
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
@@ -11,7 +12,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import mu.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
