@@ -97,7 +97,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.1.10")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.1.20")
     testImplementation(platform("org.junit:junit-bom:5.12.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
