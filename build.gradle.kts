@@ -83,7 +83,7 @@ dependencies {
 
     // DB
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersjon")
-    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("com.zaxxer:HikariCP:6.3.0")
     implementation("org.postgresql:postgresql:42.7.5")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
