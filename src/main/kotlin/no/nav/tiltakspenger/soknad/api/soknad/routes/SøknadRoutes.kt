@@ -12,7 +12,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
@@ -84,7 +83,7 @@ fun Route.søknadRoutes(
                     is UninitializedPropertyAccessException,
                     is RequestValidationException,
                     -> {
-                        sikkerlogg.error(exception) { "Ugyldig søknad: ${exception.message}" }
+                        log.error(exception) { "Ugyldig søknad: ${exception.message}" }
                         metricsCollector.antallFeiledeInnsendingerCounter.inc()
                         metricsCollector.antallUgyldigeSøknaderCounter.inc()
                         requestTimer.observeDuration()

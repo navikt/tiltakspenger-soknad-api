@@ -10,26 +10,38 @@ class NySøknadService(
 ) {
     private val log = KotlinLogging.logger {}
 
+    private val deltakerIderSomSkalTilTpsak = listOf(
+        "0261ee55-c16d-48f8-9e07-ea101856e72d",
+        "0b9d57f0-0ece-44f3-a918-d0721ec526ca",
+    )
+
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
     fun nySøknad(
         nySøknadCommand: NySøknadCommand,
     ): Either<KunneIkkeMottaNySøknad, Unit> {
-        // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før.
-        // Flagget endres manuelt for MVP-brukerne våre.
-        val brukerHarSøknaderSomEiesAvTiltakspenger = søknadRepo.hentBrukersSøknader(nySøknadCommand.fnr, Applikasjonseier.Tiltakspenger).isNotEmpty()
-        val eier: Applikasjonseier = if (Configuration.isProd() && !brukerHarSøknaderSomEiesAvTiltakspenger) {
-            Applikasjonseier.Arena
-        } else {
-            Applikasjonseier.Tiltakspenger
-        }
+        val eier = getEier(nySøknadCommand)
         val søknad: MottattSøknad = nySøknadCommand.toDomain(eier)
         return Either.catch {
             søknadRepo.lagre(søknad)
             log.info { "Søknad mottatt og lagret. SøknadId: ${søknad.id}. Acr: ${nySøknadCommand.acr}. Antall vedlegg: ${nySøknadCommand.vedlegg.size}. Innsendingstidspunkt: ${nySøknadCommand.innsendingTidspunkt}" }
         }.mapLeft {
-            log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "Feil under lagring av søknad. Se sikkerlogg for mer kontekst. Antall vedlegg: ${nySøknadCommand.vedlegg.size}. Innsendingstidspunkt: ${nySøknadCommand.innsendingTidspunkt}" }
+            log.error(it) { "Feil under lagring av søknad. Se sikkerlogg for mer kontekst. Antall vedlegg: ${nySøknadCommand.vedlegg.size}. Innsendingstidspunkt: ${nySøknadCommand.innsendingTidspunkt}" }
             sikkerlogg.error(it) { "Feil under lagring av søknad. Antall vedlegg: ${nySøknadCommand.vedlegg.size}. Innsendingstidspunkt: ${nySøknadCommand.innsendingTidspunkt}. Fnr: ${nySøknadCommand.fnr}. " }
             KunneIkkeMottaNySøknad.KunneIkkeLagreSøknad
+        }
+    }
+
+    // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før, eller blir
+    // manuelt lagt til i listen over deltakere som skal til oss.
+    private fun getEier(nySøknadCommand: NySøknadCommand): Applikasjonseier {
+        val brukerHarSøknaderSomEiesAvTiltakspenger =
+            søknadRepo.hentBrukersSøknader(nySøknadCommand.fnr, Applikasjonseier.Tiltakspenger).isNotEmpty()
+        val brukerErForhandsgodkjent = nySøknadCommand.brukersBesvarelser.tiltak.aktivitetId in deltakerIderSomSkalTilTpsak
+
+        return if (Configuration.isProd() && !brukerHarSøknaderSomEiesAvTiltakspenger && !brukerErForhandsgodkjent) {
+            Applikasjonseier.Arena
+        } else {
+            Applikasjonseier.Tiltakspenger
         }
     }
 }

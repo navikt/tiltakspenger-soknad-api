@@ -44,7 +44,7 @@ class PdlClientTokenX(
                 setBody(hentPersonQuery(fødselsnummer))
             }.body<SøkerRespons>()
         }.getOrElse {
-            log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "PdlClientTokenX(fetchSøker): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
+            log.error(it) { "PdlClientTokenX(fetchSøker): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
             sikkerlogg.error(it) { "PdlClientTokenX(fetchSøker): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId." }
             throw it
         }
@@ -72,7 +72,7 @@ class PdlClientTokenX(
                 setBody(hentAdressebeskyttelseQuery(fødselsnummer))
             }.body<AdressebeskyttelseRespons>()
         }.getOrElse {
-            log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
+            log.error(it) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId. Se sikkerlogg for mer kontekst." }
             sikkerlogg.error(it) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId." }
             throw it
         }

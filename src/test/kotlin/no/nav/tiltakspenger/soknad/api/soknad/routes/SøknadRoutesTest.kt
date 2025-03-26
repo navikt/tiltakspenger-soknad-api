@@ -20,6 +20,7 @@ import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
+import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.PersonDTO
@@ -200,7 +201,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post på soknad-endepunkt skal svare med 201 Created ved gyldig søknad `() {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
-        coEvery { taInnSøknadSomMultipart(any()) } returns Pair(mockk(), emptyList())
+        coEvery { taInnSøknadSomMultipart(any()) } returns Pair(mockSpørsmålsbesvarelser(), emptyList())
         val søknadRepoMock = mockk<SøknadRepo>().also { mock ->
             coEvery { mock.hentBrukersSøknader(any(), any()) } returns emptyList()
             coEvery { mock.lagre(any()) } returns Unit
