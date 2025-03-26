@@ -47,7 +47,7 @@ class SøknadJobbService(
             val navn = try {
                 personHttpklient.hentNavnForFnr(Fnr.fromString(søknad.fnr))
             } catch (e: Exception) {
-                log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
+                log.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
                 sikkerlogg.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
                 return@forEach
             }
@@ -65,7 +65,7 @@ class SøknadJobbService(
                     callId = correlationId.toString(),
                 )
             } catch (e: Exception) {
-                log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
+                log.error(e) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
                 sikkerlogg.error(e) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
                 return@forEach
             }
@@ -101,7 +101,7 @@ class SøknadJobbService(
                 søknadRepo.oppdater(søknad.copy(sendtTilVedtak = sendtTilSaksbehandlingApi))
                 log.info { "Send søknad til saksbehandling-api jobb: Oppdatert utsendingstidspunktet til $sendtTilSaksbehandlingApi for søknad ${søknad.id}" }
             } catch (e: Exception) {
-                log.error(RuntimeException("Trigger stacktrace for enklere debug.")) { "Send søknad til saksbehandling-api jobb: Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt. Se sikkerlogg for mer info." }
+                log.error(e) { "Send søknad til saksbehandling-api jobb: Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt. Se sikkerlogg for mer info." }
                 sikkerlogg.error(e) { "Send søknad til saksbehandling-api jobb:  Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt." }
             }
         }

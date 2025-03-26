@@ -47,7 +47,7 @@ fun Route.tiltakRoutes(
 
                 call.respond(tiltakDto)
             } catch (e: Exception) {
-                log.error(RuntimeException("Trigger exception for enklere debugging.")) { "Ukjent feil under tiltakroute, se sikkerlogg for mer kontekst." }
+                log.error(e) { "Ukjent feil under tiltakroute, se sikkerlogg for mer kontekst." }
                 sikkerlogg.error(e) { "Ukjent feil under tiltakroute" }
                 metricsCollector.antallFeilVedHentTiltakCounter.inc()
                 call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
