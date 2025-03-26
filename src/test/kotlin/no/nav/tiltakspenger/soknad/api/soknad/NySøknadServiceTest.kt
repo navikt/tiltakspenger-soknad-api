@@ -5,6 +5,8 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import no.nav.tiltakspenger.soknad.api.Configuration
+import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
+import no.nav.tiltakspenger.soknad.api.mockTiltak
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -17,7 +19,7 @@ class NySøknadServiceTest {
     @BeforeEach
     fun setUp() {
         kommando = NySøknadCommand(
-            brukersBesvarelser = mockk(),
+            brukersBesvarelser = mockSpørsmålsbesvarelser(),
             acr = "Level4",
             fnr = "12345678910",
             vedlegg = listOf(),
@@ -41,6 +43,28 @@ class NySøknadServiceTest {
     fun `eier settes til Tiltakspenger i prod når bruker har tidligere søknader som eies av Tiltakspenger`() {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns listOf(mockk())
+
+        val resultat = nySøknadService.nySøknad(kommando)
+
+        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
+        resultat.isRight()
+    }
+
+    @Test
+    fun `eier settes til Tiltakspenger i prod når bruker er forhåndsgodkjent`() {
+        every { Configuration.isProd() } returns true
+        every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
+        kommando = NySøknadCommand(
+            brukersBesvarelser = mockSpørsmålsbesvarelser(
+                tiltak = mockTiltak(
+                    aktivitetId = "0261ee55-c16d-48f8-9e07-ea101856e72d",
+                ),
+            ),
+            acr = "Level4",
+            fnr = "12345678910",
+            vedlegg = listOf(),
+            innsendingTidspunkt = LocalDateTime.now(),
+        )
 
         val resultat = nySøknadService.nySøknad(kommando)
 
