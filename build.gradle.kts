@@ -11,7 +11,7 @@ val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.13.0"
 val pdfboxVersion = "3.0.4"
 val felleslibVersion = "0.0.424"
-val flywayVersjon = "11.4.1"
+val flywayVersjon = "11.5.0"
 val testContainersVersion = "1.20.6"
 
 plugins {
