@@ -31,7 +31,6 @@ DOKARKIV_AUDIENCE=mock_audience
 DOKARKIV_ENDPOINT_URL=http://localhost:8484
 DOKARKIV_SCOPE=mock_scope
 PDF_ENDPOINT_URL=http://localhost:8085
-PDL_AUDIENCE=mock_audience
 PDL_ENDPOINT_URL=http://localhost:8484/personalia
 PDL_SCOPE=mock_scope
 TILTAKSPENGER_ARENA_AUDIENCE=mock_audience
