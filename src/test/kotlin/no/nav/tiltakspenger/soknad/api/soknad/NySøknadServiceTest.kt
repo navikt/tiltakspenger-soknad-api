@@ -57,7 +57,7 @@ class NySøknadServiceTest {
         kommando = NySøknadCommand(
             brukersBesvarelser = mockSpørsmålsbesvarelser(
                 tiltak = mockTiltak(
-                    aktivitetId = "0261ee55-c16d-48f8-9e07-ea101856e72d",
+                    aktivitetId = "0b9d57f0-0ece-44f3-a918-d0721ec526ca",
                 ),
             ),
             acr = "Level4",
