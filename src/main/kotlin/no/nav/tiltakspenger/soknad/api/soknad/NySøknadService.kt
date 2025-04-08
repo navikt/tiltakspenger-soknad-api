@@ -11,7 +11,6 @@ class NySøknadService(
     private val log = KotlinLogging.logger {}
 
     private val deltakerIderSomSkalTilTpsak = listOf(
-        "0b9d57f0-0ece-44f3-a918-d0721ec526ca",
         "fda6f295-201e-4522-b94e-99d54b537f94",
     )
 
