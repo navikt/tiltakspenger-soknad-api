@@ -3,6 +3,7 @@ package no.nav.tiltakspenger.soknad.api.soknad
 import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.db.DataSource
 import no.nav.tiltakspenger.soknad.api.domain.toDbJson
@@ -167,6 +168,22 @@ class SøknadRepo {
                     ).map { row ->
                         row.toSøknadDbDto()
                     }.asSingle,
+                )
+            }
+        }
+    }
+
+    fun oppdaterFnr(gammeltFnr: Fnr, nyttFnr: Fnr) {
+        sessionOf(DataSource.hikariDataSource).use {
+            it.transaction { transaction ->
+                transaction.run(
+                    queryOf(
+                        """update søknad set fnr = :nytt_fnr where fnr = :gammelt_fnr""",
+                        mapOf(
+                            "nytt_fnr" to nyttFnr.verdi,
+                            "gammelt_fnr" to gammeltFnr.verdi,
+                        ),
+                    ).asUpdate,
                 )
             }
         }

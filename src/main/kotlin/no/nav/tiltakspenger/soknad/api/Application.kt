@@ -21,6 +21,8 @@ import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.db.flywayMigrate
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
+import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseConsumer
+import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseService
 import no.nav.tiltakspenger.soknad.api.jobber.TaskExecutor
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
@@ -120,6 +122,14 @@ internal fun start(
     )
     val tiltakService = TiltakService(tiltakspengerTiltakClient)
 
+    val identhendelseService = IdenthendelseService(
+        søknadRepo = søknadRepo,
+    )
+    val identhendelseConsumer = IdenthendelseConsumer(
+        identhendelseService = identhendelseService,
+        topic = Configuration.identhendelseTopic,
+    )
+
     val server = embeddedServer(
         factory = Netty,
         port = port,
@@ -157,16 +167,22 @@ internal fun start(
                 applicationIsReady = { server.application.isReady() },
             )
         }
-    val stoppableTasks =
-        TaskExecutor.startJob(
-            runCheckFactory = runCheckFactory,
-            tasks =
-            listOf { correlationId ->
-                søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
-                søknadJobbService.journalførLagredeSøknader(correlationId)
-                søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(correlationId)
-            },
+    TaskExecutor.startJob(
+        runCheckFactory = runCheckFactory,
+        tasks =
+        listOf { correlationId ->
+            søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
+            søknadJobbService.journalførLagredeSøknader(correlationId)
+            søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(correlationId)
+        },
+    )
+
+    if (Configuration.isNais()) {
+        val consumers = listOf(
+            identhendelseConsumer,
         )
+        consumers.forEach { it.run() }
+    }
 
     Runtime.getRuntime().addShutdownHook(
         Thread {
