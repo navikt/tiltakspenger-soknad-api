@@ -9,6 +9,9 @@ import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 
+private const val APPLICATION_NAME = "tiltakspenger-soknad-api"
+const val KAFKA_CONSUMER_GROUP_ID = "$APPLICATION_NAME-consumer"
+
 enum class Profile {
     LOCAL,
     DEV,
@@ -38,6 +41,7 @@ object Configuration {
                 "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to System.getenv("NAIS_TOKEN_INTROSPECTION_ENDPOINT"),
                 "NAIS_TOKEN_ENDPOINT" to System.getenv("NAIS_TOKEN_ENDPOINT"),
                 "NAIS_TOKEN_EXCHANGE_ENDPOINT" to System.getenv("NAIS_TOKEN_EXCHANGE_ENDPOINT"),
+                "IDENTHENDELSE_TOPIC" to "tpts.identhendelse-v1",
             ),
         )
     private val localProperties =
@@ -123,6 +127,8 @@ object Configuration {
     val naisTokenIntrospectionEndpoint: String by lazy { config()[Key("NAIS_TOKEN_INTROSPECTION_ENDPOINT", stringType)] }
     val naisTokenEndpoint: String by lazy { config()[Key("NAIS_TOKEN_ENDPOINT", stringType)] }
     val tokenExchangeEndpoint: String by lazy { config()[Key("NAIS_TOKEN_EXCHANGE_ENDPOINT", stringType)] }
+
+    val identhendelseTopic: String by lazy { config()[Key("IDENTHENDELSE_TOPIC", stringType)] }
 
     data class DataBaseConf(
         val url: String,

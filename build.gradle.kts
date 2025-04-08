@@ -46,6 +46,7 @@ dependencies {
     implementation("com.github.navikt.tiltakspenger-libs:personklient-infrastruktur:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:json:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:logging:$felleslibVersion")
+    implementation("com.github.navikt.tiltakspenger-libs:kafka:$felleslibVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
 
     // Ktor
@@ -114,6 +115,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:$testContainersVersion")
     testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
     testImplementation("org.testcontainers:postgresql:$testContainersVersion")
+    testImplementation("com.github.navikt.tiltakspenger-libs:test-common:$felleslibVersion")
 }
 
 application {
