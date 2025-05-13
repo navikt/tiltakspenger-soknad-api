@@ -3,7 +3,6 @@ package no.nav.tiltakspenger.soknad.api.soknad.jobb
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
@@ -48,7 +47,6 @@ class SøknadJobbService(
                 personHttpklient.hentNavnForFnr(Fnr.fromString(søknad.fnr))
             } catch (e: Exception) {
                 log.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
-                sikkerlogg.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
                 return@forEach
             }
             val (journalpostId, søknadDto) = try {
@@ -66,7 +64,6 @@ class SøknadJobbService(
                 )
             } catch (e: Exception) {
                 log.error(e) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
-                sikkerlogg.error(e) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
                 return@forEach
             }
             søknadRepo.oppdater(
@@ -101,8 +98,7 @@ class SøknadJobbService(
                 søknadRepo.oppdater(søknad.copy(sendtTilVedtak = sendtTilSaksbehandlingApi))
                 log.info { "Send søknad til saksbehandling-api jobb: Oppdatert utsendingstidspunktet til $sendtTilSaksbehandlingApi for søknad ${søknad.id}" }
             } catch (e: Exception) {
-                log.error(e) { "Send søknad til saksbehandling-api jobb: Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt. Se sikkerlogg for mer info." }
-                sikkerlogg.error(e) { "Send søknad til saksbehandling-api jobb:  Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt." }
+                log.error(e) { "Send søknad til saksbehandling-api jobb: Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt." }
             }
         }
     }

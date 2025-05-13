@@ -57,6 +57,8 @@ spec:
         - application: tiltakspenger-saksbehandling-api
         - application: clamav
           namespace: nais-system
+        - application: logging
+          namespace: nais-system
       external:
         - host: {{outboundExternalUrls.pdl}}
         - host: {{outboundExternalUrls.dokarkiv}}
