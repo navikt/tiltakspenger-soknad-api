@@ -8,7 +8,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
 import no.nav.tiltakspenger.soknad.api.auth.texas.TexasAuth
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
@@ -47,8 +46,7 @@ fun Route.tiltakRoutes(
 
                 call.respond(tiltakDto)
             } catch (e: Exception) {
-                log.error(e) { "Ukjent feil under tiltakroute, se sikkerlogg for mer kontekst." }
-                sikkerlogg.error(e) { "Ukjent feil under tiltakroute" }
+                log.error(e) { "Ukjent feil under tiltakroute." }
                 metricsCollector.antallFeilVedHentTiltakCounter.inc()
                 call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
             }

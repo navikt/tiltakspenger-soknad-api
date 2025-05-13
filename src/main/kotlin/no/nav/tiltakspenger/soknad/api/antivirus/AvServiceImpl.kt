@@ -1,7 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.antivirus
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 class AvServiceImpl(
@@ -16,11 +15,11 @@ class AvServiceImpl(
 
         resultat.forEach {
             if (it.resultat == Status.FOUND) {
-                sikkerlogg.info { "Fant skadevare i vedlegg ${it.filnavn}" }
+                log.info { "Fant skadevare i vedlegg ${it.filnavn}" }
             }
             if (it.resultat === Status.ERROR) {
                 // TODO post-mvp jah: Så hvis vi ikke klarer å scanne en fil, godtar vi den bare. Er dette ønsket oppførsel? Hva sier ROSen om dette? Finner ingen innslag i loggen.
-                sikkerlogg.info { "Noe gikk galt under virusscan av fil ${it.filnavn}" }
+                log.error { "Noe gikk galt under virusscan av fil ${it.filnavn}" }
             }
         }
 

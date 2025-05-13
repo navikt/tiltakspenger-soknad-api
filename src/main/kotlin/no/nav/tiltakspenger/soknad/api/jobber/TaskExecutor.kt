@@ -9,7 +9,6 @@ import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.jobber.RunCheckFactory
 import no.nav.tiltakspenger.libs.jobber.StoppableJob
 import no.nav.tiltakspenger.libs.jobber.startStoppableJob
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -36,7 +35,6 @@ internal class TaskExecutor(
                     initialDelay = initialDelay.toJavaDuration(),
                     intervall = intervall.toJavaDuration(),
                     logger = log,
-                    sikkerLogg = sikkerlogg,
                     // Ref callIdMdc("call-id") i VedtakApi.kt
                     mdcCallIdKey = "call-id",
                     runJobCheck = listOf(runCheckFactory.leaderPod(), runCheckFactory.isReady()),

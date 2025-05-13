@@ -5,7 +5,6 @@ import arrow.core.getOrElse
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.libs.common.Fnr
-import no.nav.tiltakspenger.libs.logging.sikkerlogg
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklient
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError.AdressebeskyttelseKunneIkkeAvklares
@@ -29,10 +28,7 @@ class PersonHttpklient(
     private val getSystemToken: suspend () -> AccessToken,
 ) {
     private val personklient =
-        FellesPersonklient.create(
-            endepunkt = endepunkt,
-            sikkerlogg = sikkerlogg,
-        )
+        FellesPersonklient.create(endepunkt = endepunkt)
 
     suspend fun hentNavnForFnr(
         fnr: Fnr,
