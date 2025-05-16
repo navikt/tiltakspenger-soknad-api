@@ -155,7 +155,8 @@ internal fun start(
                     electorPath = Configuration.electorPath(),
                     logger = KotlinLogging.logger { },
                 ),
-                applicationIsReady = { server.application.isReady() },
+                attributes = server.application.attributes,
+                isReadyKey = isReadyKey,
             )
         } else {
             RunCheckFactory(
@@ -164,7 +165,8 @@ internal fun start(
                     override fun amITheLeader(localHostName: String): Either<LeaderPodLookupFeil, Boolean> =
                         true.right()
                 },
-                applicationIsReady = { server.application.isReady() },
+                attributes = server.application.attributes,
+                isReadyKey = isReadyKey,
             )
         }
     TaskExecutor.startJob(
