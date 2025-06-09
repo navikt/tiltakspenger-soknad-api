@@ -95,7 +95,7 @@ dependencies {
     implementation("org.apache.tika:tika-core:3.2.0")
 
     // Caffeine
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.1.21")
