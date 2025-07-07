@@ -6,7 +6,6 @@ metadata:
   labels:
     team: tpts
   annotations:
-    texas.nais.io/enabled: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
