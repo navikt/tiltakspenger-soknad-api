@@ -3,6 +3,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.routes
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.principal
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.CannotTransformContentToTypeException
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
@@ -15,34 +16,30 @@ import io.ktor.server.routing.route
 import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
-import no.nav.tiltakspenger.soknad.api.auth.texas.TexasAuth
-import no.nav.tiltakspenger.soknad.api.auth.texas.acr
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
-import no.nav.tiltakspenger.soknad.api.auth.texas.fnr
+import no.nav.tiltakspenger.soknad.api.auth.texas.TexasPrincipal
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import java.time.LocalDateTime
 
 fun Route.søknadRoutes(
-    texasClient: TexasClient,
     nySøknadService: NySøknadService,
     avService: AvService,
     metricsCollector: MetricsCollector,
 ) {
     val log = KotlinLogging.logger { }
     route(SØKNAD_PATH) {
-        install(TexasAuth) { client = texasClient }
         post {
             log.info { "Mottatt kall til $SØKNAD_PATH" }
             val requestTimer = metricsCollector.søknadsmottakLatencySeconds.startTimer()
             try {
+                val principal = call.principal<TexasPrincipal>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = LocalDateTime.now()
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart())
                 log.info { "Utfører virussjekk" }
                 avService.gjørVirussjekkAvVedlegg(vedlegg)
-                val fødselsnummer = call.fnr()
-                val acr = call.acr()
+                val fødselsnummer = principal.fnr
+                val acr = principal.acr
 
                 val command = NySøknadCommand(
                     brukersBesvarelser = brukersBesvarelser,

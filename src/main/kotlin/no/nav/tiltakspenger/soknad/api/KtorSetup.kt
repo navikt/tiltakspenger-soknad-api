@@ -6,6 +6,8 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.calllogging.CallLogging
@@ -15,6 +17,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.routing.routing
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
+import no.nav.tiltakspenger.soknad.api.auth.texas.TexasAuthenticationProvider
 import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.health.healthRoutes
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
@@ -60,25 +63,28 @@ internal fun Application.setupRouting(
     avService: AvService,
     metricsCollector: MetricsCollector,
 ) {
+    authentication {
+        register(TexasAuthenticationProvider(TexasAuthenticationProvider.Config("tokenx", texasClient)))
+    }
+
     routing {
-        pdlRoutes(
-            texasClient = texasClient,
-            pdlService = pdlService,
-            tiltakService = tiltakService,
-            metricsCollector = metricsCollector,
-        )
-        søknadRoutes(
-            texasClient = texasClient,
-            avService = avService,
-            metricsCollector = metricsCollector,
-            nySøknadService = nySøknadService,
-        )
-        tiltakRoutes(
-            texasClient = texasClient,
-            tiltakService = tiltakService,
-            metricsCollector = metricsCollector,
-            pdlService = pdlService,
-        )
+        authenticate("tokenx") {
+            pdlRoutes(
+                pdlService = pdlService,
+                tiltakService = tiltakService,
+                metricsCollector = metricsCollector,
+            )
+            søknadRoutes(
+                avService = avService,
+                metricsCollector = metricsCollector,
+                nySøknadService = nySøknadService,
+            )
+            tiltakRoutes(
+                tiltakService = tiltakService,
+                metricsCollector = metricsCollector,
+                pdlService = pdlService,
+            )
+        }
         healthRoutes()
         metricRoutes()
     }
