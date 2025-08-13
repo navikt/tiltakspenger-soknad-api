@@ -9,8 +9,8 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import no.nav.tiltakspenger.libs.texas.TexasPrincipalUser
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
-import no.nav.tiltakspenger.soknad.api.auth.texas.TexasPrincipal
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
@@ -28,7 +28,7 @@ fun Route.tiltakRoutes(
     route(TILTAK_PATH) {
         get {
             try {
-                val principal = call.principal<TexasPrincipal>() ?: throw IllegalStateException("Mangler principal")
+                val principal = call.principal<TexasPrincipalUser>() ?: throw IllegalStateException("Mangler principal")
                 val fødselsnummer = principal.fnr
                 val subjectToken = principal.token
 

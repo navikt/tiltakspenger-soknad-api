@@ -4,7 +4,7 @@ import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.EndringsMetadata
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.Navn
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
+import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO

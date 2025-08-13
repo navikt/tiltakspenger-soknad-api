@@ -13,11 +13,12 @@ import no.nav.tiltakspenger.libs.jobber.LeaderPodLookup
 import no.nav.tiltakspenger.libs.jobber.LeaderPodLookupClient
 import no.nav.tiltakspenger.libs.jobber.LeaderPodLookupFeil
 import no.nav.tiltakspenger.libs.jobber.RunCheckFactory
+import no.nav.tiltakspenger.libs.texas.IdentityProvider
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.Configuration.httpPort
 import no.nav.tiltakspenger.soknad.api.antivirus.AvClient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.AvServiceImpl
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.db.flywayMigrate
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -63,22 +64,22 @@ internal fun start(
 
     flywayMigrate()
 
-    val texasClient = TexasClient(
+    val texasClient = TexasHttpClient(
         introspectionUrl = Configuration.naisTokenIntrospectionEndpoint,
         tokenUrl = Configuration.naisTokenEndpoint,
         tokenExchangeUrl = Configuration.tokenExchangeEndpoint,
     )
 
     val personHttpklient = PersonHttpklient(Configuration.pdlUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.pdlScope)
+        texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
     }
     val arbeidsfordelingClient = ArbeidsfordelingClient(baseUrl = Configuration.norg2Url) {
-        texasClient.getSystemToken(audienceTarget = Configuration.norg2Scope)
+        texasClient.getSystemToken(audienceTarget = Configuration.norg2Scope, identityProvider = IdentityProvider.AZUREAD)
     }
     val journalforendeEnhetService = JournalforendeEnhetService(arbeidsfordelingClient)
 
     val dokarkivClient = DokarkivClient(baseUrl = Configuration.dokarkivUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.dokarkivScope)
+        texasClient.getSystemToken(audienceTarget = Configuration.dokarkivScope, identityProvider = IdentityProvider.AZUREAD)
     }
 
     val journalforingService = JournalforingService(
@@ -99,13 +100,13 @@ internal fun start(
             texasClient = texasClient,
         ),
         pdlClientCredentials = PdlCredentialsClient(pdlEndpoint = Configuration.pdlUrl) {
-            texasClient.getSystemToken(audienceTarget = Configuration.pdlScope)
+            texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
         },
     )
 
     val nySøknadService = NySøknadService(søknadRepo)
     val saksbehandlingApiKlient = SaksbehandlingApiKlient(baseUrl = Configuration.saksbehandlingApiUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.saksbehandlingApiScope)
+        texasClient.getSystemToken(audienceTarget = Configuration.saksbehandlingApiScope, identityProvider = IdentityProvider.AZUREAD)
     }
 
     val søknadJobbService = SøknadJobbService(søknadRepo, personHttpklient, journalforingService, saksbehandlingApiKlient)

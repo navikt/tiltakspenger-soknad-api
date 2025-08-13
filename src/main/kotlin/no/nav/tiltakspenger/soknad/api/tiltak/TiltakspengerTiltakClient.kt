@@ -8,15 +8,16 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import no.nav.tiltakspenger.libs.texas.IdentityProvider
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
 class TiltakspengerTiltakClient(
     private val httpClient: HttpClient = httpClientWithRetry(timeout = 10L),
     private val tiltakspengerTiltakEndpoint: String,
     private val tiltakspengerTiltakScope: String,
-    private val texasClient: TexasClient,
+    private val texasClient: TexasHttpClient,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -25,6 +26,7 @@ class TiltakspengerTiltakClient(
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = tiltakspengerTiltakScope,
+            identityProvider = IdentityProvider.TOKENX,
         )
         log.debug { "fetchTiltak: Token til tiltakspenger-tiltak mottatt OK" }
         return kotlin.runCatching {

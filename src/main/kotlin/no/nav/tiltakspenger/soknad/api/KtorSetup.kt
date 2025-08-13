@@ -16,9 +16,10 @@ import io.ktor.server.plugins.requestvalidation.RequestValidation
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.routing.routing
+import no.nav.tiltakspenger.libs.texas.IdentityProvider
+import no.nav.tiltakspenger.libs.texas.TexasAuthenticationProvider
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.auth.texas.TexasAuthenticationProvider
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.health.healthRoutes
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
@@ -32,7 +33,7 @@ import no.nav.tiltakspenger.soknad.api.tiltak.tiltakRoutes
 import java.util.UUID.randomUUID
 
 internal fun Application.ktorSetup(
-    texasClient: TexasClient,
+    texasClient: TexasHttpClient,
     pdlService: PdlService,
     tiltakService: TiltakService,
     avService: AvService,
@@ -56,7 +57,7 @@ internal fun Application.ktorSetup(
 }
 
 internal fun Application.setupRouting(
-    texasClient: TexasClient,
+    texasClient: TexasHttpClient,
     pdlService: PdlService,
     nySøknadService: NySøknadService,
     tiltakService: TiltakService,
@@ -64,11 +65,20 @@ internal fun Application.setupRouting(
     metricsCollector: MetricsCollector,
 ) {
     authentication {
-        register(TexasAuthenticationProvider(TexasAuthenticationProvider.Config("tokenx", texasClient)))
+        register(
+            TexasAuthenticationProvider(
+                TexasAuthenticationProvider.Config(
+                    name = IdentityProvider.TOKENX.value,
+                    texasClient = texasClient,
+                    identityProvider = IdentityProvider.TOKENX,
+                    requireIdportenLevelHigh = true,
+                ),
+            ),
+        )
     }
 
     routing {
-        authenticate("tokenx") {
+        authenticate(IdentityProvider.TOKENX.value) {
             pdlRoutes(
                 pdlService = pdlService,
                 tiltakService = tiltakService,
