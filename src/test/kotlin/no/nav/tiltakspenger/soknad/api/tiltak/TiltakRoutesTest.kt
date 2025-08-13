@@ -17,11 +17,11 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.FORTROLIG
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_FORTROLIG
@@ -38,7 +38,7 @@ import java.time.LocalDateTime
 import kotlin.test.assertEquals
 
 internal class TiltakRoutesTest {
-    private val texasClient = mockk<TexasClient>()
+    private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
     private val tiltakservice = TiltakService(tiltakspengerTiltakClient)
@@ -72,7 +72,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal svare med tiltak fra tiltakservice hvis tokenet er gyldig og validerer ok`() {
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -103,7 +103,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal svare med tiltak fra tiltakservice hvis tokenet er gyldig, også for token med gammelt acr-claim`() {
         val tokenAcrLevel4 = issueTestTokenOldAcr()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = tokenAcrLevel4.jwtClaimsSet.claims["pid"].toString(),
             acr = tokenAcrLevel4.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -135,7 +135,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal fjerne arrangørnavn for en søker med adressebeskyttelse`() {
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -170,7 +170,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal kalle på TiltakService med fødselsnummeret som ligger bakt inn i pid claim i tokenet`() {
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -221,7 +221,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal returnere 401 dersom token kommer fra ugyldig issuer`() {
         val tokenMedUgyldigIssuer = issueTestToken(issuer = "ugyldigIssuer")
-        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig issuer",
         )
@@ -250,7 +250,7 @@ internal class TiltakRoutesTest {
     @Test
     fun `get på tiltak-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
         val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = tokenMedManglendeClaim.jwtClaimsSet.claims["pid"].toString(),
             acr = "",
         )

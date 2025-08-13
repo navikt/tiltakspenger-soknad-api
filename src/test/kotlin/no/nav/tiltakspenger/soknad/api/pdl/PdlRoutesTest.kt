@@ -17,8 +17,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
@@ -31,7 +31,7 @@ import java.time.LocalDate
 import kotlin.test.assertEquals
 
 internal class PdlRoutesTest {
-    private val texasClient = mockk<TexasClient>()
+    private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val tiltakservice = mockk<TiltakService>(relaxed = true)
     private val mockOAuth2Server = MockOAuth2Server()
@@ -62,7 +62,7 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal svare med personalia fra PDLService hvis tokenet er gyldig og validerer ok`() {
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -95,7 +95,7 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal kalle på PDLService med fødselsnummeret som ligger bakt inn i pid claim i tokenet`() {
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -148,7 +148,7 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal returnere 401 dersom token kommer fra ugyldig issuer`() {
         val tokenMedUgyldigIssuer = issueTestToken(issuer = "ugyldigIssuer")
-        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig issuer",
         )
@@ -178,7 +178,7 @@ internal class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
         val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = tokenMedManglendeClaim.jwtClaimsSet.claims["pid"].toString(),
             acr = "",
         )

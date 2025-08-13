@@ -16,9 +16,9 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class SøknadRoutesTest {
-    private val texasClient = mockk<TexasClient>()
+    private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val avService = mockk<AvService>(relaxed = true)
 
@@ -65,7 +65,7 @@ internal class SøknadRoutesTest {
 
     @Test
     fun `post med ugyldig token skal gi 401`() {
-        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig token",
         )
@@ -90,7 +90,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post med token som har ugyldig acr claim skal gi 401`() {
         val token = issueTestToken(acr = "Level3")
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -116,7 +116,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post med token som har expiret utenfor leeway skal gi 401`() {
         val token = issueTestToken(expiry = -60L)
-        coEvery { texasClient.introspectToken(any()) } returns TexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Utløpt",
         )
@@ -144,7 +144,7 @@ internal class SøknadRoutesTest {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
         coEvery { taInnSøknadSomMultipart(any()) } throws BadRequestException("1")
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -175,7 +175,7 @@ internal class SøknadRoutesTest {
             listOf("Kvalifisering fra dato må være tidligere eller lik til dato"),
         )
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
@@ -209,7 +209,7 @@ internal class SøknadRoutesTest {
         val nySøknadService = NySøknadService(søknadRepoMock)
 
         val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any()) } returns getGyldigTexasIntrospectionResponse(
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )

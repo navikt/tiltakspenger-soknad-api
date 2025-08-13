@@ -10,7 +10,7 @@ val kotlinxCoroutinesVersion = "1.10.2"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.14.0"
 val pdfboxVersion = "3.0.5"
-val felleslibVersion = "0.0.547"
+val felleslibVersion = "0.0.548"
 val flywayVersjon = "11.11.0"
 val testContainersVersion = "1.21.3"
 
@@ -47,6 +47,7 @@ dependencies {
     implementation("com.github.navikt.tiltakspenger-libs:json:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:logging:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:kafka:$felleslibVersion")
+    implementation("com.github.navikt.tiltakspenger-libs:texas:$felleslibVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
 
     // Ktor

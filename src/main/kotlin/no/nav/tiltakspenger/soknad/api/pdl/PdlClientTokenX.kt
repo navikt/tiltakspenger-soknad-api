@@ -12,7 +12,8 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import no.nav.tiltakspenger.soknad.api.auth.texas.client.TexasClient
+import no.nav.tiltakspenger.libs.texas.IdentityProvider
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
 const val INDIVIDSTONAD = "IND"
@@ -21,7 +22,7 @@ class PdlClientTokenX(
     private val httpClient: HttpClient = httpClientWithRetry(timeout = 10L),
     private val pdlEndpoint: String,
     private val pdlScope: String,
-    private val texasClient: TexasClient,
+    private val texasClient: TexasHttpClient,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -30,6 +31,7 @@ class PdlClientTokenX(
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = pdlScope,
+            identityProvider = IdentityProvider.TOKENX,
         )
         log.info { "fetchSøker: Token-exchange OK" }
         return Either.catch {
@@ -57,6 +59,7 @@ class PdlClientTokenX(
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = pdlScope,
+            identityProvider = IdentityProvider.TOKENX,
         )
         log.debug { "fetchAdressebeskyttelse: Token-exchange OK" }
         return Either.catch {
