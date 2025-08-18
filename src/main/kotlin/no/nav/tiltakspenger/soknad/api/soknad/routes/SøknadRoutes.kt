@@ -13,7 +13,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import no.nav.tiltakspenger.libs.texas.TexasPrincipalUser
+import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
@@ -33,7 +33,7 @@ fun Route.søknadRoutes(
             log.info { "Mottatt kall til $SØKNAD_PATH" }
             val requestTimer = metricsCollector.søknadsmottakLatencySeconds.startTimer()
             try {
-                val principal = call.principal<TexasPrincipalUser>() ?: throw IllegalStateException("Mangler principal")
+                val principal = call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = LocalDateTime.now()
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart())
                 log.info { "Utfører virussjekk" }
