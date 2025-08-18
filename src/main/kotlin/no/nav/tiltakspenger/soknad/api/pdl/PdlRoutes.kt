@@ -9,7 +9,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
-import no.nav.tiltakspenger.libs.texas.TexasPrincipalUser
+import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
@@ -24,7 +24,7 @@ fun Route.pdlRoutes(
     route(PERSONALIA_PATH) {
         get {
             try {
-                val principal = call.principal<TexasPrincipalUser>() ?: throw IllegalStateException("Mangler principal")
+                val principal = call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val fødselsnummer = principal.fnr
                 val subjectToken = principal.token
 
