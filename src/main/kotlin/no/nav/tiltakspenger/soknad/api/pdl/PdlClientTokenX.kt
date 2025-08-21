@@ -2,6 +2,8 @@ package no.nav.tiltakspenger.soknad.api.pdl
 
 import arrow.core.Either
 import arrow.core.getOrElse
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -25,6 +27,9 @@ class PdlClientTokenX(
     private val texasClient: TexasHttpClient,
 ) {
     private val log = KotlinLogging.logger {}
+    private val cache: Cache<String, AdressebeskyttelseRespons> = Caffeine.newBuilder()
+        .expireAfterWrite(java.time.Duration.ofMinutes(60))
+        .build()
 
     suspend fun fetchSøker(fødselsnummer: String, subjectToken: String, callId: String): SøkerRespons {
         log.info { "fetchSøker: Henter token for å snakke med PDL" }
@@ -56,6 +61,10 @@ class PdlClientTokenX(
         callId: String,
     ): AdressebeskyttelseRespons {
         log.debug { "fetchAdressebeskyttelse:Token-respons mottatt" }
+        cache.getIfPresent(fødselsnummer)?.let {
+            log.debug { "Hentet adressebeskyttelse fra cache" }
+            return it
+        }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = pdlScope,
@@ -63,7 +72,7 @@ class PdlClientTokenX(
         )
         log.debug { "fetchAdressebeskyttelse: Token-exchange OK" }
         return Either.catch {
-            httpClient.post(pdlEndpoint) {
+            val response = httpClient.post(pdlEndpoint) {
                 accept(ContentType.Application.Json)
                 header("Tema", INDIVIDSTONAD)
                 header("Nav-Call-Id", callId)
@@ -72,6 +81,10 @@ class PdlClientTokenX(
                 contentType(ContentType.Application.Json)
                 setBody(hentAdressebeskyttelseQuery(fødselsnummer))
             }.body<AdressebeskyttelseRespons>()
+            if (response.errors.isEmpty()) {
+                cache.put(fødselsnummer, response)
+            }
+            response
         }.getOrElse {
             log.error(it) { "PdlClientTokenX(fetchAdressebeskyttelse): Kall mot PDL feilet. Token-exchange var OK. Kallid: $callId." }
             throw it

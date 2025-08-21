@@ -88,6 +88,7 @@ internal fun Application.setupRouting(
                 avService = avService,
                 metricsCollector = metricsCollector,
                 nySøknadService = nySøknadService,
+                pdlService = pdlService,
             )
             tiltakRoutes(
                 tiltakService = tiltakService,

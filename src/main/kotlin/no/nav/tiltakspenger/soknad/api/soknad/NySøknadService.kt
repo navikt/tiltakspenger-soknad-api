@@ -4,6 +4,7 @@ import arrow.core.Either
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.Configuration
+import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
 
 class NySøknadService(
     private val søknadRepo: SøknadRepo,
@@ -17,8 +18,9 @@ class NySøknadService(
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
     fun nySøknad(
         nySøknadCommand: NySøknadCommand,
+        adressebeskyttelseGradering: AdressebeskyttelseGradering,
     ): Either<KunneIkkeMottaNySøknad, Unit> {
-        val eier = getEier(nySøknadCommand)
+        val eier = getEier(nySøknadCommand, adressebeskyttelseGradering)
         val søknad: MottattSøknad = nySøknadCommand.toDomain(eier)
         return Either.catch {
             søknadRepo.lagre(søknad)
@@ -30,15 +32,26 @@ class NySøknadService(
         }
     }
 
-    // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før, eller blir
-    // manuelt lagt til i listen over deltakere som skal til oss.
-    private fun getEier(nySøknadCommand: NySøknadCommand): Applikasjonseier {
+    // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før, er
+    // kode 6 (og ikke har søknader hos oss fra før) eller blir manuelt lagt til i listen over deltakere
+    // som skal til oss.
+    private fun getEier(
+        nySøknadCommand: NySøknadCommand,
+        adressebeskyttelseGradering: AdressebeskyttelseGradering,
+    ): Applikasjonseier {
         val brukerHarSøknaderSomEiesAvTiltakspenger =
             søknadRepo.hentBrukersSøknader(nySøknadCommand.fnr, Applikasjonseier.Tiltakspenger).isNotEmpty()
-        val brukerErForhandsgodkjent = nySøknadCommand.brukersBesvarelser.tiltak.aktivitetId in deltakerIderSomSkalTilTpsak
+        val brukerErForhandsgodkjent =
+            nySøknadCommand.brukersBesvarelser.tiltak.aktivitetId in deltakerIderSomSkalTilTpsak
+        val erKode6 = adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG ||
+            adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND
 
-        return if (Configuration.isProd() && !brukerHarSøknaderSomEiesAvTiltakspenger && !brukerErForhandsgodkjent) {
-            Applikasjonseier.Arena
+        return if (Configuration.isProd()) {
+            if (brukerHarSøknaderSomEiesAvTiltakspenger || (brukerErForhandsgodkjent && !erKode6)) {
+                Applikasjonseier.Tiltakspenger
+            } else {
+                Applikasjonseier.Arena
+            }
         } else {
             Applikasjonseier.Tiltakspenger
         }
