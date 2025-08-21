@@ -68,6 +68,8 @@ internal class SøknadRoutesTest {
         coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig token",
+            groups = null,
+            roles = null,
         )
         testApplication {
             configureTestApplication(
@@ -119,6 +121,8 @@ internal class SøknadRoutesTest {
         coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Utløpt",
+            groups = null,
+            roles = null,
         )
 
         testApplication {
