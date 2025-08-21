@@ -7,6 +7,7 @@ import io.mockk.verify
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
+import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -33,7 +34,7 @@ class NySøknadServiceTest {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
 
-        val resultat = nySøknadService.nySøknad(kommando)
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
 
         verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Arena }) }
         resultat.isRight()
@@ -44,7 +45,18 @@ class NySøknadServiceTest {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns listOf(mockk())
 
-        val resultat = nySøknadService.nySøknad(kommando)
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
+
+        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
+        resultat.isRight()
+    }
+
+    @Test
+    fun `eier settes til Tiltakspenger i prod når kode6-bruker har tidligere søknader som eies av Tiltakspenger`() {
+        every { Configuration.isProd() } returns true
+        every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns listOf(mockk())
+
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG)
 
         verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
         resultat.isRight()
@@ -66,9 +78,31 @@ class NySøknadServiceTest {
             innsendingTidspunkt = LocalDateTime.now(),
         )
 
-        val resultat = nySøknadService.nySøknad(kommando)
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
 
         verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
+        resultat.isRight()
+    }
+
+    @Test
+    fun `eier settes til Arena i prod når kode6-bruker er forhåndsgodkjent`() {
+        every { Configuration.isProd() } returns true
+        every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
+        kommando = NySøknadCommand(
+            brukersBesvarelser = mockSpørsmålsbesvarelser(
+                tiltak = mockTiltak(
+                    aktivitetId = "fda6f295-201e-4522-b94e-99d54b537f94",
+                ),
+            ),
+            acr = "Level4",
+            fnr = "12345678910",
+            vedlegg = listOf(),
+            innsendingTidspunkt = LocalDateTime.now(),
+        )
+
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND)
+
+        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Arena }) }
         resultat.isRight()
     }
 
@@ -76,7 +110,16 @@ class NySøknadServiceTest {
     fun `eier settes til Tiltakspenger i dev`() {
         every { Configuration.isProd() } returns false
 
-        val resultat = nySøknadService.nySøknad(kommando)
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
+        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
+        resultat.isRight()
+    }
+
+    @Test
+    fun `eier settes til Tiltakspenger i dev for kode6-bruker`() {
+        every { Configuration.isProd() } returns false
+
+        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG)
         verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
         resultat.isRight()
     }
