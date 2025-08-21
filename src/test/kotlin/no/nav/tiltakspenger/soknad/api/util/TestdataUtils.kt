@@ -74,6 +74,8 @@ fun getGyldigTexasIntrospectionResponse(
     TexasIntrospectionResponse(
         active = true,
         error = null,
+        groups = null,
+        roles = null,
         other = mapOf(
             "pid" to fnr,
             "acr" to acr,

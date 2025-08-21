@@ -224,6 +224,8 @@ internal class TiltakRoutesTest {
         coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig issuer",
+            groups = null,
+            roles = null,
         )
 
         testApplication {
