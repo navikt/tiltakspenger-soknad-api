@@ -19,6 +19,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.time.LocalDate
+import java.util.UUID
 
 fun mockTiltak(
     aktivitetId: String = "123",
@@ -33,6 +34,7 @@ fun mockTiltak(
     arrangør: String = "test",
     type: String = "test",
     typeNavn: String = "test",
+    gjennomforingId: String = UUID.randomUUID().toString(),
 ): Tiltak =
     Tiltak(
         aktivitetId = aktivitetId,
@@ -41,6 +43,7 @@ fun mockTiltak(
         type = type,
         typeNavn = typeNavn,
         arenaRegistrertPeriode = arenaRegistrertPeriode,
+        gjennomforingId = gjennomforingId,
     )
 
 fun mockKvalifiseringsprogram(

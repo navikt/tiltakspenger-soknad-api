@@ -75,6 +75,7 @@ class Tiltak(
     arrangør: String,
     type: String,
     typeNavn: String,
+    gjennomforingId: String?,
 ) {
     val aktivitetId: String = saniter(aktivitetId)
     val arrangør: String = saniter(arrangør)
@@ -82,6 +83,7 @@ class Tiltak(
     val typeNavn: String = saniter(typeNavn)
     val arenaRegistrertPeriode: Deltakelsesperiode? = arenaRegistrertPeriode
     val periode: Periode = periode
+    val gjennomforingId: String? = gjennomforingId?.let { saniter(it) }
 
     fun harKunFradatoIArena(): Boolean {
         return arenaRegistrertPeriode?.fra != null && arenaRegistrertPeriode.til == null
