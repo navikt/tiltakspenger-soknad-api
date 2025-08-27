@@ -21,6 +21,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import java.time.LocalDate
+import java.util.UUID
 
 fun Any.toJsonString(): String {
     val objectMapper = ObjectMapper().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false).registerModule(
@@ -41,6 +42,7 @@ private fun tiltak() = Tiltak(
     type = "test",
     typeNavn = "test",
     arenaRegistrertPeriode = null,
+    gjennomforingId = UUID.randomUUID().toString(),
 )
 
 fun spørsmålsbesvarelser(

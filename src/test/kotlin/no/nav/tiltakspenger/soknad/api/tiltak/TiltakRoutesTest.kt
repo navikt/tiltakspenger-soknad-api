@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlin.test.assertEquals
 
 internal class TiltakRoutesTest {
@@ -43,6 +44,7 @@ internal class TiltakRoutesTest {
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
     private val tiltakservice = TiltakService(tiltakspengerTiltakClient)
     private val mockOAuth2Server = MockOAuth2Server()
+    private val gjennomforingId = UUID.randomUUID().toString()
 
     private val mockedTiltak =
         listOf(
@@ -52,6 +54,7 @@ internal class TiltakRoutesTest {
                 typeNavn = "typenavn",
                 arenaRegistrertPeriode = Deltakelsesperiode(null, null),
                 arrangør = "Testarrangør AS",
+                gjennomforingId = gjennomforingId,
             ),
         )
     private val testFødselsnummer = "12345678910"
@@ -320,7 +323,7 @@ internal class TiltakRoutesTest {
             TiltakDTO(
                 id = "123456",
                 gjennomforing = TiltakResponsDTO.GjennomføringDTO(
-                    id = "123456",
+                    id = gjennomforingId,
                     arenaKode = TiltakResponsDTO.TiltakType.ABOPPF,
                     typeNavn = "typenavn",
                     arrangørnavn = arrangør,

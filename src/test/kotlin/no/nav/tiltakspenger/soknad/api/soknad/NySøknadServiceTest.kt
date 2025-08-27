@@ -1,9 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.verify
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -16,6 +16,8 @@ class NySøknadServiceTest {
     private val søknadRepo = mockk<SøknadRepo>(relaxed = true)
     private val nySøknadService = NySøknadService(søknadRepo)
     private lateinit var kommando: NySøknadCommand
+
+    private val gjennomforingerSomSkalTilTpsak = listOf("1234-5678")
 
     @BeforeEach
     fun setUp() {
@@ -34,10 +36,7 @@ class NySøknadServiceTest {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
-
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Arena }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.UGRADERT, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Arena
     }
 
     @Test
@@ -45,10 +44,7 @@ class NySøknadServiceTest {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns listOf(mockk())
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
-
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.UGRADERT, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Tiltakspenger
     }
 
     @Test
@@ -56,20 +52,17 @@ class NySøknadServiceTest {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns listOf(mockk())
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG)
-
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Tiltakspenger
     }
 
     @Test
-    fun `eier settes til Tiltakspenger i prod når bruker er forhåndsgodkjent`() {
+    fun `eier settes til Tiltakspenger i prod når bruker deltar på forhåndsgodkjent tiltak`() {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
         kommando = NySøknadCommand(
             brukersBesvarelser = mockSpørsmålsbesvarelser(
                 tiltak = mockTiltak(
-                    aktivitetId = "fda6f295-201e-4522-b94e-99d54b537f94",
+                    gjennomforingId = "1234-5678",
                 ),
             ),
             acr = "Level4",
@@ -78,20 +71,17 @@ class NySøknadServiceTest {
             innsendingTidspunkt = LocalDateTime.now(),
         )
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
-
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.UGRADERT, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Tiltakspenger
     }
 
     @Test
-    fun `eier settes til Arena i prod når kode6-bruker er forhåndsgodkjent`() {
+    fun `eier settes til Arena i prod når kode6-bruker deltar på forhåndsgodkjent tiltak`() {
         every { Configuration.isProd() } returns true
         every { søknadRepo.hentBrukersSøknader(any(), Applikasjonseier.Tiltakspenger) } returns emptyList()
         kommando = NySøknadCommand(
             brukersBesvarelser = mockSpørsmålsbesvarelser(
                 tiltak = mockTiltak(
-                    aktivitetId = "fda6f295-201e-4522-b94e-99d54b537f94",
+                    gjennomforingId = "1234-5678",
                 ),
             ),
             acr = "Level4",
@@ -100,27 +90,20 @@ class NySøknadServiceTest {
             innsendingTidspunkt = LocalDateTime.now(),
         )
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND)
-
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Arena }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Arena
     }
 
     @Test
     fun `eier settes til Tiltakspenger i dev`() {
         every { Configuration.isProd() } returns false
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.UGRADERT)
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.UGRADERT, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Tiltakspenger
     }
 
     @Test
     fun `eier settes til Tiltakspenger i dev for kode6-bruker`() {
         every { Configuration.isProd() } returns false
 
-        val resultat = nySøknadService.nySøknad(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG)
-        verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
-        resultat.isRight()
+        nySøknadService.getEier(kommando, AdressebeskyttelseGradering.STRENGT_FORTROLIG, gjennomforingerSomSkalTilTpsak) shouldBe Applikasjonseier.Tiltakspenger
     }
 }

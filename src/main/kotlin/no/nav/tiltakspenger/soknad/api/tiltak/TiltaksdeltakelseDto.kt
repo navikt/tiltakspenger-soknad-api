@@ -15,6 +15,7 @@ data class TiltaksdeltakelseDto(
     val typeNavn: String,
     val arenaRegistrertPeriode: Deltakelsesperiode,
     val arrangør: String,
+    val gjennomforingId: String,
 ) {
     fun erInnenforRelevantTidsrom(): Boolean {
         val datoFor6MånederSiden = LocalDate.now().minusMonths(6)
@@ -41,7 +42,7 @@ fun List<TiltakDTO>.toTiltakDto(maskerArrangørnavn: Boolean): List<Tiltaksdelta
                 til = it.deltakelseTom,
             ),
             arrangør = if (maskerArrangørnavn) "" else it.gjennomforing.arrangørnavn,
-            // status = ArenaTiltaksaktivitetResponsDTO.DeltakerStatusType.valueOf(it.status.name),
+            gjennomforingId = it.gjennomforing.id,
         )
     }
 }
