@@ -11,7 +11,13 @@ class NySøknadService(
 ) {
     private val log = KotlinLogging.logger {}
 
-    private val gjennomforingerSomSkalTilTpsak = emptyList<String>()
+    private val gjennomforingerSomSkalTilTpsak = listOf<String>(
+        "e4e18ddb-defa-4cb9-85dd-d0184076d61b",
+        "8859e28c-75be-4f95-a031-d4f05e3cbb72",
+        "53ab50ab-96df-4303-a205-97ad0d9b2f12",
+        "cb7d17d3-ccb7-4b2a-a28c-d8b09ee32eab",
+        "ea984bc6-ed90-40ba-8f58-e3dd243498f6",
+    )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
     fun nySøknad(
