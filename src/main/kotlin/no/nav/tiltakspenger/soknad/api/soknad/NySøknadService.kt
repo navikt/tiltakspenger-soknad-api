@@ -17,6 +17,12 @@ class NySøknadService(
         "53ab50ab-96df-4303-a205-97ad0d9b2f12",
         "cb7d17d3-ccb7-4b2a-a28c-d8b09ee32eab",
         "ea984bc6-ed90-40ba-8f58-e3dd243498f6",
+        "8d569657-7f12-498c-bc8a-91f95f8f7cfd",
+        "c61a732e-975c-4351-b774-eea3eb7975a1",
+        "7f848f25-e343-4c17-9317-2df6bc2a0015",
+        "81bf7cee-41b6-4604-b840-fb54116eeea6",
+        "6480717f-882a-4c35-87db-54004e846cf0",
+        "17de7b99-5f85-4015-bb3b-9c4030cad23d",
     )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
