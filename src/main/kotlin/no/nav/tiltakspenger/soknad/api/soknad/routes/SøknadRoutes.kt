@@ -40,8 +40,10 @@ fun Route.søknadRoutes(
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = LocalDateTime.now()
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart())
-                log.info { "Utfører virussjekk" }
-                avService.gjørVirussjekkAvVedlegg(vedlegg)
+                if (vedlegg.isNotEmpty()) {
+                    log.info { "Utfører virussjekk" }
+                    avService.gjørVirussjekkAvVedlegg(vedlegg)
+                }
                 val fødselsnummer = principal.fnr
                 val acr = principal.claims["acr"]!!.toString()
                 val adressebeskyttelse = pdlService.hentAdressebeskyttelse(

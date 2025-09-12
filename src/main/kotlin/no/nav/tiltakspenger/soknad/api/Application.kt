@@ -16,9 +16,8 @@ import no.nav.tiltakspenger.libs.jobber.RunCheckFactory
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.Configuration.httpPort
-import no.nav.tiltakspenger.soknad.api.antivirus.AvClient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.antivirus.AvServiceImpl
+import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
 import no.nav.tiltakspenger.soknad.api.db.flywayMigrate
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -110,8 +109,8 @@ internal fun start(
     }
 
     val søknadJobbService = SøknadJobbService(søknadRepo, personHttpklient, journalforingService, saksbehandlingApiKlient)
-    val avService: AvService = AvServiceImpl(
-        av = AvClient(
+    val avService = AvService(
+        clamAvClient = ClamAvClient(
             avEndpoint = Configuration.avUrl,
             client = httpClientCIO(timeout = 30L),
         ),
