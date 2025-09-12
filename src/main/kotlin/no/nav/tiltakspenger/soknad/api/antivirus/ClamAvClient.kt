@@ -9,11 +9,11 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
-class AvClient(
+class ClamAvClient(
     private val avEndpoint: String,
     private val client: HttpClient,
-) : AntiVirus {
-    override suspend fun scan(vedleggsListe: List<Vedlegg>): List<AvSjekkResultat> {
+) {
+    suspend fun scan(vedleggsListe: List<Vedlegg>): List<AvSjekkResultat> {
         try {
             return client.submitFormWithBinaryData(
                 url = avEndpoint,
