@@ -6,6 +6,7 @@ val mockkVersion = "1.14.5"
 val ktorVersion = "3.2.3"
 val kotestVersion = "6.0.3"
 val jacksonVersion = "2.20.0"
+val jacksonAnnotationsVersion = "2.20"
 val kotlinxCoroutinesVersion = "1.10.2"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.14.0"
@@ -77,7 +78,7 @@ dependencies {
 
     // Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotationsVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // DB
