@@ -34,6 +34,11 @@ class NySøknadService(
         "0099cd72-06ba-4782-8dd4-b494d2da471d",
         "e02fc0f2-fab3-449a-9ecc-01628b9b7b56",
         "78b2a4a0-f3c0-47db-9a57-370dc897b157",
+        // https://trello.com/c/jEVYSPwy/1648-s%C3%B8knader-for-4-nye-tiltak-rutes-til-tp-sak
+        "4ce8a248-7c01-4e90-8bc3-ec4087078a87",
+        "7291d4a5-7876-4e94-803f-115858e177b0",
+        "fe803908-811f-41d1-90c9-228f3dbb7e91",
+        "51bc251f-44ff-4467-bdc4-fce50e6b2e62",
     )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
