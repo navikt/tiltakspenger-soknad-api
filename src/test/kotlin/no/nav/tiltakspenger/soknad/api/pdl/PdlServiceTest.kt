@@ -100,12 +100,6 @@ internal class PdlServiceTest {
                     doedsfall = emptyList(),
                     foedselsdato = listOf(mockFødsel()),
                 ),
-                hentGeografiskTilknytning = GeografiskTilknytning(
-                    gtType = "KOMMUNE",
-                    gtKommune = "1122",
-                    gtBydel = null,
-                    gtLand = null,
-                ),
             ),
         )
     }

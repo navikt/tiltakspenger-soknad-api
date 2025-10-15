@@ -42,13 +42,7 @@ query($ident: ID!){
                 ...metadataDetails
             }
         }
-    },
-    hentGeografiskTilknytning(ident: $ident) {
-            gtKommune
-            gtBydel
-            gtLand
-            gtType
-        }
+    }
 }
 
 fragment folkeregistermetadataDetails on Folkeregistermetadata {
