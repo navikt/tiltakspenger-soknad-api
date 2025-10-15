@@ -48,7 +48,7 @@ query($ident: ID!){
             gtBydel
             gtLand
             gtType
-        }
+    }
 }
 
 fragment folkeregistermetadataDetails on Folkeregistermetadata {

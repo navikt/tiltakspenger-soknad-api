@@ -108,6 +108,10 @@ class PdlClient(
                 val response = objectMapper.readValue<SøkerRespons>(it)
                 if (response.errors.isEmpty()) {
                     cache.put(fødselsnummer, response)
+                } else {
+                    response.errors.forEach {
+                        log.warn { "PDL svarte med feil for callid $callId: ${it.message}" }
+                    }
                 }
                 log.info { "fetchSøker: Hentet søkers personopplysninger fra PDL, callId $callId" }
                 response
