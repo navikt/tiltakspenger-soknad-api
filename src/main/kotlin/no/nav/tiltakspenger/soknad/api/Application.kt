@@ -94,11 +94,11 @@ internal fun start(
     val søknadRepo = SøknadRepo()
     val pdlService = PdlService(
         pdlClientTokenX = PdlClientTokenX(
-            pdlEndpoint = Configuration.pdlUrl,
+            endepunkt = Configuration.pdlUrl,
             pdlScope = Configuration.pdlScope,
             texasClient = texasClient,
         ),
-        pdlClientCredentials = PdlCredentialsClient(pdlEndpoint = Configuration.pdlUrl) {
+        pdlClientCredentials = PdlCredentialsClient(endepunkt = Configuration.pdlUrl) {
             texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
         },
     )

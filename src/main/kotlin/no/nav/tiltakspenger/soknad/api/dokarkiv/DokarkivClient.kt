@@ -17,10 +17,11 @@ import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 import no.nav.tiltakspenger.soknad.api.objectMapper
-import no.nav.tiltakspenger.soknad.api.pdl.INDIVIDSTONAD
 
 // https://confluence.adeo.no/display/BOA/opprettJournalpost
 // swagger: https://dokarkiv-q2.dev.intern.nav.no/swagger-ui/index.html#/
+
+const val INDIVIDSTONAD = "IND"
 
 internal const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
 

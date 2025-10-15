@@ -1,39 +1,34 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import arrow.core.getOrElse
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.accept
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import no.nav.tiltakspenger.libs.common.AccessToken
-import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
+import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklient
+import no.nav.tiltakspenger.soknad.api.objectMapper
+import no.nav.tiltakspenger.soknad.api.soknad.jobb.person.mapError
 
 class PdlCredentialsClient(
-    private val httpClient: HttpClient = httpClientWithRetry(timeout = 10L),
-    private val pdlEndpoint: String,
+    endepunkt: String,
     private val getSystemToken: suspend () -> AccessToken,
 ) {
     private val log = KotlinLogging.logger {}
 
-    suspend fun fetchBarn(ident: String, callId: String): Result<SøkersBarnRespons> {
-        log.info { "fetchBarn: Henter credentials for å snakke med PDL" }
-        val token = getSystemToken().token
-        log.info { "fetchBarn: Hent credentials OK" }
-        return kotlin.runCatching {
-            httpClient.post(pdlEndpoint) {
-                accept(ContentType.Application.Json)
-                header("Tema", INDIVIDSTONAD)
-                header("Nav-Call-Id", callId)
-                header("behandlingsnummer", "B470")
-                bearerAuth(token)
-                contentType(ContentType.Application.Json)
-                setBody(hentBarnQuery(ident))
-            }.body()
-        }
+    private val personklient =
+        FellesPersonklient.create(endepunkt = endepunkt)
+
+    suspend fun fetchBarn(
+        ident: String,
+        callId: String,
+    ): Result<SøkersBarnRespons> {
+        log.info { "fetchBarn: Henter barn fra PDL, callId $callId" }
+        val body = objectMapper.writeValueAsString(hentBarnQuery(ident))
+        return personklient
+            .graphqlRequest(getSystemToken(), body)
+            .map {
+                Result.success(objectMapper.readValue<SøkersBarnRespons>(it))
+            }.getOrElse {
+                Result.failure<SøkersBarnRespons>(it.mapError())
+            }
     }
 }

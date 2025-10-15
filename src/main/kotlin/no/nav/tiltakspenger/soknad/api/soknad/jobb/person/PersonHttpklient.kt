@@ -35,12 +35,12 @@ class PersonHttpklient(
     ): no.nav.tiltakspenger.libs.personklient.pdl.dto.Navn {
         val body = objectMapper.writeValueAsString(hentPersonNavnQuery(fnr))
         return personklient
-            .hentPerson(fnr, getSystemToken(), body)
+            .graphqlRequest(getSystemToken(), body)
             .flatMap { jsonBody: String ->
                 val data: PdlResponseData = objectMapper.readValue<PdlResponseData>(jsonBody)
                 avklarNavn(data.hentPerson.navn)
             }.onLeft {
-                it.logError()
+                it.mapError()
             }.getOrNull()!!
     }
 
@@ -49,8 +49,8 @@ class PersonHttpklient(
         fnr: Fnr,
     ): Person {
         val body = objectMapper.writeValueAsString(hentPersonQuery(fnr))
-        val response = personklient.hentPerson(fnr, getSystemToken(), body)
-            .onLeft { it.logError() }
+        val response = personklient.graphqlRequest(getSystemToken(), body)
+            .onLeft { it.mapError() }
             .getOrElse {
                 throw RuntimeException("Kunne ikke hente person fra PDL")
             }
@@ -81,7 +81,7 @@ private data class PdlPersonResponseData(
     )
 }
 
-private fun FellesPersonklientError.logError(): Nothing {
+fun FellesPersonklientError.mapError(): Nothing {
     when (this) {
         is AdressebeskyttelseKunneIkkeAvklares -> throw RuntimeException(
             "Feil ved henting av personopplysninger: AdressebeskyttelseKunneIkkeAvklares",
