@@ -22,7 +22,7 @@ class PdlService(
         val result =
             pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
         log.debug { "Henting av søkers personalia har gått OK. Kallid: $callId" }
-        val person = result.toPerson()
+        val person = result.toPerson(log)
         val barnsIdenter = person.barnsIdenter()
         log.debug { "Henter personalia søkers barn fra PDL. Kallid: $callId" }
         val barn = barnsIdenter
@@ -40,7 +40,7 @@ class PdlService(
     ): AdressebeskyttelseGradering {
         log.debug { "Henter informasjon om adressebeskyttelse for fødselsnummer, callId $callId" }
         val personopplysninger = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
-        val adressebeskyttelse = personopplysninger.toPerson().adressebeskyttelseGradering
+        val adressebeskyttelse = personopplysninger.toPerson(log).adressebeskyttelseGradering
         log.debug { "Hentet informasjon om adressebeskyttelse for fødselsnummer OK, callId $callId" }
         return adressebeskyttelse
     }
@@ -56,6 +56,6 @@ class PdlService(
             callId = callId,
         )
         log.debug { "Hentet navn for fødselsnummer, callId $callId" }
-        return personopplysninger.toPerson().getNavn()
+        return personopplysninger.toPerson(log).getNavn()
     }
 }
