@@ -32,6 +32,7 @@ data class GeografiskTilknytning(
 
 data class SøkerFraPDLRespons(
     val hentPerson: SøkerFraPDL?,
+    val hentGeografiskTilknytning: GeografiskTilknytning?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
