@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.ktor.util.toUpperCasePreservingASCIIRules
 
 data class SøkerFraPDL(
     val navn: List<Navn>,
@@ -10,8 +11,25 @@ data class SøkerFraPDL(
     val doedsfall: List<Dødsfall>,
 )
 
+data class GeografiskTilknytning(
+    val gtType: String,
+    val gtKommune: String?,
+    val gtBydel: String?,
+    val gtLand: String?,
+) {
+    fun getGT(): String? =
+        when (gtType.toUpperCasePreservingASCIIRules()) {
+            "KOMMUNE" -> gtKommune
+            "BYDEL" -> gtBydel
+            "UTLAND" -> gtLand
+            "UDEFINERT" -> gtType
+            else -> null
+        }
+}
+
 data class SøkerFraPDLRespons(
     val hentPerson: SøkerFraPDL?,
+    val hentGeografiskTilknytning: GeografiskTilknytning?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
