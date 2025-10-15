@@ -1,7 +1,10 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.util.toUpperCasePreservingASCIIRules
+import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
+import no.nav.tiltakspenger.soknad.api.pdl.Person
+import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering
 
 data class SøkerFraPDL(
     val navn: List<Navn>,

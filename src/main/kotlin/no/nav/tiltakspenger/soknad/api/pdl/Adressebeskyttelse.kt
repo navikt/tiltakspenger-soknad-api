@@ -1,5 +1,11 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Changeable
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.getEndringstidspunktOrNull
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.kildeErUdokumentert
+
 enum class AdressebeskyttelseGradering {
     STRENGT_FORTROLIG_UTLAND,
     STRENGT_FORTROLIG,

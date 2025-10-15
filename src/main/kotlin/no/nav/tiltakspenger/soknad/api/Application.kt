@@ -27,9 +27,8 @@ import no.nav.tiltakspenger.soknad.api.jobber.TaskExecutor
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
 import no.nav.tiltakspenger.soknad.api.pdf.PdfServiceImpl
-import no.nav.tiltakspenger.soknad.api.pdl.PdlClientTokenX
-import no.nav.tiltakspenger.soknad.api.pdl.PdlCredentialsClient
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
+import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
@@ -37,7 +36,6 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.JournalforendeEnhetService
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.arbeidsfordeling.ArbeidsfordelingClient
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
-import no.nav.tiltakspenger.soknad.api.soknad.jobb.person.PersonHttpklient
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
 
@@ -69,9 +67,6 @@ internal fun start(
         tokenExchangeUrl = Configuration.tokenExchangeEndpoint,
     )
 
-    val personHttpklient = PersonHttpklient(Configuration.pdlUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
-    }
     val arbeidsfordelingClient = ArbeidsfordelingClient(baseUrl = Configuration.norg2Url) {
         texasClient.getSystemToken(audienceTarget = Configuration.norg2Scope, identityProvider = IdentityProvider.AZUREAD)
     }
@@ -93,12 +88,11 @@ internal fun start(
 
     val søknadRepo = SøknadRepo()
     val pdlService = PdlService(
-        pdlClientTokenX = PdlClientTokenX(
+        pdlClient = PdlClient(
             endepunkt = Configuration.pdlUrl,
             pdlScope = Configuration.pdlScope,
             texasClient = texasClient,
-        ),
-        pdlClientCredentials = PdlCredentialsClient(endepunkt = Configuration.pdlUrl) {
+        ) {
             texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
         },
     )
@@ -108,7 +102,7 @@ internal fun start(
         texasClient.getSystemToken(audienceTarget = Configuration.saksbehandlingApiScope, identityProvider = IdentityProvider.AZUREAD)
     }
 
-    val søknadJobbService = SøknadJobbService(søknadRepo, personHttpklient, journalforingService, saksbehandlingApiKlient)
+    val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
     val avService = AvService(
         clamAvClient = ClamAvClient(
             avEndpoint = Configuration.avUrl,

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import org.junit.jupiter.api.Test
 
 class SøkerFraPDLTest {

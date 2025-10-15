@@ -1,4 +1,4 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 enum class ForelderBarnRelasjonRolle {
     BARN,

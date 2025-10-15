@@ -14,11 +14,11 @@ import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.dokarkiv.JOURNALFORENDE_ENHET_AUTOMATISK_BEHANDLING
 import no.nav.tiltakspenger.soknad.api.pdf.PdfService
+import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
-import no.nav.tiltakspenger.soknad.api.soknad.jobb.person.PersonHttpklient
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import no.nav.tiltakspenger.soknad.api.util.getTestNavnFraPdl
@@ -31,13 +31,13 @@ import java.time.LocalDateTime
 @Testcontainers
 class SøknadJobbServiceTest {
     private val søknadRepo = SøknadRepo()
-    private val personHttpklient = mockk<PersonHttpklient>()
+    private val pdlService = mockk<PdlService>()
     private val pdfService = mockk<PdfService>()
     private val dokarkivClient = mockk<DokarkivClient>()
     private val dokarkivService = DokarkivService(dokarkivClient)
     private val journalforingService = JournalforingService(pdfService, dokarkivService)
     private val saksbehandlingApiKlient = mockk<SaksbehandlingApiKlient>(relaxed = true)
-    private val søknadJobbService = SøknadJobbService(søknadRepo, personHttpklient, journalforingService, saksbehandlingApiKlient)
+    private val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
     private val saksnummer = "1234"
     private val navn = getTestNavnFraPdl()
     private val journalpostId = "15"
@@ -48,7 +48,7 @@ class SøknadJobbServiceTest {
 
     @BeforeEach
     fun setup() {
-        clearMocks(saksbehandlingApiKlient, personHttpklient, pdfService, dokarkivClient)
+        clearMocks(saksbehandlingApiKlient, pdlService, pdfService, dokarkivClient)
         Flyway.configure()
             .dataSource(DataSource.hikariDataSource)
             .loggers("slf4j")
@@ -61,7 +61,7 @@ class SøknadJobbServiceTest {
             }
 
         coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns saksnummer
-        coEvery { personHttpklient.hentNavnForFnr(any()) } returns navn
+        coEvery { pdlService.hentNavnForFnr(any(), any()) } returns navn
         coEvery { pdfService.lagPdf(any()) } returns "pdf".toByteArray()
         coEvery { pdfService.konverterVedlegg(any()) } returns emptyList()
         coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } returns journalpostId

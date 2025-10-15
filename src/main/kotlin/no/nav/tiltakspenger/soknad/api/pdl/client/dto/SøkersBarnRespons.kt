@@ -1,4 +1,8 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.client.dto
+
+import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
+import no.nav.tiltakspenger.soknad.api.pdl.Person
+import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering
 
 data class SøkersBarnFraPDL(
     val navn: List<Navn>,

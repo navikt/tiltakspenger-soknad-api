@@ -1,10 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.util
 
 import no.nav.tiltakspenger.libs.common.SøknadId
-import no.nav.tiltakspenger.libs.personklient.pdl.dto.EndringsMetadata
-import no.nav.tiltakspenger.libs.personklient.pdl.dto.FolkeregisterMetadata
-import no.nav.tiltakspenger.libs.personklient.pdl.dto.Navn
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
+import no.nav.tiltakspenger.soknad.api.pdl.Navn
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
@@ -52,18 +50,6 @@ fun getTestNavnFraPdl(): Navn {
         fornavn = "Fornavn",
         mellomnavn = "Mellomnavn",
         etternavn = "Etternavn",
-        metadata = EndringsMetadata(
-            endringer = emptyList(),
-            master = "FREG",
-        ),
-        folkeregistermetadata = FolkeregisterMetadata(
-            aarsak = null,
-            ajourholdstidspunkt = null,
-            gyldighetstidspunkt = null,
-            kilde = null,
-            opphoerstidspunkt = null,
-            sekvens = null,
-        ),
     )
 }
 

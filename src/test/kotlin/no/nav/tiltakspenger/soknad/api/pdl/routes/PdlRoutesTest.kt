@@ -1,6 +1,7 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.routes
 
 import com.nimbusds.jwt.SignedJWT
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -20,6 +21,10 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
+import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
+import no.nav.tiltakspenger.soknad.api.pdl.PdlService
+import no.nav.tiltakspenger.soknad.api.pdl.Person
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import org.junit.jupiter.api.AfterAll
@@ -83,7 +88,7 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${token.serialize()}")
                 }
-                Assertions.assertEquals(HttpStatusCode.OK, response.status)
+                Assertions.assertEquals(HttpStatusCode.Companion.OK, response.status)
                 val body: PersonDTO = response.body()
                 assertEquals(mockedPerson.fornavn, body.fornavn)
                 assertEquals(mockedPerson.etternavn, body.etternavn)
@@ -140,7 +145,7 @@ internal class PdlRoutesTest {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
             }
         }
     }
@@ -172,7 +177,7 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedUgyldigIssuer.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
             }
         }
     }
@@ -202,7 +207,7 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedManglendeClaim.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
             }
         }
     }
