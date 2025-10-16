@@ -105,6 +105,7 @@ class PdlClient(
         return personklient
             .graphqlRequest(token, body)
             .map {
+                log.info { "Respons: $it" }
                 val response = objectMapper.readValue<SøkerRespons>(it)
                 if (response.errors.isEmpty()) {
                     cache.put(fødselsnummer, response)

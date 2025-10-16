@@ -1,7 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import io.github.oshai.kotlinlogging.KLogger
 import io.ktor.util.toUpperCasePreservingASCIIRules
 import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
 import no.nav.tiltakspenger.soknad.api.pdl.Person
@@ -41,18 +40,15 @@ data class SøkerRespons(
     val data: SøkerFraPDLRespons? = null,
     val errors: List<PdlError> = emptyList(),
 ) {
-    private fun extractPerson(log: KLogger): SøkerFraPDL? {
+    private fun extractPerson(): SøkerFraPDL? {
         if (this.errors.isNotEmpty()) {
-            this.errors.forEach {
-                log.warn { "Respons fra PDL inneholder feil: ${it.message}" }
-            }
             throw IllegalStateException(this.errors.firstOrNull()?.toString())
         }
         return this.data?.hentPerson
     }
 
-    fun toPerson(log: KLogger): Person {
-        val person = extractPerson(log) ?: throw IllegalStateException("Fant ikke personen")
+    fun toPerson(): Person {
+        val person = extractPerson() ?: throw IllegalStateException("Fant ikke personen")
         val navn = avklarNavn(person.navn)
         val fødsel = avklarFødsel(person.foedselsdato)
         if (person.doedsfall.isNotEmpty()) {
