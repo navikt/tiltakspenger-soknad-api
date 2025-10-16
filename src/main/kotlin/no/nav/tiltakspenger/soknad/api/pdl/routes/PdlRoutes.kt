@@ -1,4 +1,4 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.routes
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
@@ -12,6 +12,7 @@ import io.ktor.server.routing.route
 import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
+import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import java.time.LocalDate
 

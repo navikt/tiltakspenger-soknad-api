@@ -42,6 +42,12 @@ query($ident: ID!){
                 ...metadataDetails
             }
         }
+    },
+    hentGeografiskTilknytning(ident: $ident) {
+            gtKommune
+            gtBydel
+            gtLand
+            gtType
     }
 }
 

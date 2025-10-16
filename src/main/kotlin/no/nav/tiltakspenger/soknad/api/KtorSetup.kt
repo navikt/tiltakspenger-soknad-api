@@ -24,7 +24,7 @@ import no.nav.tiltakspenger.soknad.api.health.healthRoutes
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
-import no.nav.tiltakspenger.soknad.api.pdl.pdlRoutes
+import no.nav.tiltakspenger.soknad.api.pdl.routes.pdlRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.routes.søknadRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.validateSøknad

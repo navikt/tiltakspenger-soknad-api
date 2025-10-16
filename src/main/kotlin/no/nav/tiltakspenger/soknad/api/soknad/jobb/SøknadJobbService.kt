@@ -3,17 +3,17 @@ package no.nav.tiltakspenger.soknad.api.soknad.jobb
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
-import no.nav.tiltakspenger.soknad.api.soknad.jobb.person.PersonHttpklient
 import java.time.LocalDateTime
 
 class SøknadJobbService(
     private val søknadRepo: SøknadRepo,
-    private val personHttpklient: PersonHttpklient,
+    private val pdlService: PdlService,
     private val journalforingService: JournalforingService,
     private val saksbehandlingApiKlient: SaksbehandlingApiKlient,
 ) {
@@ -44,7 +44,7 @@ class SøknadJobbService(
             }
 
             val navn = try {
-                personHttpklient.hentNavnForFnr(Fnr.fromString(søknad.fnr))
+                pdlService.hentNavnForFnr(Fnr.fromString(søknad.fnr), correlationId)
             } catch (e: Exception) {
                 log.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
                 return@forEach

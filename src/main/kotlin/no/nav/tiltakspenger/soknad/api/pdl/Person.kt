@@ -1,6 +1,10 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import java.time.LocalDate
 
 data class Person(
@@ -47,19 +51,10 @@ data class Person(
             return it.isAfter(datoMinus16år)
         } ?: throw IllegalStateException("Barn mangler fødselsdato")
     }
+
+    fun getNavn() = Navn(
+        fornavn = fornavn,
+        mellomnavn = mellomnavn,
+        etternavn = etternavn,
+    )
 }
-
-data class BarnDTO(
-    val fødselsdato: LocalDate,
-    val fornavn: String? = null,
-    val mellomnavn: String? = null,
-    val etternavn: String? = null,
-)
-
-data class PersonDTO(
-    val fornavn: String,
-    val mellomnavn: String?,
-    val etternavn: String,
-    val barn: List<BarnDTO> = emptyList(),
-    val harFylt18År: Boolean?,
-)

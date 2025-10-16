@@ -1,6 +1,10 @@
-package no.nav.tiltakspenger.soknad.api.pdl
+package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.ktor.util.toUpperCasePreservingASCIIRules
+import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
+import no.nav.tiltakspenger.soknad.api.pdl.Person
+import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering
 
 data class SøkerFraPDL(
     val navn: List<Navn>,
@@ -10,24 +14,28 @@ data class SøkerFraPDL(
     val doedsfall: List<Dødsfall>,
 )
 
-data class SøkerFraPDLRespons(
-    val hentPerson: SøkerFraPDL?,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class SøkerRespons(
-    val data: SøkerFraPDLRespons? = null,
-    val errors: List<PdlError> = emptyList(),
+data class GeografiskTilknytning(
+    val gtType: String,
+    val gtKommune: String?,
+    val gtBydel: String?,
+    val gtLand: String?,
 ) {
-    private fun extractPerson(): SøkerFraPDL? {
-        if (this.errors.isNotEmpty()) {
-            throw IllegalStateException(this.errors.firstOrNull()?.toString())
+    fun getGT(): String? =
+        when (gtType.toUpperCasePreservingASCIIRules()) {
+            "KOMMUNE" -> gtKommune
+            "BYDEL" -> gtBydel
+            "UTLAND" -> gtLand
+            "UDEFINERT" -> gtType
+            else -> null
         }
-        return this.data?.hentPerson
-    }
+}
 
+data class SøkerRespons(
+    val hentPerson: SøkerFraPDL?,
+    val hentGeografiskTilknytning: GeografiskTilknytning?,
+) {
     fun toPerson(): Person {
-        val person = extractPerson() ?: throw IllegalStateException("Fant ikke personen")
+        val person = hentPerson ?: throw IllegalStateException("Fant ikke personen")
         val navn = avklarNavn(person.navn)
         val fødsel = avklarFødsel(person.foedselsdato)
         if (person.doedsfall.isNotEmpty()) {

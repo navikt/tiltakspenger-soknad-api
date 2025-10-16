@@ -1,6 +1,10 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.kotest.assertions.throwables.shouldThrow
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Endring
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Kilde
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
