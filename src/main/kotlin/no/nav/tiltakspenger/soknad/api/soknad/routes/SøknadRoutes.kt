@@ -46,7 +46,7 @@ fun Route.søknadRoutes(
                 }
                 val fødselsnummer = principal.fnr
                 val acr = principal.claims["acr"]!!.toString()
-                val adressebeskyttelse = pdlService.hentAdressebeskyttelse(
+                val person = pdlService.hentPerson(
                     fødselsnummer = fødselsnummer.verdi,
                     subjectToken = principal.token,
                     callId = call.callId!!,
@@ -59,7 +59,7 @@ fun Route.søknadRoutes(
                     vedlegg = vedlegg,
                     innsendingTidspunkt = innsendingTidspunkt,
                 )
-                nySøknadService.nySøknad(command, adressebeskyttelse).fold(
+                nySøknadService.nySøknad(command, person).fold(
                     {
                         metricsCollector.antallFeiledeInnsendingerCounter.inc()
                         requestTimer.observeDuration()

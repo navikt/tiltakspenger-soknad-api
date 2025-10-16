@@ -5,9 +5,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
+import no.nav.tiltakspenger.soknad.api.pdl.Person
 
 class NySøknadService(
     private val søknadRepo: SøknadRepo,
+    private val fylkeService: FylkeService,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -41,12 +43,21 @@ class NySøknadService(
         "51bc251f-44ff-4467-bdc4-fce50e6b2e62",
     )
 
+    // her kan vi legge inn kodeverdien for fylker som rutes til oss, f.eks. 55 for Troms og 56 for Finnmark
+    private val fylkerSomSkalTilTpsak = emptyList<String>()
+
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
     fun nySøknad(
         nySøknadCommand: NySøknadCommand,
-        adressebeskyttelseGradering: AdressebeskyttelseGradering,
+        person: Person,
     ): Either<KunneIkkeMottaNySøknad, Unit> {
-        val eier = getEier(nySøknadCommand, adressebeskyttelseGradering, gjennomforingerSomSkalTilTpsak)
+        val eier =
+            getEier(
+                nySøknadCommand = nySøknadCommand,
+                person = person,
+                gjennomforingerSomSkalTilTpsak = gjennomforingerSomSkalTilTpsak,
+                fylkerSomSkalTilTpsak = fylkerSomSkalTilTpsak,
+            )
         val søknad: MottattSøknad = nySøknadCommand.toDomain(eier)
         return Either.catch {
             søknadRepo.lagre(søknad)
@@ -58,23 +69,30 @@ class NySøknadService(
         }
     }
 
-    // Søknader sendes by default til arena i prod, med mindre brukeren har søknader hos oss fra før, er
-    // kode 6 (og ikke har søknader hos oss fra før) eller blir manuelt lagt til i listen over gjennomføringer
-    // der søknaden skal rutes til oss.
+    // Søknader sendes by default til arena i prod, med mindre brukeren ikke har kode 6 og deltar på tiltak som har
+    // blitt manuelt lagt til i listen over gjennomføringer der søknaden skal rutes til oss eller bor i et fylke som
+    // skal rutes til oss. Brukere som har fått en søknad behandlet i Tpsak skal alltid sendes til oss, også hvis
+    // bruker har eller får kode 6.
     fun getEier(
         nySøknadCommand: NySøknadCommand,
-        adressebeskyttelseGradering: AdressebeskyttelseGradering,
+        person: Person,
         gjennomforingerSomSkalTilTpsak: List<String>,
+        fylkerSomSkalTilTpsak: List<String>,
     ): Applikasjonseier {
         val brukerHarSøknaderSomEiesAvTiltakspenger =
             søknadRepo.hentBrukersSøknader(nySøknadCommand.fnr, Applikasjonseier.Tiltakspenger).isNotEmpty()
         val forhandsgodkjentTiltak =
             nySøknadCommand.brukersBesvarelser.tiltak.gjennomforingId?.let { it in gjennomforingerSomSkalTilTpsak } == true
-        val erKode6 = adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG ||
-            adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND
+        val erKode6 = person.adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG ||
+            person.adressebeskyttelseGradering == AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND
+        val brukersFylkeRutesTilTpsak = if (erKode6) {
+            false
+        } else {
+            fylkeService.brukersFylkeRutesTilTpsak(person.geografiskTilknytning, fylkerSomSkalTilTpsak)
+        }
 
         return if (Configuration.isProd()) {
-            if (brukerHarSøknaderSomEiesAvTiltakspenger || (forhandsgodkjentTiltak && !erKode6)) {
+            if (brukerHarSøknaderSomEiesAvTiltakspenger || ((forhandsgodkjentTiltak || brukersFylkeRutesTilTpsak) && !erKode6)) {
                 Applikasjonseier.Tiltakspenger
             } else {
                 Applikasjonseier.Arena

@@ -45,6 +45,18 @@ class PdlService(
         return adressebeskyttelse
     }
 
+    suspend fun hentPerson(
+        fødselsnummer: String,
+        subjectToken: String,
+        callId: String,
+    ): Person {
+        log.debug { "Henter person for fødselsnummer, callId $callId" }
+        val personopplysninger = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
+        val person = personopplysninger.toPerson()
+        log.debug { "Hentet person for fødselsnummer OK, callId $callId" }
+        return person
+    }
+
     suspend fun hentNavnForFnr(
         fnr: Fnr,
         correlationId: CorrelationId,
