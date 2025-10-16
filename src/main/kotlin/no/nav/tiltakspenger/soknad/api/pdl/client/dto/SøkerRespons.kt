@@ -1,6 +1,5 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.util.toUpperCasePreservingASCIIRules
 import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
 import no.nav.tiltakspenger.soknad.api.pdl.Person
@@ -50,6 +49,7 @@ data class SøkerRespons(
             forelderBarnRelasjon = person.forelderBarnRelasjon,
             adressebeskyttelseGradering = adressebeskyttelseGradering,
             erDød = false,
+            geografiskTilknytning = hentGeografiskTilknytning?.getGT(),
         )
     }
 }

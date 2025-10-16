@@ -15,6 +15,7 @@ data class Person(
     val erDød: Boolean,
     val forelderBarnRelasjon: List<ForelderBarnRelasjon>? = emptyList(),
     val adressebeskyttelseGradering: AdressebeskyttelseGradering,
+    val geografiskTilknytning: String?,
 ) {
     fun toPersonDTO(barn: List<Person> = emptyList()): PersonDTO {
         val levendeBarn = barn.filterNot { it.erDød }

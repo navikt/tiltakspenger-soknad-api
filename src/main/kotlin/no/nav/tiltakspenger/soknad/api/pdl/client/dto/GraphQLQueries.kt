@@ -2,8 +2,8 @@ package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 
-val hentPersonQueryString = PdlClient::class.java.getResource("/hentPersonQuery.graphql").readText()
-val hentBarnQueryString = PdlClient::class.java.getResource("/hentBarnQuery.graphql").readText()
+val hentPersonQueryString = requireNotNull(PdlClient::class.java.getResource("/hentPersonQuery.graphql")).readText()
+val hentBarnQueryString = requireNotNull(PdlClient::class.java.getResource("/hentBarnQuery.graphql")).readText()
 
 fun hentPersonQuery(ident: String): GraphqlQuery {
     return GraphqlQuery(

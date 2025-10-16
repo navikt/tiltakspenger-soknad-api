@@ -50,6 +50,7 @@ internal class PdlRoutesTest {
         fødselsdato = LocalDate.MAX,
         adressebeskyttelseGradering = AdressebeskyttelseGradering.UGRADERT,
         erDød = false,
+        geografiskTilknytning = "1122",
     )
 
     @BeforeEach

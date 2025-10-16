@@ -29,6 +29,7 @@ internal class PersonTest {
         erDød: Boolean = false,
         fornavn: String = "foo",
         fødselsdato: LocalDate = LocalDate.MAX,
+        geografiskTilknytning: String? = "1122",
     ): Person {
         return Person(
             fornavn = fornavn,
@@ -38,6 +39,7 @@ internal class PersonTest {
             fødselsdato = fødselsdato,
             forelderBarnRelasjon = forelderBarnRelasjon,
             erDød = erDød,
+            geografiskTilknytning = geografiskTilknytning,
         )
     }
 
@@ -77,7 +79,7 @@ internal class PersonTest {
         assertEquals(testpersonUgradert.etternavn, personDTO.etternavn)
         assertTrue(personDTO.barn.size == 1)
 
-        val ugradertBart = personDTO.barn.get(0)
+        val ugradertBart = personDTO.barn[0]
         assertEquals(testpersonUgradert.fornavn, ugradertBart.fornavn)
         assertEquals(testpersonUgradert.mellomnavn, ugradertBart.mellomnavn)
         assertEquals(testpersonUgradert.etternavn, ugradertBart.etternavn)
@@ -86,7 +88,7 @@ internal class PersonTest {
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering FORTROLIG`() {
         val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonFortrolig))
-        val fortroligBarn = personDTO.barn.get(0)
+        val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
         assertNull(fortroligBarn.etternavn)
@@ -95,7 +97,7 @@ internal class PersonTest {
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG`() {
         val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonStrengtFortrolig))
-        val fortroligBarn = personDTO.barn.get(0)
+        val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
         assertNull(fortroligBarn.etternavn)
@@ -104,7 +106,7 @@ internal class PersonTest {
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG_UTLAND`() {
         val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonStrengtFortroligUtland))
-        val fortroligBarn = personDTO.barn.get(0)
+        val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
         assertNull(fortroligBarn.etternavn)
@@ -115,7 +117,7 @@ internal class PersonTest {
         val barnsIdenter = testpersonMedRelasjoner.barnsIdenter()
         assertTrue(barnsIdenter.size == 2)
         assertTrue(barnsIdenter.distinct().size == 2)
-        assertTrue(barnsIdenter.filterNotNull().size == 2)
+        assertTrue(barnsIdenter.size == 2)
         assertEquals(barnsIdenter[0], "1")
         assertEquals(barnsIdenter[1], "2")
     }

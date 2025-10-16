@@ -13,6 +13,7 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.testing.testApplication
 import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -23,7 +24,9 @@ import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
+import no.nav.tiltakspenger.soknad.api.pdl.Person
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
+import no.nav.tiltakspenger.soknad.api.soknad.FylkeService
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 internal class SøknadRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
@@ -53,7 +57,16 @@ internal class SøknadRoutesTest {
     @BeforeEach
     fun setupMocks() {
         clearMocks(texasClient, pdlService)
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT
+        coEvery { pdlService.hentPerson(any(), any(), any()) } returns Person(
+            fornavn = "fornavn",
+            mellomnavn = null,
+            etternavn = "etternavn",
+            adressebeskyttelseGradering = UGRADERT,
+            fødselsdato = LocalDate.now().minusYears(35),
+            forelderBarnRelasjon = emptyList(),
+            erDød = false,
+            geografiskTilknytning = "1122",
+        )
         coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns PersonDTO(
             fornavn = "fornavn",
             mellomnavn = null,
@@ -210,7 +223,10 @@ internal class SøknadRoutesTest {
             coEvery { mock.hentBrukersSøknader(any(), any()) } returns emptyList()
             coEvery { mock.lagre(any()) } returns Unit
         }
-        val nySøknadService = NySøknadService(søknadRepoMock)
+        val fylkeService = mockk<FylkeService>().also { mock ->
+            every { mock.brukersFylkeRutesTilTpsak(any(), any()) } returns false
+        }
+        val nySøknadService = NySøknadService(søknadRepoMock, fylkeService)
 
         val token = issueTestToken()
         coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(

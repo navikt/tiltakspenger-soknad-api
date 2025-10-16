@@ -27,6 +27,7 @@ data class SøkersBarnRespons(
             adressebeskyttelseGradering = adressebeskyttelseGradering,
             fødselsdato = fødsel.foedselsdato,
             erDød = dødsfall,
+            geografiskTilknytning = null,
         )
     }
 }

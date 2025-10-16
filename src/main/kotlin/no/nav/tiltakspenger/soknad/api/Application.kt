@@ -30,6 +30,7 @@ import no.nav.tiltakspenger.soknad.api.pdf.PdfServiceImpl
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
+import no.nav.tiltakspenger.soknad.api.soknad.FylkeService
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
@@ -97,7 +98,7 @@ internal fun start(
         },
     )
 
-    val nySøknadService = NySøknadService(søknadRepo)
+    val nySøknadService = NySøknadService(søknadRepo, FylkeService())
     val saksbehandlingApiKlient = SaksbehandlingApiKlient(baseUrl = Configuration.saksbehandlingApiUrl) {
         texasClient.getSystemToken(audienceTarget = Configuration.saksbehandlingApiScope, identityProvider = IdentityProvider.AZUREAD)
     }
