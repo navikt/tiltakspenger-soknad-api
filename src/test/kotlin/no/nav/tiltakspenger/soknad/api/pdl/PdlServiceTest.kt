@@ -16,10 +16,8 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Fødsel
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.GeografiskTilknytning
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Navn
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerFraPDL
-import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerFraPDLRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDL
-import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDLRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import org.junit.jupiter.api.BeforeEach
@@ -92,20 +90,18 @@ internal class PdlServiceTest {
 
     fun mockSøkerRespons(forelderBarnRelasjon: List<ForelderBarnRelasjon> = emptyList()): SøkerRespons {
         return SøkerRespons(
-            data = SøkerFraPDLRespons(
-                hentPerson = SøkerFraPDL(
-                    navn = listOf(mockNavn()),
-                    adressebeskyttelse = emptyList(),
-                    forelderBarnRelasjon = forelderBarnRelasjon,
-                    doedsfall = emptyList(),
-                    foedselsdato = listOf(mockFødsel()),
-                ),
-                hentGeografiskTilknytning = GeografiskTilknytning(
-                    gtType = "KOMMUNE",
-                    gtKommune = "1122",
-                    gtBydel = null,
-                    gtLand = null,
-                ),
+            hentPerson = SøkerFraPDL(
+                navn = listOf(mockNavn()),
+                adressebeskyttelse = emptyList(),
+                forelderBarnRelasjon = forelderBarnRelasjon,
+                doedsfall = emptyList(),
+                foedselsdato = listOf(mockFødsel()),
+            ),
+            hentGeografiskTilknytning = GeografiskTilknytning(
+                gtType = "KOMMUNE",
+                gtKommune = "1122",
+                gtBydel = null,
+                gtLand = null,
             ),
         )
     }
@@ -129,13 +125,11 @@ internal class PdlServiceTest {
         dødsfall: List<Dødsfall> = emptyList(),
     ): SøkersBarnRespons =
         SøkersBarnRespons(
-            data = SøkersBarnFraPDLRespons(
-                hentPerson = SøkersBarnFraPDL(
-                    navn = navn,
-                    adressebeskyttelse = adressebeskyttelse,
-                    foedselsdato = fødsel,
-                    doedsfall = dødsfall,
-                ),
+            hentPerson = SøkersBarnFraPDL(
+                navn = navn,
+                adressebeskyttelse = adressebeskyttelse,
+                foedselsdato = fødsel,
+                doedsfall = dødsfall,
             ),
         )
 
@@ -388,10 +382,10 @@ internal class PdlServiceTest {
     }
 
     fun SøkersBarnRespons.toBarnDTO(): BarnDTO = BarnDTO(
-        fødselsdato = this.data?.hentPerson?.foedselsdato?.first()!!.foedselsdato,
-        fornavn = this.data.hentPerson.navn.first().fornavn,
-        mellomnavn = this.data.hentPerson.navn.first().mellomnavn,
-        etternavn = this.data.hentPerson.navn.first().etternavn,
+        fødselsdato = this.hentPerson?.foedselsdato?.first()!!.foedselsdato,
+        fornavn = this.hentPerson.navn.first().fornavn,
+        mellomnavn = this.hentPerson.navn.first().mellomnavn,
+        etternavn = this.hentPerson.navn.first().etternavn,
     )
 
     @Test

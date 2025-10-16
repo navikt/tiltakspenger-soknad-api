@@ -30,25 +30,12 @@ data class GeografiskTilknytning(
         }
 }
 
-data class SøkerFraPDLRespons(
+data class SøkerRespons(
     val hentPerson: SøkerFraPDL?,
     val hentGeografiskTilknytning: GeografiskTilknytning?,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class SøkerRespons(
-    val data: SøkerFraPDLRespons? = null,
-    val errors: List<PdlError> = emptyList(),
 ) {
-    private fun extractPerson(): SøkerFraPDL? {
-        if (this.errors.isNotEmpty()) {
-            throw IllegalStateException(this.errors.firstOrNull()?.toString())
-        }
-        return this.data?.hentPerson
-    }
-
     fun toPerson(): Person {
-        val person = extractPerson() ?: throw IllegalStateException("Fant ikke personen")
+        val person = hentPerson ?: throw IllegalStateException("Fant ikke personen")
         val navn = avklarNavn(person.navn)
         val fødsel = avklarFødsel(person.foedselsdato)
         if (person.doedsfall.isNotEmpty()) {
