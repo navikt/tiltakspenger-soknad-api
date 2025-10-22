@@ -26,6 +26,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentPersonQuery
 import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class PdlClient(
     endepunkt: String,
@@ -39,7 +40,11 @@ class PdlClient(
         .build()
 
     private val personklient =
-        FellesPersonklient.create(endepunkt = endepunkt)
+        FellesPersonklient.create(
+            endepunkt = endepunkt,
+            connectTimeout = 10.seconds,
+            timeout = 10.seconds,
+        )
 
     suspend fun fetchBarn(
         ident: String,
