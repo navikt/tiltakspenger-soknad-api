@@ -44,7 +44,11 @@ class NySøknadService(
     )
 
     // her kan vi legge inn kodeverdien for fylker som rutes til oss, f.eks. 55 for Troms og 56 for Finnmark
-    private val fylkerSomSkalTilTpsak = emptyList<String>()
+    // se geografikodeverk.json for mapping mellom kodeverdier og fylker
+    private val fylkerSomSkalTilTpsak = listOf(
+        "55",
+        "56",
+    )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
     fun nySøknad(
