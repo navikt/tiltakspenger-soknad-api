@@ -54,25 +54,6 @@ internal class TiltakServiceTest {
         }
     }
 
-/*    private fun mockArenaTiltaksaktivitetResponsDTO(arrangør: String = "Arrangør AS") =
-        ArenaTiltaksaktivitetResponsDTO(
-            tiltaksaktiviteter = listOf(
-                ArenaTiltaksaktivitetResponsDTO.TiltaksaktivitetDTO(
-                    tiltakType = ArenaTiltaksaktivitetResponsDTO.TiltakType.ABIST,
-                    aktivitetId = "",
-                    tiltakLokaltNavn = "",
-                    arrangoer = arrangør,
-                    bedriftsnummer = "123456789",
-                    deltakelsePeriode = null,
-                    deltakelseProsent = 100f,
-                    deltakerStatusType = ArenaTiltaksaktivitetResponsDTO.DeltakerStatusType.DELAVB,
-                    statusSistEndret = null,
-                    begrunnelseInnsoeking = null,
-                    antallDagerPerUke = null,
-                ),
-            ),
-        )*/
-
     private fun mockTiltakspengerTiltakResponsDTO(arrangør: String = "Arrangør AS") =
         listOf(
             TiltakResponsDTO.TiltakDTO(
@@ -82,6 +63,7 @@ internal class TiltakServiceTest {
                     arenaKode = TiltakResponsDTO.TiltakType.ABIST,
                     typeNavn = "typenavn",
                     arrangørnavn = arrangør,
+                    deltidsprosent = 100.0,
                 ),
                 deltakelseFom = null,
                 deltakelseTom = null,

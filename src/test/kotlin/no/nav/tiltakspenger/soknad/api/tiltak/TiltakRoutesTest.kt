@@ -327,6 +327,7 @@ internal class TiltakRoutesTest {
                     arenaKode = TiltakResponsDTO.TiltakType.ABOPPF,
                     typeNavn = "typenavn",
                     arrangørnavn = arrangør,
+                    deltidsprosent = 100.0,
                 ),
                 deltakelseFom = null,
                 deltakelseTom = null,
