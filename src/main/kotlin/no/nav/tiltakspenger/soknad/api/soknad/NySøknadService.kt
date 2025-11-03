@@ -48,6 +48,9 @@ class NySøknadService(
     private val fylkerSomSkalTilTpsak = listOf(
         "55",
         "56",
+        "11",
+        "39",
+        "40",
     )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
