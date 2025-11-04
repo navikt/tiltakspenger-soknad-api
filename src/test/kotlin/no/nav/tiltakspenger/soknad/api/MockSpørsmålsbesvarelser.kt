@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api
 
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.AdressebeskyttelseDTO
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Etterlønn
@@ -132,6 +133,7 @@ fun mockRegistrertBarn(
     mellomnavn: String? = null,
     fødselsdato: LocalDate = LocalDate.of(2025, 1, 1),
     oppholdInnenforEøs: Boolean = true,
+    adressebeskyttelse: AdressebeskyttelseDTO = AdressebeskyttelseDTO.UGRADERT,
 ): RegistrertBarn =
     RegistrertBarn(
         fornavn,
@@ -139,6 +141,7 @@ fun mockRegistrertBarn(
         etternavn,
         fødselsdato,
         oppholdInnenforEøs,
+        adressebeskyttelse,
     )
 
 fun mockBarnetillegg(

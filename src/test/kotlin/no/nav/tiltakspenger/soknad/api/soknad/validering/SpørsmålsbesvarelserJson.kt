@@ -98,6 +98,7 @@ private fun barnetillegg(): Barnetillegg = Barnetillegg(
             etternavn = "Testesen",
             mellomnavn = "Test",
             oppholdInnenforEøs = true,
+            adressebeskyttelse = no.nav.tiltakspenger.soknad.api.pdl.routes.dto.AdressebeskyttelseDTO.UGRADERT,
         ),
     ),
 )

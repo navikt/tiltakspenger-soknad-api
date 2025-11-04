@@ -386,6 +386,7 @@ internal class PdlServiceTest {
         fornavn = this.hentPerson.navn.first().fornavn,
         mellomnavn = this.hentPerson.navn.first().mellomnavn,
         etternavn = this.hentPerson.navn.first().etternavn,
+        adressebeskyttelse = this.hentPerson.adressebeskyttelse.first().gradering.toDTO(),
     )
 
     @Test

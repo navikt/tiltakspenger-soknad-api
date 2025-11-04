@@ -65,6 +65,7 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
+                adressebeskyttelseDTO = it.adressebeskyttelse.toAdresseBeskyttelseDTO(),
             )
         },
         barnetilleggManuelle = soknad.spørsmålsbesvarelser.barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.map {
@@ -76,6 +77,7 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
+                adressebeskyttelseDTO = it.adressebeskyttelse.toAdresseBeskyttelseDTO(),
             )
         },
         vedlegg = søknad.vedleggsnavn.size,

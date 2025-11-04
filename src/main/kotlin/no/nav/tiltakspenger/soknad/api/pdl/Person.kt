@@ -30,12 +30,14 @@ data class Person(
                         fornavn = it.fornavn,
                         mellomnavn = it.mellomnavn,
                         etternavn = it.etternavn,
+                        adressebeskyttelse = it.adressebeskyttelseGradering.toDTO(),
                     )
                 } else {
-                    BarnDTO(fødselsdato = it.fødselsdato!!)
+                    BarnDTO(fødselsdato = it.fødselsdato!!, adressebeskyttelse = it.adressebeskyttelseGradering.toDTO())
                 }
             },
-            harFylt18År = fødselsdato?.isSameOrBefore(LocalDate.now().minusYears(18)) ?: throw IllegalStateException("Søker mangler fødselsdato"),
+            harFylt18År = fødselsdato?.isSameOrBefore(LocalDate.now().minusYears(18))
+                ?: throw IllegalStateException("Søker mangler fødselsdato"),
         )
     }
 
