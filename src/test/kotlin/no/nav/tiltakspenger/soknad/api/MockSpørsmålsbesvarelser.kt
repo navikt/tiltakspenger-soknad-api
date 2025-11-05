@@ -1,7 +1,5 @@
 package no.nav.tiltakspenger.soknad.api
 
-import java.time.LocalDate
-import java.util.UUID
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Etterlønn
@@ -20,6 +18,8 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
+import java.time.LocalDate
+import java.util.UUID
 
 fun mockTiltak(
     aktivitetId: String = "123",
