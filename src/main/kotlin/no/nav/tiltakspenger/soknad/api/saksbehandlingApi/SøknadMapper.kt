@@ -58,6 +58,8 @@ fun søknadMapper(
         ),
         barnetilleggPdl = soknad.spørsmålsbesvarelser.barnetillegg.registrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(
+                // TODO - fyll inn med faktiske fnr når vi kan
+                fnr = null,
                 fødselsdato = it.fødselsdato,
                 fornavn = it.fornavn,
                 mellomnavn = it.mellomnavn,
@@ -65,11 +67,11 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
-                adressebeskyttelseDTO = it.adressebeskyttelse.toAdresseBeskyttelseDTO(),
             )
         },
         barnetilleggManuelle = soknad.spørsmålsbesvarelser.barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(
+                fnr = null,
                 fødselsdato = it.fødselsdato,
                 fornavn = it.fornavn,
                 mellomnavn = it.mellomnavn,
@@ -77,7 +79,6 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
-                adressebeskyttelseDTO = it.adressebeskyttelse.toAdresseBeskyttelseDTO(),
             )
         },
         vedlegg = søknad.vedleggsnavn.size,
