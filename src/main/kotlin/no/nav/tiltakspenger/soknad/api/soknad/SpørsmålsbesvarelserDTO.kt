@@ -4,7 +4,6 @@ import no.nav.tiltakspenger.libs.common.SaniterStringForPdfgen.saniter
 import no.nav.tiltakspenger.soknad.api.deserialize
 import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
-import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.AdressebeskyttelseDTO
 import no.nav.tiltakspenger.soknad.api.serialize
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.security.InvalidParameterException
@@ -33,30 +32,28 @@ class ManueltRegistrertBarn(
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
 ) {
+    val fnr: String? = null
     val fornavn: String = saniter(fornavn)
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String = saniter(etternavn)
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
-
-    // Kan ikke velge adressebeskyttelse for manuelt registrerte barn i søknaden
-    val adressebeskyttelse: AdressebeskyttelseDTO = AdressebeskyttelseDTO.UGRADERT
 }
 
 class RegistrertBarn(
+    fnr: String?,
     fornavn: String?,
     mellomnavn: String?,
     etternavn: String?,
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
-    adressebeskyttelse: AdressebeskyttelseDTO,
 ) {
+    val fnr: String? = fnr
     val fornavn: String? = fornavn?.let { saniter(fornavn) }
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String? = etternavn?.let { saniter(etternavn) }
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
-    val adressebeskyttelse: AdressebeskyttelseDTO = adressebeskyttelse
 }
 
 data class Kvalifiseringsprogram(

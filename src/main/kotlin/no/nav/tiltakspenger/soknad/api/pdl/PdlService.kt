@@ -22,11 +22,11 @@ class PdlService(
         val result =
             pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
         log.debug { "Henting av søkers personalia har gått OK. Kallid: $callId" }
-        val person = result.toPerson()
+        val person = result.toPerson(Fnr.fromString(fødselsnummer))
         val barnsIdenter = person.barnsIdenter()
         log.debug { "Henter personalia søkers barn fra PDL. Kallid: $callId" }
         val barn = barnsIdenter
-            .map { barnsIdent -> pdlClient.fetchBarn(barnsIdent, callId).getOrNull()?.toPerson() }
+            .map { barnsIdent -> pdlClient.fetchBarn(barnsIdent, callId).getOrNull()?.toPerson(Fnr.fromString(barnsIdent)) }
             .mapNotNull { it }
             .filter { it.erUnder16ÅrPåDato(dato = styrendeDato) }
         log.debug { "Henting personalia søkers barn har gått OK. Kallid: $callId" }
@@ -40,7 +40,7 @@ class PdlService(
     ): AdressebeskyttelseGradering {
         log.debug { "Henter informasjon om adressebeskyttelse for fødselsnummer, callId $callId" }
         val personopplysninger = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
-        val adressebeskyttelse = personopplysninger.toPerson().adressebeskyttelseGradering
+        val adressebeskyttelse = personopplysninger.toPerson(Fnr.fromString(fødselsnummer)).adressebeskyttelseGradering
         log.debug { "Hentet informasjon om adressebeskyttelse for fødselsnummer OK, callId $callId" }
         return adressebeskyttelse
     }
@@ -52,7 +52,7 @@ class PdlService(
     ): Person {
         log.debug { "Henter person for fødselsnummer, callId $callId" }
         val personopplysninger = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
-        val person = personopplysninger.toPerson()
+        val person = personopplysninger.toPerson(Fnr.fromString(fødselsnummer))
         log.debug { "Hentet person for fødselsnummer OK, callId $callId" }
         return person
     }
@@ -68,6 +68,6 @@ class PdlService(
             callId = callId,
         )
         log.debug { "Hentet navn for fødselsnummer, callId $callId" }
-        return personopplysninger.toPerson().getNavn()
+        return personopplysninger.toPerson(fnr).getNavn()
     }
 }

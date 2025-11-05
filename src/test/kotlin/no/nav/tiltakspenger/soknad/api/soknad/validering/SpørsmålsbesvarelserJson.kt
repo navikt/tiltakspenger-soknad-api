@@ -21,7 +21,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 fun Any.toJsonString(): String {
     val objectMapper = ObjectMapper().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false).registerModule(
@@ -93,12 +93,12 @@ private fun barnetillegg(): Barnetillegg = Barnetillegg(
     ),
     registrerteBarnSøktBarnetilleggFor = listOf(
         RegistrertBarn(
+            fnr = "02058938710",
             fornavn = "Test",
             fødselsdato = LocalDate.of(2023, 1, 1),
             etternavn = "Testesen",
             mellomnavn = "Test",
             oppholdInnenforEøs = true,
-            adressebeskyttelse = no.nav.tiltakspenger.soknad.api.pdl.routes.dto.AdressebeskyttelseDTO.UGRADERT,
         ),
     ),
 )

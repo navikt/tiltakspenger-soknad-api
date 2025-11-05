@@ -58,8 +58,7 @@ fun søknadMapper(
         ),
         barnetilleggPdl = soknad.spørsmålsbesvarelser.barnetillegg.registrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(
-                // TODO - fyll inn med faktiske fnr når vi kan
-                fnr = null,
+                fnr = it.fnr,
                 fødselsdato = it.fødselsdato,
                 fornavn = it.fornavn,
                 mellomnavn = it.mellomnavn,

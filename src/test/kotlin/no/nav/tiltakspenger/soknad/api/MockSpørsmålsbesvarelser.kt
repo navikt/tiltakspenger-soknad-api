@@ -1,6 +1,5 @@
 package no.nav.tiltakspenger.soknad.api
 
-import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.AdressebeskyttelseDTO
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Etterlønn
@@ -20,7 +19,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 fun mockTiltak(
     aktivitetId: String = "123",
@@ -128,20 +127,20 @@ fun mockManueltRegistrertBarn(
     )
 
 fun mockRegistrertBarn(
+    fnr: String = "12345678910",
     fornavn: String = "Test",
     etternavn: String = "Testesen",
     mellomnavn: String? = null,
     fødselsdato: LocalDate = LocalDate.of(2025, 1, 1),
     oppholdInnenforEøs: Boolean = true,
-    adressebeskyttelse: AdressebeskyttelseDTO = AdressebeskyttelseDTO.UGRADERT,
 ): RegistrertBarn =
     RegistrertBarn(
+        fnr,
         fornavn,
         mellomnavn,
         etternavn,
         fødselsdato,
         oppholdInnenforEøs,
-        adressebeskyttelse,
     )
 
 fun mockBarnetillegg(

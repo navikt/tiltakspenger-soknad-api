@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Dødsfall
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
@@ -30,8 +31,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class PdlServiceTest {
-    val testFødselsnummer = "123"
-    val testBarnFødselsnummer = "456"
+    val testFødselsnummer = "02058938710"
+    val testBarnFødselsnummer = "21062002856"
 
     @BeforeEach
     fun setup() {
@@ -265,7 +266,7 @@ internal class PdlServiceTest {
                 callId = "test",
             )
             assertTrue(person.barn.size == 1)
-            assertEquals(person.barn[0].fødselsdato, søkersBarnUnder16År.toPerson().fødselsdato)
+            assertEquals(person.barn[0].fødselsdato, søkersBarnUnder16År.toPerson(Fnr.fromString(testFødselsnummer)).fødselsdato)
         }
     }
 
@@ -381,12 +382,12 @@ internal class PdlServiceTest {
         }
     }
 
-    fun SøkersBarnRespons.toBarnDTO(): BarnDTO = BarnDTO(
+    private fun SøkersBarnRespons.toBarnDTO(fnr: String): BarnDTO = BarnDTO(
+        fnr = fnr,
         fødselsdato = this.hentPerson?.foedselsdato?.first()!!.foedselsdato,
         fornavn = this.hentPerson.navn.first().fornavn,
         mellomnavn = this.hentPerson.navn.first().mellomnavn,
         etternavn = this.hentPerson.navn.first().etternavn,
-        adressebeskyttelse = this.hentPerson.adressebeskyttelse.first().gradering.toDTO(),
     )
 
     @Test
@@ -408,20 +409,20 @@ internal class PdlServiceTest {
                 coEvery { mock.fetchSøker(any(), any(), any()) } returns
                     mockSøkerRespons(
                         forelderBarnRelasjon = listOf(
-                            mockForelderBarnRelasjon(ident = "barnOver16År"),
-                            mockForelderBarnRelasjon(ident = "barnSomFyller16År"),
-                            mockForelderBarnRelasjon(ident = "barnUnder16År"),
-                            mockForelderBarnRelasjon(ident = "barnUnder16År2"),
+                            mockForelderBarnRelasjon(ident = "07090506506"),
+                            mockForelderBarnRelasjon(ident = "09052267207"),
+                            mockForelderBarnRelasjon(ident = "05106020371"),
+                            mockForelderBarnRelasjon(ident = "26052341395"),
                         ),
                     )
-                coEvery { mock.fetchBarn("barnOver16År", any()) } returns Result.success(barnOver16ÅrPåTiltaksstartdato)
-                coEvery { mock.fetchBarn("barnSomFyller16År", any()) } returns Result.success(
+                coEvery { mock.fetchBarn("07090506506", any()) } returns Result.success(barnOver16ÅrPåTiltaksstartdato)
+                coEvery { mock.fetchBarn("09052267207", any()) } returns Result.success(
                     barnSomFyller16ÅrPåTiltaksstartdato,
                 )
-                coEvery { mock.fetchBarn("barnUnder16År", any()) } returns Result.success(
+                coEvery { mock.fetchBarn("05106020371", any()) } returns Result.success(
                     barnUnder16ÅrPåTiltaksstartdato,
                 )
-                coEvery { mock.fetchBarn("barnUnder16År2", any()) } returns Result.success(
+                coEvery { mock.fetchBarn("26052341395", any()) } returns Result.success(
                     barn2Under16ÅrPåTiltaksstartdato,
                 )
             }
@@ -434,8 +435,8 @@ internal class PdlServiceTest {
 
             person.barn.size shouldBe 2
             person.barn shouldBe listOf(
-                barnUnder16ÅrPåTiltaksstartdato.toBarnDTO(),
-                barn2Under16ÅrPåTiltaksstartdato.toBarnDTO(),
+                barnUnder16ÅrPåTiltaksstartdato.toBarnDTO("05106020371"),
+                barn2Under16ÅrPåTiltaksstartdato.toBarnDTO("26052341395"),
             )
         }
     }

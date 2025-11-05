@@ -1,7 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
 import com.nimbusds.jwt.SignedJWT
-import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -18,6 +17,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
@@ -44,6 +44,7 @@ internal class PdlRoutesTest {
     private val testFødselsnummer = "12345678910"
 
     private val mockedPerson = Person(
+        fnr = Fnr.fromString(testFødselsnummer),
         fornavn = "foo",
         etternavn = "bar",
         mellomnavn = "baz",

@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -135,6 +136,7 @@ class NySøknadServiceTest {
         geografiskTilknytning: String? = "1122",
     ): Person {
         return Person(
+            fnr = Fnr.fromString("02058938710"),
             fornavn = "fornavn",
             mellomnavn = null,
             etternavn = "etternavn",

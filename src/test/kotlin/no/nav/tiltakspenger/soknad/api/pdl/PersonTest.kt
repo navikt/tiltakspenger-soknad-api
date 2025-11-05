@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.mockk.mockkClass
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
@@ -24,6 +25,7 @@ internal class PersonTest {
     }
 
     private fun mockPerson(
+        fnr: Fnr = Fnr.fromString("02058938710"),
         gradering: AdressebeskyttelseGradering = AdressebeskyttelseGradering.UGRADERT,
         forelderBarnRelasjon: List<ForelderBarnRelasjon> = emptyList(),
         erDød: Boolean = false,
@@ -32,6 +34,7 @@ internal class PersonTest {
         geografiskTilknytning: String? = "1122",
     ): Person {
         return Person(
+            fnr = fnr,
             fornavn = fornavn,
             mellomnavn = "baz",
             etternavn = "bar",

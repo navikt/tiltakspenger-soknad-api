@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
 import no.nav.tiltakspenger.soknad.api.pdl.Person
 import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering
@@ -14,13 +15,14 @@ data class SøkersBarnFraPDL(
 data class SøkersBarnRespons(
     val hentPerson: SøkersBarnFraPDL?,
 ) {
-    fun toPerson(): Person {
+    fun toPerson(fnr: Fnr): Person {
         val person = hentPerson ?: throw IllegalStateException("Fant ikke personen")
         val navn = avklarNavn(person.navn)
         val fødsel = avklarFødsel(person.foedselsdato)
         val dødsfall = person.doedsfall.isNotEmpty()
         val adressebeskyttelseGradering = avklarGradering(person.adressebeskyttelse)
         return Person(
+            fnr = fnr,
             fornavn = navn.fornavn,
             mellomnavn = navn.mellomnavn,
             etternavn = navn.etternavn,
