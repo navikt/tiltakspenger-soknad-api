@@ -51,6 +51,11 @@ class NySøknadService(
         "11",
         "39",
         "40",
+        "03",
+        "46",
+        "42",
+        "34",
+        "18",
     )
 
     // TODO post-mvp jah: Flytt domenelogikk fra route og inn hit.
