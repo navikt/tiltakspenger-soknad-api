@@ -1,13 +1,13 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import java.security.InvalidParameterException
+import java.time.LocalDate
 import no.nav.tiltakspenger.libs.common.SaniterStringForPdfgen.saniter
 import no.nav.tiltakspenger.soknad.api.deserialize
 import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
 import no.nav.tiltakspenger.soknad.api.serialize
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
-import java.security.InvalidParameterException
-import java.time.LocalDate
 
 data class Periode(
     val fra: LocalDate,
@@ -32,7 +32,6 @@ class ManueltRegistrertBarn(
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
 ) {
-    val fnr: String? = null
     val fornavn: String = saniter(fornavn)
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String = saniter(etternavn)
