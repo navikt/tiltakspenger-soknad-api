@@ -81,8 +81,8 @@ fun spørsmålsbesvarelser(
     harBekreftetÅSvareSåGodtManKan = harBekreftetÅSvareSåGodtManKan,
 )
 
-private fun barnetillegg(): Barnetillegg = Barnetillegg(
-    manueltRegistrerteBarnSøktBarnetilleggFor = listOf(
+fun barnetillegg(
+    manueltRegistrerteBarnSøktBarnetilleggFor: List<ManueltRegistrertBarn> = listOf(
         ManueltRegistrertBarn(
             fornavn = "Test",
             mellomnavn = "Test",
@@ -91,7 +91,7 @@ private fun barnetillegg(): Barnetillegg = Barnetillegg(
             oppholdInnenforEøs = true,
         ),
     ),
-    registrerteBarnSøktBarnetilleggFor = listOf(
+    registrerteBarnSøktBarnetilleggFor: List<RegistrertBarn> = listOf(
         RegistrertBarn(
             fnr = "02058938710",
             fornavn = "Test",
@@ -101,6 +101,9 @@ private fun barnetillegg(): Barnetillegg = Barnetillegg(
             oppholdInnenforEøs = true,
         ),
     ),
+): Barnetillegg = Barnetillegg(
+    manueltRegistrerteBarnSøktBarnetilleggFor = manueltRegistrerteBarnSøktBarnetilleggFor,
+    registrerteBarnSøktBarnetilleggFor = registrerteBarnSøktBarnetilleggFor,
 )
 
 private fun etterlønn(): Etterlønn = Etterlønn(mottar = true)
