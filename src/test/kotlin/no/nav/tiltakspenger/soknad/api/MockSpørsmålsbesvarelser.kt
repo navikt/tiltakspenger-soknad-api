@@ -127,6 +127,7 @@ fun mockManueltRegistrertBarn(
     )
 
 fun mockRegistrertBarn(
+    fnr: String = "12345678910",
     fornavn: String = "Test",
     etternavn: String = "Testesen",
     mellomnavn: String? = null,
@@ -134,6 +135,7 @@ fun mockRegistrertBarn(
     oppholdInnenforEøs: Boolean = true,
 ): RegistrertBarn =
     RegistrertBarn(
+        fnr,
         fornavn,
         mellomnavn,
         etternavn,

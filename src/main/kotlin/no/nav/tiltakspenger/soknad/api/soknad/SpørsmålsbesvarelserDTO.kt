@@ -8,6 +8,7 @@ import no.nav.tiltakspenger.soknad.api.serialize
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.security.InvalidParameterException
 import java.time.LocalDate
+import java.util.Objects
 
 data class Periode(
     val fra: LocalDate,
@@ -37,20 +38,57 @@ class ManueltRegistrertBarn(
     val etternavn: String = saniter(etternavn)
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ManueltRegistrertBarn) return false
+
+        if (fornavn != other.fornavn) return false
+        if (mellomnavn != other.mellomnavn) return false
+        if (etternavn != other.etternavn) return false
+        if (fødselsdato != other.fødselsdato) return false
+        if (oppholdInnenforEøs != other.oppholdInnenforEøs) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs)
+    }
 }
 
 class RegistrertBarn(
+    fnr: String?,
     fornavn: String?,
     mellomnavn: String?,
     etternavn: String?,
     fødselsdato: LocalDate,
     oppholdInnenforEøs: Boolean,
 ) {
+    val fnr: String? = fnr
     val fornavn: String? = fornavn?.let { saniter(fornavn) }
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String? = etternavn?.let { saniter(etternavn) }
     val fødselsdato: LocalDate = fødselsdato
     val oppholdInnenforEøs = oppholdInnenforEøs
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is RegistrertBarn) return false
+
+        if (fnr != other.fnr) return false
+        if (fornavn != other.fornavn) return false
+        if (mellomnavn != other.mellomnavn) return false
+        if (etternavn != other.etternavn) return false
+        if (fødselsdato != other.fødselsdato) return false
+        if (oppholdInnenforEøs != other.oppholdInnenforEøs) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs, fnr)
+    }
 }
 
 data class Kvalifiseringsprogram(
@@ -112,6 +150,32 @@ class Tiltak(
 
     override fun toString(): String {
         return "Tiltak(periode=$periode, arenaRegistrertPeriode=$arenaRegistrertPeriode)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Tiltak) return false
+        if (aktivitetId != other.aktivitetId) return false
+        if (periode != other.periode) return false
+        if (arenaRegistrertPeriode != other.arenaRegistrertPeriode) return false
+        if (arrangør != other.arrangør) return false
+        if (type != other.type) return false
+        if (typeNavn != other.typeNavn) return false
+        if (gjennomforingId != other.gjennomforingId) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(
+            aktivitetId,
+            periode,
+            arenaRegistrertPeriode,
+            arrangør,
+            type,
+            typeNavn,
+            gjennomforingId,
+        )
     }
 }
 

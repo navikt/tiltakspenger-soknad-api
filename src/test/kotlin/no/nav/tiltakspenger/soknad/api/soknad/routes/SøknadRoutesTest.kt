@@ -17,6 +17,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
@@ -58,6 +59,7 @@ internal class SøknadRoutesTest {
     fun setupMocks() {
         clearMocks(texasClient, pdlService)
         coEvery { pdlService.hentPerson(any(), any(), any()) } returns Person(
+            fnr = Fnr.fromString("02058938710"),
             fornavn = "fornavn",
             mellomnavn = null,
             etternavn = "etternavn",

@@ -3,6 +3,7 @@ package no.nav.tiltakspenger.soknad.api.pdl.routes.dto
 import java.time.LocalDate
 
 data class BarnDTO(
+    val fnr: String,
     val fødselsdato: LocalDate,
     val fornavn: String? = null,
     val mellomnavn: String? = null,

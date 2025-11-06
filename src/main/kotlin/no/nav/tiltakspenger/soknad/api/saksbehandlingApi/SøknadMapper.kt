@@ -58,6 +58,7 @@ fun søknadMapper(
         ),
         barnetilleggPdl = soknad.spørsmålsbesvarelser.barnetillegg.registrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(
+                fnr = it.fnr,
                 fødselsdato = it.fødselsdato,
                 fornavn = it.fornavn,
                 mellomnavn = it.mellomnavn,
@@ -69,6 +70,7 @@ fun søknadMapper(
         },
         barnetilleggManuelle = soknad.spørsmålsbesvarelser.barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(
+                fnr = null,
                 fødselsdato = it.fødselsdato,
                 fornavn = it.fornavn,
                 mellomnavn = it.mellomnavn,

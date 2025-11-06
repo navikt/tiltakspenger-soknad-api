@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
@@ -8,6 +9,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import java.time.LocalDate
 
 data class Person(
+    val fnr: Fnr,
     val fornavn: String,
     val mellomnavn: String?,
     val etternavn: String,
@@ -26,16 +28,18 @@ data class Person(
             barn = levendeBarn.map {
                 if (it.adressebeskyttelseGradering === AdressebeskyttelseGradering.UGRADERT) {
                     BarnDTO(
+                        fnr = it.fnr.verdi,
                         fødselsdato = it.fødselsdato!!,
                         fornavn = it.fornavn,
                         mellomnavn = it.mellomnavn,
                         etternavn = it.etternavn,
                     )
                 } else {
-                    BarnDTO(fødselsdato = it.fødselsdato!!)
+                    BarnDTO(fnr = it.fnr.verdi, fødselsdato = it.fødselsdato!!)
                 }
             },
-            harFylt18År = fødselsdato?.isSameOrBefore(LocalDate.now().minusYears(18)) ?: throw IllegalStateException("Søker mangler fødselsdato"),
+            harFylt18År = fødselsdato?.isSameOrBefore(LocalDate.now().minusYears(18))
+                ?: throw IllegalStateException("Søker mangler fødselsdato"),
         )
     }
 
