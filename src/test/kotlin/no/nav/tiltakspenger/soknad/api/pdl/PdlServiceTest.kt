@@ -6,7 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Dødsfall
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
@@ -19,6 +19,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Navn
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerFraPDL
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDL
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDLBolk
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import org.junit.jupiter.api.BeforeEach
@@ -120,46 +121,80 @@ internal class PdlServiceTest {
     }
 
     private fun mockSøkersBarn(
+        barn: List<SøkersBarnFraPDLBolk> = listOf(mockSøkersBarnFraPdl()),
+    ): SøkersBarnRespons =
+        SøkersBarnRespons(
+            hentPersonBolk = barn,
+        )
+
+    private fun mockSøkersBarnFraPdl(
+        ident: String = testBarnFødselsnummer,
         navn: List<Navn> = listOf(mockNavn()),
         adressebeskyttelse: List<Adressebeskyttelse> = listOf(mockAdressebeskyttelse()),
         fødsel: List<Fødsel> = listOf(mockFødsel()),
         dødsfall: List<Dødsfall> = emptyList(),
-    ): SøkersBarnRespons =
-        SøkersBarnRespons(
-            hentPerson = SøkersBarnFraPDL(
+    ): SøkersBarnFraPDLBolk =
+        SøkersBarnFraPDLBolk(
+            ident = ident,
+            person = SøkersBarnFraPDL(
                 navn = navn,
                 adressebeskyttelse = adressebeskyttelse,
                 foedselsdato = fødsel,
                 doedsfall = dødsfall,
             ),
+            code = PdlPersonBolkCode.OK,
         )
 
     private val søkersBarnDefaultMock: SøkersBarnRespons = mockSøkersBarn()
 
     private val fødselsdatoUnder16År = LocalDate.now().minusYears(16).plusDays(1)
     private val søkersBarnUnder16År: SøkersBarnRespons = mockSøkersBarn(
-        fødsel = listOf(mockFødsel(fødselsdato = fødselsdatoUnder16År)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                fødsel = listOf(mockFødsel(fødselsdato = fødselsdatoUnder16År)),
+            ),
+        ),
     )
 
     private val fødselsdatoOver16År = LocalDate.now().minusYears(16)
     private val søkersBarnOver16År: SøkersBarnRespons = mockSøkersBarn(
-        fødsel = listOf(mockFødsel(fødselsdato = fødselsdatoOver16År)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                fødsel = listOf(mockFødsel(fødselsdato = fødselsdatoOver16År)),
+            ),
+        ),
     )
 
     private val barnMedStrengtFortrolig: SøkersBarnRespons = mockSøkersBarn(
-        adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG)),
+            ),
+        ),
     )
 
     private val barnMedFortrolig: SøkersBarnRespons = mockSøkersBarn(
-        adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.FORTROLIG)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.FORTROLIG)),
+            ),
+        ),
     )
 
     private val barnMedStrengtFortroligUtland: SøkersBarnRespons = mockSøkersBarn(
-        adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND)),
+            ),
+        ),
     )
 
     private val barnMedUgradert: SøkersBarnRespons = mockSøkersBarn(
-        adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.UGRADERT)),
+        barn = listOf(
+            mockSøkersBarnFraPdl(
+                adressebeskyttelse = listOf(mockAdressebeskyttelse(gradering = AdressebeskyttelseGradering.UGRADERT)),
+            ),
+        ),
     )
 
     private val mockedPdlClient = mockk<PdlClient>()
@@ -179,7 +214,7 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(søkersBarnDefaultMock)
+                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnDefaultMock
             }
             pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
@@ -187,7 +222,7 @@ internal class PdlServiceTest {
                 callId = "test",
             )
             coVerify { mockedPdlClient.fetchSøker(testFødselsnummer, token, "test") }
-            coVerify { mockedPdlClient.fetchBarn(testBarnFødselsnummer, "test") }
+            coVerify { mockedPdlClient.fetchBarn(listOf(testBarnFødselsnummer), "test") }
         }
     }
 
@@ -236,7 +271,7 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(søkersBarnOver16År)
+                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnOver16År
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
@@ -258,15 +293,18 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(søkersBarnUnder16År)
+                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnUnder16År
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            assertTrue(person.barn.size == 1)
-            assertEquals(person.barn[0].fødselsdato, søkersBarnUnder16År.toPerson(Fnr.fromString(testFødselsnummer)).fødselsdato)
+            assertEquals(person.barn.size, 1)
+            assertEquals(
+                person.barn[0].fødselsdato,
+                søkersBarnUnder16År.toPersoner().first()!!.fødselsdato,
+            )
         }
     }
 
@@ -281,14 +319,14 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(barnMedStrengtFortrolig)
+                coEvery { mock.fetchBarn(any(), any()) } returns barnMedStrengtFortrolig
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            assertTrue(person.barn.size == 1)
+            assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
             assertNull(barn.fornavn)
@@ -309,14 +347,14 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(barnMedFortrolig)
+                coEvery { mock.fetchBarn(any(), any()) } returns barnMedFortrolig
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            assertTrue(person.barn.size == 1)
+            assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
             assertNull(barn.fornavn)
@@ -337,14 +375,14 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(barnMedStrengtFortroligUtland)
+                coEvery { mock.fetchBarn(any(), any()) } returns barnMedStrengtFortroligUtland
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            assertTrue(person.barn.size == 1)
+            assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
             assertNull(barn.fornavn)
@@ -365,14 +403,14 @@ internal class PdlServiceTest {
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns Result.success(barnMedUgradert)
+                coEvery { mock.fetchBarn(any(), any()) } returns barnMedUgradert
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            assertTrue(person.barn.size == 1)
+            assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
             assertNotNull(barn.fornavn)
@@ -382,49 +420,81 @@ internal class PdlServiceTest {
         }
     }
 
-    private fun SøkersBarnRespons.toBarnDTO(fnr: String): BarnDTO = BarnDTO(
-        fnr = fnr,
-        fødselsdato = this.hentPerson?.foedselsdato?.first()!!.foedselsdato,
-        fornavn = this.hentPerson.navn.first().fornavn,
-        mellomnavn = this.hentPerson.navn.first().mellomnavn,
-        etternavn = this.hentPerson.navn.first().etternavn,
-    )
+    private fun SøkersBarnFraPDLBolk.toBarnDTO(): BarnDTO {
+        return BarnDTO(
+            fnr = ident,
+            fødselsdato = person?.foedselsdato?.first()!!.foedselsdato,
+            fornavn = person.navn.first().fornavn,
+            mellomnavn = person.navn.first().mellomnavn,
+            etternavn = person.navn.first().etternavn,
+        )
+    }
 
     @Test
     fun `hentPersonaliaMedBarn skal filtrere vekk barn som er over 16 år på styrendeDato`() {
         val token = "token"
         val startdato = LocalDate.of(2020, 1, 1)
 
-        val barnOver16ÅrPåTiltaksstartdato =
-            mockSøkersBarn(fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16).minusDays(1))))
-        val barnSomFyller16ÅrPåTiltaksstartdato =
-            mockSøkersBarn(fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16))))
-        val barnUnder16ÅrPåTiltaksstartdato =
-            mockSøkersBarn(fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16).plusDays(1))))
-        val barn2Under16ÅrPåTiltaksstartdato =
-            mockSøkersBarn(fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16).plusDays(2))))
+        val barnOver16ÅrPåTiltaksstartdatoIdent = "07090506506"
+        val barnOver16ÅrPåTiltaksstartdato = mockSøkersBarnFraPdl(
+            ident = barnOver16ÅrPåTiltaksstartdatoIdent,
+            fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16).minusDays(1))),
+        )
+        val barnSomFyller16ÅrPåTiltaksstartdatoIdent = "09052267207"
+        val barnSomFyller16ÅrPåTiltaksstartdato = mockSøkersBarnFraPdl(
+            ident = barnSomFyller16ÅrPåTiltaksstartdatoIdent,
+            fødsel = listOf(mockFødsel(fødselsdato = startdato.minusYears(16))),
+        )
+        val barnUnder16ÅrPåTiltaksstartdatoIdent = "05106020371"
+        val barnUnder16ÅrPåTiltaksstartdato = mockSøkersBarnFraPdl(
+            ident = barnUnder16ÅrPåTiltaksstartdatoIdent,
+            fødsel = listOf(
+                mockFødsel(
+                    fødselsdato = startdato.minusYears(16).plusDays(1),
+                ),
+            ),
+        )
+        val barn2Under16ÅrPåTiltaksstartdatoIdent = "26052341395"
+        val barn2Under16ÅrPåTiltaksstartdato = mockSøkersBarnFraPdl(
+            ident = barn2Under16ÅrPåTiltaksstartdatoIdent,
+            fødsel = listOf(
+                mockFødsel(
+                    fødselsdato = startdato.minusYears(16).plusDays(2),
+                ),
+            ),
+        )
+
+        val forventetResponse = mockSøkersBarn(
+            barn = listOf(
+                barnOver16ÅrPåTiltaksstartdato,
+                barnSomFyller16ÅrPåTiltaksstartdato,
+                barnUnder16ÅrPåTiltaksstartdato,
+                barn2Under16ÅrPåTiltaksstartdato,
+            ),
+        )
 
         runBlocking {
             mockedPdlClient.also { mock ->
                 coEvery { mock.fetchSøker(any(), any(), any()) } returns
                     mockSøkerRespons(
                         forelderBarnRelasjon = listOf(
-                            mockForelderBarnRelasjon(ident = "07090506506"),
-                            mockForelderBarnRelasjon(ident = "09052267207"),
-                            mockForelderBarnRelasjon(ident = "05106020371"),
-                            mockForelderBarnRelasjon(ident = "26052341395"),
+                            mockForelderBarnRelasjon(ident = barnOver16ÅrPåTiltaksstartdatoIdent),
+                            mockForelderBarnRelasjon(ident = barnSomFyller16ÅrPåTiltaksstartdatoIdent),
+                            mockForelderBarnRelasjon(ident = barnUnder16ÅrPåTiltaksstartdatoIdent),
+                            mockForelderBarnRelasjon(ident = barn2Under16ÅrPåTiltaksstartdatoIdent),
                         ),
                     )
-                coEvery { mock.fetchBarn("07090506506", any()) } returns Result.success(barnOver16ÅrPåTiltaksstartdato)
-                coEvery { mock.fetchBarn("09052267207", any()) } returns Result.success(
-                    barnSomFyller16ÅrPåTiltaksstartdato,
-                )
-                coEvery { mock.fetchBarn("05106020371", any()) } returns Result.success(
-                    barnUnder16ÅrPåTiltaksstartdato,
-                )
-                coEvery { mock.fetchBarn("26052341395", any()) } returns Result.success(
-                    barn2Under16ÅrPåTiltaksstartdato,
-                )
+                coEvery {
+                    mock.fetchBarn(
+                        listOf(
+                            barnOver16ÅrPåTiltaksstartdatoIdent,
+                            barnSomFyller16ÅrPåTiltaksstartdatoIdent,
+                            barnUnder16ÅrPåTiltaksstartdatoIdent,
+                            barn2Under16ÅrPåTiltaksstartdatoIdent,
+                        ),
+                        any(),
+                    )
+                } returns forventetResponse
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
@@ -435,8 +505,8 @@ internal class PdlServiceTest {
 
             person.barn.size shouldBe 2
             person.barn shouldBe listOf(
-                barnUnder16ÅrPåTiltaksstartdato.toBarnDTO("05106020371"),
-                barn2Under16ÅrPåTiltaksstartdato.toBarnDTO("26052341395"),
+                barnUnder16ÅrPåTiltaksstartdato.toBarnDTO(),
+                barn2Under16ÅrPåTiltaksstartdato.toBarnDTO(),
             )
         }
     }

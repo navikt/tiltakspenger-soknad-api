@@ -23,7 +23,7 @@ import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.objectMapper
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
-import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnQuery
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnBolkQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentPersonQuery
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -47,17 +47,17 @@ class PdlClient(
         )
 
     suspend fun fetchBarn(
-        ident: String,
+        identer: List<String>,
         callId: String,
-    ): Result<SøkersBarnRespons> {
+    ): SøkersBarnRespons {
         log.info { "fetchBarn: Henter barn fra PDL, callId $callId" }
-        val body = objectMapper.writeValueAsString(hentBarnQuery(ident))
+        val body = objectMapper.writeValueAsString(hentBarnBolkQuery(identer))
         return personklient
             .graphqlRequest(getSystemToken(), body)
             .map {
-                Result.success(objectMapper.readValue<SøkersBarnRespons>(it))
+                objectMapper.readValue<SøkersBarnRespons>(it)
             }.getOrElse {
-                Result.failure<SøkersBarnRespons>(it.mapError())
+                it.mapError()
             }
     }
 

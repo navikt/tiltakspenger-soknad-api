@@ -1,9 +1,10 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
+import no.nav.tiltakspenger.libs.personklient.pdl.GraphqlBolkQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 
 val hentPersonQueryString = requireNotNull(PdlClient::class.java.getResource("/hentPersonQuery.graphql")).readText()
-val hentBarnQueryString = requireNotNull(PdlClient::class.java.getResource("/hentBarnQuery.graphql")).readText()
+val hentBarnBolkQueryString = requireNotNull(PdlClient::class.java.getResource("/hentBarnBolkQuery.graphql")).readText()
 
 fun hentPersonQuery(ident: String): GraphqlQuery {
     return GraphqlQuery(
@@ -14,11 +15,11 @@ fun hentPersonQuery(ident: String): GraphqlQuery {
     )
 }
 
-fun hentBarnQuery(ident: String): GraphqlQuery {
-    return GraphqlQuery(
-        query = hentBarnQueryString,
+fun hentBarnBolkQuery(identer: List<String>): GraphqlBolkQuery {
+    return GraphqlBolkQuery(
+        query = hentBarnBolkQueryString,
         variables = mapOf(
-            "ident" to ident,
+            "identer" to identer,
         ),
     )
 }
