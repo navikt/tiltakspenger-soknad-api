@@ -25,10 +25,13 @@ class PdlService(
         val person = result.toPerson(Fnr.fromString(fødselsnummer))
         val barnsIdenter = person.barnsIdenter()
         log.debug { "Henter personalia søkers barn fra PDL. Kallid: $callId" }
-        val barn = barnsIdenter
-            .map { barnsIdent -> pdlClient.fetchBarn(barnsIdent, callId).getOrNull()?.toPerson(Fnr.fromString(barnsIdent)) }
-            .mapNotNull { it }
-            .filter { it.erUnder16ÅrPåDato(dato = styrendeDato) }
+        val barn = if (barnsIdenter.isNotEmpty()) {
+            pdlClient.fetchBarn(barnsIdenter, callId).toPersoner()
+                .mapNotNull { it }
+                .filter { it.erUnder16ÅrPåDato(dato = styrendeDato) }
+        } else {
+            emptyList()
+        }
         log.debug { "Henting personalia søkers barn har gått OK. Kallid: $callId" }
         return person.toPersonDTO(barn)
     }
