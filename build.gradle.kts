@@ -13,7 +13,7 @@ val apacheCommonsTextVersion = "1.14.0"
 val pdfboxVersion = "3.0.6"
 val felleslibVersion = "0.0.622"
 val flywayVersjon = "11.17.1"
-val testContainersVersion = "1.21.3"
+val testContainersVersion = "2.0.2"
 
 plugins {
     application
@@ -112,8 +112,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:$kotlinxCoroutinesVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.8.0")
     testImplementation("org.testcontainers:testcontainers:$testContainersVersion")
-    testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
-    testImplementation("org.testcontainers:postgresql:$testContainersVersion")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testContainersVersion")
+    testImplementation("org.testcontainers:testcontainers-postgresql:$testContainersVersion")
     testImplementation("com.github.navikt.tiltakspenger-libs:test-common:$felleslibVersion")
 }
 
