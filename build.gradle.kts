@@ -11,7 +11,7 @@ val kotlinxCoroutinesVersion = "1.10.2"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.14.0"
 val pdfboxVersion = "3.0.6"
-val felleslibVersion = "0.0.625"
+val felleslibVersion = "0.0.627"
 val flywayVersjon = "11.17.2"
 val testContainersVersion = "2.0.2"
 
