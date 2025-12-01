@@ -6,7 +6,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.CannotTransformContentToTypeException
-import io.ktor.server.plugins.callid.callId
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
@@ -19,7 +18,6 @@ import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
-import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import java.time.LocalDateTime
@@ -28,7 +26,6 @@ fun Route.søknadRoutes(
     nySøknadService: NySøknadService,
     avService: AvService,
     metricsCollector: MetricsCollector,
-    pdlService: PdlService,
 ) {
     val log = KotlinLogging.logger { }
     route(SØKNAD_PATH) {
@@ -46,11 +43,6 @@ fun Route.søknadRoutes(
                 }
                 val fødselsnummer = principal.fnr
                 val acr = principal.claims["acr"]!!.toString()
-                val person = pdlService.hentPerson(
-                    fødselsnummer = fødselsnummer.verdi,
-                    subjectToken = principal.token,
-                    callId = call.callId!!,
-                )
 
                 val command = NySøknadCommand(
                     brukersBesvarelser = brukersBesvarelser,
@@ -59,7 +51,7 @@ fun Route.søknadRoutes(
                     vedlegg = vedlegg,
                     innsendingTidspunkt = innsendingTidspunkt,
                 )
-                nySøknadService.nySøknad(command, person).fold(
+                nySøknadService.nySøknad(command).fold(
                     {
                         metricsCollector.antallFeiledeInnsendingerCounter.inc()
                         requestTimer.observeDuration()

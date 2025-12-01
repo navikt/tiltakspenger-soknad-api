@@ -11,9 +11,7 @@ data class NySøknadCommand(
     val vedlegg: List<Vedlegg>,
     val innsendingTidspunkt: LocalDateTime,
 ) {
-    fun toDomain(
-        eier: Applikasjonseier,
-    ): MottattSøknad {
+    fun toDomain(): MottattSøknad {
         return MottattSøknad(
             id = SøknadId.random(),
             versjon = "1",
@@ -28,7 +26,7 @@ data class NySøknadCommand(
             journalført = null,
             journalpostId = null,
             opprettet = innsendingTidspunkt,
-            eier = eier,
+            eier = Applikasjonseier.Tiltakspenger,
             saksnummer = null,
         )
     }
