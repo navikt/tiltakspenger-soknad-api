@@ -114,6 +114,7 @@ class Tiltak(
     type: String,
     typeNavn: String,
     gjennomforingId: String?,
+    visningsnavn: String?,
 ) {
     val aktivitetId: String = saniter(aktivitetId)
     val arrangør: String = saniter(arrangør)
@@ -122,6 +123,7 @@ class Tiltak(
     val arenaRegistrertPeriode: Deltakelsesperiode? = arenaRegistrertPeriode
     val periode: Periode = periode
     val gjennomforingId: String? = gjennomforingId?.let { saniter(it) }
+    val visningsnavn: String? = visningsnavn?.let { saniter(it) }
 
     fun harKunFradatoIArena(): Boolean {
         return arenaRegistrertPeriode?.fra != null && arenaRegistrertPeriode.til == null
@@ -162,6 +164,7 @@ class Tiltak(
         if (type != other.type) return false
         if (typeNavn != other.typeNavn) return false
         if (gjennomforingId != other.gjennomforingId) return false
+        if (visningsnavn != other.visningsnavn) return false
 
         return true
     }
@@ -175,6 +178,7 @@ class Tiltak(
             type,
             typeNavn,
             gjennomforingId,
+            visningsnavn,
         )
     }
 }

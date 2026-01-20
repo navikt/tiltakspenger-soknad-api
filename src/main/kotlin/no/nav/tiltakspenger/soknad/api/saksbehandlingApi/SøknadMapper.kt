@@ -55,6 +55,7 @@ fun søknadMapper(
             arrangør = soknad.spørsmålsbesvarelser.tiltak.arrangør,
             typeKode = soknad.spørsmålsbesvarelser.tiltak.type,
             typeNavn = soknad.spørsmålsbesvarelser.tiltak.typeNavn,
+            visningsnavn = soknad.spørsmålsbesvarelser.tiltak.visningsnavn,
         ),
         barnetilleggPdl = soknad.spørsmålsbesvarelser.barnetillegg.registrerteBarnSøktBarnetilleggFor.map {
             BarnetilleggDTO(

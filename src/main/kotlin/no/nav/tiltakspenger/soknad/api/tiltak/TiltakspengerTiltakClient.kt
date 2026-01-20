@@ -10,7 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
-import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
+import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
 class TiltakspengerTiltakClient(
@@ -21,7 +21,7 @@ class TiltakspengerTiltakClient(
 ) {
     private val log = KotlinLogging.logger {}
 
-    suspend fun fetchTiltak(subjectToken: String): Result<List<TiltakDTO>> {
+    suspend fun fetchTiltak(subjectToken: String): Result<List<TiltakshistorikkDTO>> {
         log.debug { "fetchTiltak: Henter token for å snakke med tiltakspenger-tiltak" }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
@@ -30,7 +30,7 @@ class TiltakspengerTiltakClient(
         )
         log.debug { "fetchTiltak: Token til tiltakspenger-tiltak mottatt OK" }
         return kotlin.runCatching {
-            httpClient.get("$tiltakspengerTiltakEndpoint/tokenx/tiltak") {
+            httpClient.get("$tiltakspengerTiltakEndpoint/tokenx/tiltakshistorikk") {
                 accept(ContentType.Application.Json)
                 bearerAuth(token.token)
                 contentType(ContentType.Application.Json)
