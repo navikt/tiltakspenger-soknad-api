@@ -44,6 +44,7 @@ fun mockTiltak(
         typeNavn = typeNavn,
         arenaRegistrertPeriode = arenaRegistrertPeriode,
         gjennomforingId = gjennomforingId,
+        visningsnavn = "$typeNavn hos $arrangør",
     )
 
 fun mockKvalifiseringsprogram(

@@ -43,6 +43,7 @@ private fun tiltak() = Tiltak(
     typeNavn = "test",
     arenaRegistrertPeriode = null,
     gjennomforingId = UUID.randomUUID().toString(),
+    visningsnavn = "Tiltakstype hos Arrangør",
 )
 
 fun spørsmålsbesvarelser(

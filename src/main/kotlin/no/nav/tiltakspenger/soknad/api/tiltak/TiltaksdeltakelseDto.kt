@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakType
+import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import java.time.LocalDate
 
 data class Deltakelsesperiode(
@@ -16,6 +16,7 @@ data class TiltaksdeltakelseDto(
     val arenaRegistrertPeriode: Deltakelsesperiode,
     val arrangør: String,
     val gjennomforingId: String,
+    val visningsnavn: String?,
 ) {
     fun erInnenforRelevantTidsrom(): Boolean {
         val datoFor6MånederSiden = LocalDate.now().minusMonths(6)
@@ -31,7 +32,7 @@ data class TiltaksdeltakelseDto(
     }
 }
 
-fun List<TiltakDTO>.toTiltakDto(maskerArrangørnavn: Boolean): List<TiltaksdeltakelseDto> {
+fun List<TiltakshistorikkDTO>.toTiltakDto(maskerArrangørnavn: Boolean): List<TiltaksdeltakelseDto> {
     return this.map {
         TiltaksdeltakelseDto(
             aktivitetId = it.id,
@@ -41,8 +42,9 @@ fun List<TiltakDTO>.toTiltakDto(maskerArrangørnavn: Boolean): List<Tiltaksdelta
                 fra = it.deltakelseFom,
                 til = it.deltakelseTom,
             ),
-            arrangør = if (maskerArrangørnavn) "" else it.gjennomforing.arrangørnavn,
+            arrangør = if (maskerArrangørnavn) "" else it.gjennomforing.arrangornavn ?: "Ukjent",
             gjennomforingId = it.gjennomforing.id,
+            visningsnavn = if (maskerArrangørnavn) it.gjennomforing.typeNavn else it.gjennomforing.visningsnavn,
         )
     }
 }

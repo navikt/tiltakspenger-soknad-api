@@ -4,9 +4,9 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
+import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.time.LocalDateTime
 import kotlin.test.assertEquals
 
 internal class TiltakServiceTest {
@@ -56,22 +56,22 @@ internal class TiltakServiceTest {
 
     private fun mockTiltakspengerTiltakResponsDTO(arrangør: String = "Arrangør AS") =
         listOf(
-            TiltakResponsDTO.TiltakDTO(
+            TiltakshistorikkDTO(
                 id = "123456",
-                gjennomforing = TiltakResponsDTO.GjennomføringDTO(
+                gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
                     id = "123456",
                     arenaKode = TiltakResponsDTO.TiltakType.ABIST,
                     typeNavn = "typenavn",
-                    arrangørnavn = arrangør,
+                    arrangornavn = arrangør,
                     deltidsprosent = 100.0,
+                    visningsnavn = "Typenavn hos $arrangør",
                 ),
                 deltakelseFom = null,
                 deltakelseTom = null,
                 deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
-                deltakelseDagerUke = null,
+                antallDagerPerUke = null,
                 deltakelseProsent = null,
-                kilde = "Komet",
-                registrertDato = LocalDateTime.now(),
+                kilde = TiltakshistorikkDTO.Kilde.KOMET,
             ),
         )
 }

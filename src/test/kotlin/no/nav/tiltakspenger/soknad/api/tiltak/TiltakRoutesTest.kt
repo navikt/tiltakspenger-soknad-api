@@ -20,7 +20,7 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
-import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakDTO
+import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.FORTROLIG
@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.assertEquals
 
@@ -55,6 +54,7 @@ internal class TiltakRoutesTest {
                 arenaRegistrertPeriode = Deltakelsesperiode(null, null),
                 arrangør = "Testarrangør AS",
                 gjennomforingId = gjennomforingId,
+                visningsnavn = "Typenavn hos Testarrangør AS",
             ),
         )
     private val testFødselsnummer = "12345678910"
@@ -320,22 +320,22 @@ internal class TiltakRoutesTest {
 
     private fun mockTiltakspengerTiltakResponse(arrangør: String = "Arrangør AS") =
         listOf(
-            TiltakDTO(
+            TiltakshistorikkDTO(
                 id = "123456",
-                gjennomforing = TiltakResponsDTO.GjennomføringDTO(
+                gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
                     id = gjennomforingId,
                     arenaKode = TiltakResponsDTO.TiltakType.ABOPPF,
                     typeNavn = "typenavn",
-                    arrangørnavn = arrangør,
+                    arrangornavn = arrangør,
                     deltidsprosent = 100.0,
+                    visningsnavn = "Typenavn hos $arrangør",
                 ),
                 deltakelseFom = null,
                 deltakelseTom = null,
                 deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
-                deltakelseDagerUke = null,
-                kilde = "Komet",
+                antallDagerPerUke = null,
+                kilde = TiltakshistorikkDTO.Kilde.KOMET,
                 deltakelseProsent = null,
-                registrertDato = LocalDateTime.now(),
             ),
         )
 }
