@@ -17,6 +17,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
@@ -63,7 +64,7 @@ internal class TiltakRoutesTest {
     fun setupMocks() {
         clearMocks(texasClient, pdlService, tiltakspengerTiltakClient)
         coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT
-        coEvery { tiltakspengerTiltakClient.fetchTiltak(any()) } returns Result.success(mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS"))
+        coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns Result.success(mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS"))
     }
 
     @BeforeAll
@@ -194,7 +195,7 @@ internal class TiltakRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${token.serialize()}")
                 }
-                coVerify { tiltakspengerTiltakClient.fetchTiltak(token.serialize()) }
+                coVerify { tiltakspengerTiltakClient.fetchTiltak(token.serialize(), Fnr.fromString(testFødselsnummer)) }
             }
         }
     }

@@ -29,7 +29,11 @@ fun Route.pdlRoutes(
                 val fødselsnummer = principal.fnr
                 val subjectToken = principal.token
 
-                val tiltak = tiltakService.hentTiltak(subjectToken = subjectToken, maskerArrangørnavn = true)
+                val tiltak = tiltakService.hentTiltak(
+                    subjectToken = subjectToken,
+                    fnr = fødselsnummer,
+                    maskerArrangørnavn = true,
+                )
                 val tiltakMedTidligsteFradato = tiltak
                     .filter { it.arenaRegistrertPeriode.fra != null }
                     .sortedBy { it.arenaRegistrertPeriode.fra }

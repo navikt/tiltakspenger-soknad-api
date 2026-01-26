@@ -1,15 +1,19 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.tiltakspenger.libs.common.Fnr
 
 class TiltakService(
     private val tiltakspengerTiltakClient: TiltakspengerTiltakClient,
 ) {
     private val log = KotlinLogging.logger {}
 
-    suspend fun hentTiltak(subjectToken: String, maskerArrangørnavn: Boolean): List<TiltaksdeltakelseDto> {
+    suspend fun hentTiltak(subjectToken: String, fnr: Fnr, maskerArrangørnavn: Boolean): List<TiltaksdeltakelseDto> {
         log.info { "Henter tiltak" }
-        val result = tiltakspengerTiltakClient.fetchTiltak(subjectToken = subjectToken)
+        val result = tiltakspengerTiltakClient.fetchTiltak(
+            subjectToken = subjectToken,
+            fnr = fnr,
+        )
         if (result.isSuccess) {
             log.info { "Henting av tiltak OK" }
             val tiltak = result.getOrNull()

@@ -33,8 +33,6 @@ import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
-import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.JournalforendeEnhetService
-import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforendeEnhet.arbeidsfordeling.ArbeidsfordelingClient
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
@@ -66,11 +64,6 @@ internal fun start(
         tokenUrl = Configuration.naisTokenEndpoint,
         tokenExchangeUrl = Configuration.tokenExchangeEndpoint,
     )
-
-    val arbeidsfordelingClient = ArbeidsfordelingClient(baseUrl = Configuration.norg2Url) {
-        texasClient.getSystemToken(audienceTarget = Configuration.norg2Scope, identityProvider = IdentityProvider.AZUREAD)
-    }
-    val journalforendeEnhetService = JournalforendeEnhetService(arbeidsfordelingClient)
 
     val dokarkivClient = DokarkivClient(baseUrl = Configuration.dokarkivUrl) {
         texasClient.getSystemToken(audienceTarget = Configuration.dokarkivScope, identityProvider = IdentityProvider.AZUREAD)
