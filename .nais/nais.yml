@@ -63,7 +63,6 @@ spec:
       external:
         - host: {{outboundExternalUrls.pdl}}
         - host: {{outboundExternalUrls.dokarkiv}}
-        - host: {{outboundExternalUrls.norg2}}
   env:
     - name: PDL_ENDPOINT_URL
       value: {{ endpoints.pdl }}
@@ -85,10 +84,6 @@ spec:
       value: {{ endpoints.tiltakspengertiltak }}
     - name: TILTAKSPENGER_TILTAK_SCOPE
       value: {{ scope.tiltakspengertiltak }}
-    - name: NORG2_ENDPOINT_URL
-      value: {{ endpoints.norg2 }}
-    - name: NORG2_SCOPE
-      value: {{ scope.norg2 }}
   resources:
     limits:
       memory: 2048Mi

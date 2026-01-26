@@ -32,8 +32,6 @@ object Configuration {
                 "DOKARKIV_ENDPOINT_URL" to System.getenv("DOKARKIV_ENDPOINT_URL"),
                 "VEDTAK_SCOPE" to System.getenv("VEDTAK_SCOPE"),
                 "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to System.getenv("TILTAKSPENGER_VEDTAK_ENDPOINT_URL"),
-                "NORG2_SCOPE" to System.getenv("NORG2_SCOPE"),
-                "NORG2_ENDPOINT_URL" to System.getenv("NORG2_ENDPOINT_URL"),
                 "PDF_ENDPOINT_URL" to System.getenv("PDF_ENDPOINT_URL"),
                 "AV_ENDPOINT_URL" to System.getenv("AV_ENDPOINT_URL"),
                 "TILTAKSPENGER_TILTAK_SCOPE" to System.getenv("TILTAKSPENGER_TILTAK_SCOPE"),
@@ -56,8 +54,6 @@ object Configuration {
                 "DOKARKIV_ENDPOINT_URL" to "http://localhost:8484",
                 "VEDTAK_SCOPE" to "localhost",
                 "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to "http://host.docker.internal:8080",
-                "NORG2_SCOPE" to "localhost",
-                "NORG2_ENDPOINT_URL" to "http://localhost:8484",
                 "PDF_ENDPOINT_URL" to "http://localhost:8085",
                 "AV_ENDPOINT_URL" to "http://localhost:8484/av",
                 "TILTAKSPENGER_TILTAK_SCOPE" to "localhost",
@@ -113,13 +109,11 @@ object Configuration {
     val pdlScope: String by lazy { config()[Key("PDL_SCOPE", stringType)] }
     val dokarkivScope: String by lazy { config()[Key("DOKARKIV_SCOPE", stringType)] }
     val saksbehandlingApiScope: String by lazy { config()[Key("VEDTAK_SCOPE", stringType)] }
-    val norg2Scope: String by lazy { config()[Key("NORG2_SCOPE", stringType)] }
     val tiltakspengerTiltakScope: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_SCOPE", stringType)] }
 
     val pdlUrl by lazy { config()[Key("PDL_ENDPOINT_URL", stringType)] }
     val dokarkivUrl: String by lazy { config()[Key("DOKARKIV_ENDPOINT_URL", stringType)] }
     val saksbehandlingApiUrl: String by lazy { config()[Key("TILTAKSPENGER_VEDTAK_ENDPOINT_URL", stringType)] }
-    val norg2Url: String by lazy { config()[Key("NORG2_ENDPOINT_URL", stringType)] }
     val pdfUrl: String by lazy { config()[Key("PDF_ENDPOINT_URL", stringType)] }
     val avUrl: String by lazy { config()[Key("AV_ENDPOINT_URL", stringType)] }
     val tiltakspengerTiltakUrl: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_ENDPOINT_URL", stringType)] }
