@@ -38,6 +38,7 @@ fun Route.tiltakRoutes(
                     tiltakService.hentTiltak(
                         subjectToken = subjectToken,
                         maskerArrangørnavn = adressebeskyttelse != UGRADERT,
+                        fnr = fødselsnummer,
                     ),
                 )
 
