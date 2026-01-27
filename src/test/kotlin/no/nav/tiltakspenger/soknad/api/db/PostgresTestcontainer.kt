@@ -1,8 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.db
 
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 
-object PostgresTestcontainer : PostgreSQLContainer<PostgresTestcontainer>("postgres:16-alpine") {
+object PostgresTestcontainer : PostgreSQLContainer("postgres:16-alpine") {
 
     private const val DB_USERNAME_KEY = "DB_USERNAME"
     private const val DB_PASSWORD_KEY = "DB_PASSWORD"
