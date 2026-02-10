@@ -5,13 +5,13 @@ val javaVersion = JavaVersion.VERSION_21
 val mockkVersion = "1.14.9"
 val ktorVersion = "3.4.0"
 val kotestVersion = "6.1.2"
-val jacksonVersion = "2.21.0"
+val jacksonVersion = "3.0.4"
 val jacksonAnnotationsVersion = "2.21"
 val kotlinxCoroutinesVersion = "1.10.2"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.6"
-val felleslibVersion = "0.0.673"
+val felleslibVersion = "0.0.685"
 val flywayVersjon = "12.0.0"
 val testContainersVersion = "2.0.3"
 
@@ -58,10 +58,9 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
     implementation("io.ktor:ktor-http:$ktorVersion")
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
-    implementation("io.ktor:ktor-serialization:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-jackson3:$ktorVersion")
     implementation("io.ktor:ktor-utils:$ktorVersion")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
@@ -77,9 +76,8 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
 
     // Jackson
-    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    implementation("tools.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotationsVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // DB
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersjon")

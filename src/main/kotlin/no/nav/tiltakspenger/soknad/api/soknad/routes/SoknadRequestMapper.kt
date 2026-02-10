@@ -4,7 +4,7 @@ import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
-import no.nav.tiltakspenger.soknad.api.deserialize
+import no.nav.tiltakspenger.libs.json.deserialize
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.validerRequest
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType

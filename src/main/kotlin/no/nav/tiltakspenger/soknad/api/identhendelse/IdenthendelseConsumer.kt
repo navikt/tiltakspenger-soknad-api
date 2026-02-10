@@ -1,6 +1,5 @@
 package no.nav.tiltakspenger.soknad.api.identhendelse
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.kafka.Consumer
@@ -12,6 +11,7 @@ import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.KAFKA_CONSUMER_GROUP_ID
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
+import tools.jackson.module.kotlin.readValue
 import java.util.UUID
 
 class IdenthendelseConsumer(

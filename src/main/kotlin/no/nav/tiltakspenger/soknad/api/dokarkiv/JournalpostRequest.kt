@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.dokarkiv
 
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
-import no.nav.tiltakspenger.soknad.api.objectMapper
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import java.util.Base64
 

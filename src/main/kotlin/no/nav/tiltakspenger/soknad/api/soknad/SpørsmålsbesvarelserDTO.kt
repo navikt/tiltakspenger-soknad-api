@@ -1,10 +1,10 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
 import no.nav.tiltakspenger.libs.common.SaniterStringForPdfgen.saniter
-import no.nav.tiltakspenger.soknad.api.deserialize
+import no.nav.tiltakspenger.libs.json.deserialize
+import no.nav.tiltakspenger.libs.json.serialize
 import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
-import no.nav.tiltakspenger.soknad.api.serialize
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.security.InvalidParameterException
 import java.time.LocalDate

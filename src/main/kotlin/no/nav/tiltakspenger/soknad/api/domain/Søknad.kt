@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.domain
 
-import no.nav.tiltakspenger.soknad.api.deserialize
-import no.nav.tiltakspenger.soknad.api.serialize
+import no.nav.tiltakspenger.libs.json.deserialize
+import no.nav.tiltakspenger.libs.json.serialize
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import java.security.InvalidParameterException
 import java.time.LocalDateTime
