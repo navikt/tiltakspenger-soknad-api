@@ -12,10 +12,10 @@ internal class DataSourceTest {
 
     @Test
     fun `flyway migrations skal kjøre uten feil`() {
-        /**
-         * The colima docker environment has another behavior when bootstrapping container. It is possible to fail to make a connection right after
-         * PostgreSQLContainer.getMappedPort(). Most probably it's an issue of Colima that should be addressed, but right now the workaround suggested: retry after one second.
-         * https://github.com/abiosoft/colima/issues/71
+        /*
+         The colima docker environment has another behavior when bootstrapping container. It is possible to fail to make a connection right after
+         PostgreSQLContainer.getMappedPort(). Most probably it's an issue of Colima that should be addressed, but right now the workaround suggested: retry after one second.
+         https://github.com/abiosoft/colima/issues/71
          */
         try {
             flywayMigrate()
