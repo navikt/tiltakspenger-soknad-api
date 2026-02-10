@@ -135,16 +135,22 @@ fun FellesPersonklientError.mapError(): Nothing {
         )
 
         is FantIkkePerson -> throw RuntimeException("Feil ved henting av personopplysninger: FantIkkePerson")
+
         is FødselKunneIkkeAvklares -> throw RuntimeException("Feil ved henting av personopplysninger: FødselKunneIkkeAvklares")
+
         is Ikke2xx -> throw RuntimeException("Feil ved henting av personopplysninger: $this")
+
         is IngenNavnFunnet -> throw RuntimeException("Feil ved henting av personopplysninger: IngenNavnFunnet")
+
         is NavnKunneIkkeAvklares -> throw RuntimeException("Feil ved henting av personopplysninger: NavnKunneIkkeAvklares")
+
         is NetworkError -> throw RuntimeException(
             "Feil ved henting av personopplysninger: NetworkError",
             this.exception,
         )
 
         is ResponsManglerData -> throw RuntimeException("Feil ved henting av personopplysninger: ResponsManglerPerson")
+
         is UkjentFeil -> throw RuntimeException("Feil ved henting av personopplysninger: $this")
     }
 }
