@@ -10,8 +10,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.ByteArrayContent
 import io.ktor.http.contentType
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
-import no.nav.tiltakspenger.soknad.api.objectMapper
 import no.nav.tiltakspenger.soknad.api.util.Bilde
 import no.nav.tiltakspenger.soknad.api.util.Detect.APPLICATON_PDF
 import no.nav.tiltakspenger.soknad.api.util.Detect.IMAGE_JPEG

@@ -1,11 +1,11 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client
 
 import arrow.core.getOrElse
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.AccessToken
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklient
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError.AdressebeskyttelseKunneIkkeAvklares
@@ -20,11 +20,11 @@ import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError.Respon
 import no.nav.tiltakspenger.libs.personklient.pdl.FellesPersonklientError.UkjentFeil
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
-import no.nav.tiltakspenger.soknad.api.objectMapper
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnBolkQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentPersonQuery
+import tools.jackson.module.kotlin.readValue
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

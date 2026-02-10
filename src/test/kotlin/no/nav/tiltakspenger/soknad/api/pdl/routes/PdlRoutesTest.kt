@@ -8,7 +8,7 @@ import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson3.JacksonConverter
 import io.ktor.server.testing.testApplication
 import io.mockk.clearMocks
 import io.mockk.coEvery
@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
@@ -77,7 +78,7 @@ internal class PdlRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
                 }
             }
             configureTestApplication(
@@ -110,7 +111,7 @@ internal class PdlRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
                 }
             }
 
@@ -134,7 +135,7 @@ internal class PdlRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
                 }
             }
 
@@ -165,7 +166,7 @@ internal class PdlRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
                 }
             }
 
@@ -195,7 +196,7 @@ internal class PdlRoutesTest {
         testApplication {
             val client = createClient {
                 install(ContentNegotiation) {
-                    jackson()
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
                 }
             }
 

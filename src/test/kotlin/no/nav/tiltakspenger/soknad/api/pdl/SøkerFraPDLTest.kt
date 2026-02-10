@@ -1,24 +1,15 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.readValue
 
 class SøkerFraPDLTest {
 
     @Test
     fun mappe() {
-        val mapper = JsonMapper.builder()
-            .addModule(KotlinModule.Builder().build())
-            .addModule(JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .build()
-
-        val respons: SøkerRespons = mapper.readValue(json)
+        objectMapper.readValue<SøkerRespons>(json)
     }
 
     private val json = """
