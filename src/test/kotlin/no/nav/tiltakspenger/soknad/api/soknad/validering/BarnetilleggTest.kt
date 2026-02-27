@@ -16,7 +16,7 @@ internal class BarnetilleggTest {
                     mockManueltRegistrertBarn(
                         fornavn = "Test Test Test Test Test Test Test Test",
                         mellomnavn = "Test",
-                        etternavn = "a".toString().repeat(1001),
+                        etternavn = "a".repeat(1001),
                     ),
                 ),
             ),
@@ -31,7 +31,7 @@ internal class BarnetilleggTest {
                     mockManueltRegistrertBarn(
                         fornavn = "Test",
                         mellomnavn = "Test Test Test Test Test Test Test Test",
-                        etternavn = "a".toString().repeat(1001),
+                        etternavn = "a".repeat(1001),
                     ),
                 ),
             ),
@@ -46,7 +46,7 @@ internal class BarnetilleggTest {
                     mockManueltRegistrertBarn(
                         fornavn = "Test",
                         mellomnavn = "Test",
-                        etternavn = "a".toString().repeat(1001),
+                        etternavn = "a".repeat(1001),
                     ),
                 ),
             ),
