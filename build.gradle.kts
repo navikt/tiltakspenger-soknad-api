@@ -68,7 +68,7 @@ dependencies {
     implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
     // Arrow
-    implementation("io.arrow-kt:arrow-core:2.2.1.1")
+    implementation("io.arrow-kt:arrow-core:2.2.2")
 
     // Prometheus
     implementation("io.prometheus:simpleclient:$prometheusVersion")
