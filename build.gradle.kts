@@ -19,7 +19,7 @@ plugins {
     application
     distribution
     kotlin("jvm") version "2.3.20"
-    id("com.diffplug.spotless") version "8.3.0"
+    id("com.diffplug.spotless") version "8.4.0"
 }
 
 repositories {
