@@ -89,7 +89,7 @@ dependencies {
     implementation("org.apache.pdfbox:pdfbox:$pdfboxVersion")
 
     // Apache Tika
-    implementation("org.apache.tika:tika-core:3.2.3")
+    implementation("org.apache.tika:tika-core:3.3.0")
 
     // Caffeine
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
