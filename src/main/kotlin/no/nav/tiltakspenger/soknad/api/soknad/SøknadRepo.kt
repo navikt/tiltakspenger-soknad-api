@@ -5,16 +5,18 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
-import no.nav.tiltakspenger.soknad.api.db.DataSource
 import no.nav.tiltakspenger.soknad.api.domain.toDbJson
 import no.nav.tiltakspenger.soknad.api.domain.toSøknadDbJson
 import no.nav.tiltakspenger.soknad.api.vedlegg.toDbJson
 import no.nav.tiltakspenger.soknad.api.vedlegg.vedleggDbJson
 import org.intellij.lang.annotations.Language
+import javax.sql.DataSource
 
-class SøknadRepo {
+class SøknadRepo(
+    private val dataSource: DataSource,
+) {
     fun lagre(dto: MottattSøknad) {
-        sessionOf(DataSource.hikariDataSource).use {
+        sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -43,7 +45,7 @@ class SøknadRepo {
     }
 
     fun oppdater(dto: MottattSøknad) {
-        sessionOf(DataSource.hikariDataSource).use {
+        sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -65,7 +67,7 @@ class SøknadRepo {
     }
 
     fun hentSoknaderUtenSaksnummer(): List<MottattSøknad> {
-        return sessionOf(DataSource.hikariDataSource).use {
+        return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -87,7 +89,7 @@ class SøknadRepo {
     }
 
     fun hentAlleSøknadDbDtoSomIkkeErJournalført(): List<MottattSøknad> {
-        return sessionOf(DataSource.hikariDataSource).use {
+        return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -109,7 +111,7 @@ class SøknadRepo {
     }
 
     fun hentSøknaderSomSkalSendesTilSaksbehandlingApi(): List<MottattSøknad> {
-        return sessionOf(DataSource.hikariDataSource).use {
+        return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -132,7 +134,7 @@ class SøknadRepo {
     }
 
     fun hentBrukersSøknader(fnr: String, eier: Applikasjonseier): List<MottattSøknad> {
-        return sessionOf(DataSource.hikariDataSource).use {
+        return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -155,7 +157,7 @@ class SøknadRepo {
     }
 
     fun hentSoknad(soknadId: SøknadId): MottattSøknad? {
-        return sessionOf(DataSource.hikariDataSource).use {
+        return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
@@ -174,7 +176,7 @@ class SøknadRepo {
     }
 
     fun oppdaterFnr(gammeltFnr: Fnr, nyttFnr: Fnr) {
-        sessionOf(DataSource.hikariDataSource).use {
+        sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(

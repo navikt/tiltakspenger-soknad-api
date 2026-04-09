@@ -7,7 +7,7 @@ fun flywayMigrate() {
         .configure()
         .loggers("slf4j")
         .encoding("UTF-8")
-        .dataSource(DataSource.hikariDataSource)
+        .dataSource(DataSource.dataSource)
         .load()
         .migrate()
 }

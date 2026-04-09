@@ -11,8 +11,8 @@ val kotlinxCoroutinesVersion = "1.10.2"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.7"
-val felleslibVersion = "0.0.737"
-val flywayVersjon = "12.3.0"
+val felleslibVersion = "0.0.749"
+val flywayVersjon = "12.2.0"
 val testContainersVersion = "2.0.4"
 
 plugins {
@@ -48,6 +48,7 @@ dependencies {
     implementation("com.github.navikt.tiltakspenger-libs:json:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:logging:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:kafka:$felleslibVersion")
+    implementation("com.github.navikt.tiltakspenger-libs:periodisering:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:texas:$felleslibVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
 
@@ -113,6 +114,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testContainersVersion")
     testImplementation("org.testcontainers:testcontainers-postgresql:$testContainersVersion")
     testImplementation("com.github.navikt.tiltakspenger-libs:test-common:$felleslibVersion")
+    testImplementation("com.github.navikt.tiltakspenger-libs:persistering-test-common:$felleslibVersion")
 }
 
 application {

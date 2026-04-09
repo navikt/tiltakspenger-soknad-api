@@ -8,8 +8,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
-import no.nav.tiltakspenger.soknad.api.db.DataSource
-import no.nav.tiltakspenger.soknad.api.db.PostgresTestcontainer
+import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.dokarkiv.JOURNALFORENDE_ENHET_AUTOMATISK_BEHANDLING
@@ -22,53 +21,36 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingSe
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import no.nav.tiltakspenger.soknad.api.util.getTestNavnFraPdl
-import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDateTime
 
-@Testcontainers
 class SøknadJobbServiceTest {
-    private val søknadRepo = SøknadRepo()
     private val pdlService = mockk<PdlService>()
     private val pdfService = mockk<PdfService>()
     private val dokarkivClient = mockk<DokarkivClient>()
     private val dokarkivService = DokarkivService(dokarkivClient)
     private val journalforingService = JournalforingService(pdfService, dokarkivService)
     private val saksbehandlingApiKlient = mockk<SaksbehandlingApiKlient>(relaxed = true)
-    private val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
     private val saksnummer = "1234"
     private val navn = getTestNavnFraPdl()
     private val journalpostId = "15"
 
-    init {
-        PostgresTestcontainer.start()
-    }
-
-    @BeforeEach
-    fun setup() {
+    private fun withSetup(test: suspend (SøknadRepo, SøknadJobbService) -> Unit) {
         clearMocks(saksbehandlingApiKlient, pdlService, pdfService, dokarkivClient)
-        Flyway.configure()
-            .dataSource(DataSource.hikariDataSource)
-            .loggers("slf4j")
-            .encoding("UTF-8")
-            .cleanDisabled(false)
-            .load()
-            .run {
-                clean()
-                migrate()
-            }
-
         coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns saksnummer
         coEvery { pdlService.hentNavnForFnr(any(), any()) } returns navn
         coEvery { pdfService.lagPdf(any()) } returns "pdf".toByteArray()
         coEvery { pdfService.konverterVedlegg(any()) } returns emptyList()
         coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } returns journalpostId
+        testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
+            val søknadRepo = SøknadRepo(dataSource)
+            val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
+            runBlocking { test(søknadRepo, søknadJobbService) }
+        }
     }
 
     @Test
-    fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier TP - henter og lagrer saksnummer`(): Unit = runBlocking {
+    fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier TP - henter og lagrer saksnummer`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -85,7 +67,7 @@ class SøknadJobbServiceTest {
     }
 
     @Test
-    fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier Arena - oppdaterer ikke`(): Unit = runBlocking {
+    fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier Arena - oppdaterer ikke`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -103,7 +85,7 @@ class SøknadJobbServiceTest {
     }
 
     @Test
-    fun `journalførLagredeSøknader - eier TP - journalfører og ferdigstiller automatisk`(): Unit = runBlocking {
+    fun `journalførLagredeSøknader - eier TP - journalfører og ferdigstiller automatisk`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -132,7 +114,7 @@ class SøknadJobbServiceTest {
     }
 
     @Test
-    fun `journalførLagredeSøknader - eier arena - oppretter journalpost, ferdigstiller ikke`(): Unit = runBlocking {
+    fun `journalførLagredeSøknader - eier arena - oppretter journalpost, ferdigstiller ikke`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -161,7 +143,7 @@ class SøknadJobbServiceTest {
     }
 
     @Test
-    fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier TP - sender til saksbehandling-api`(): Unit = runBlocking {
+    fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier TP - sender til saksbehandling-api`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -190,7 +172,7 @@ class SøknadJobbServiceTest {
     }
 
     @Test
-    fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier Arena - sender ikke til saksbehandling-api`(): Unit = runBlocking {
+    fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier Arena - sender ikke til saksbehandling-api`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
         val opprettet = LocalDateTime.now()
         val mottattSøknad = genererMottattSøknadForTest(

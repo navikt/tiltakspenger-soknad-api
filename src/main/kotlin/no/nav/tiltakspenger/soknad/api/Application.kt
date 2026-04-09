@@ -15,9 +15,11 @@ import no.nav.tiltakspenger.libs.jobber.LeaderPodLookupFeil
 import no.nav.tiltakspenger.libs.jobber.RunCheckFactory
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.tid.zoneIdOslo
 import no.nav.tiltakspenger.soknad.api.Configuration.httpPort
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
+import no.nav.tiltakspenger.soknad.api.db.DataSource
 import no.nav.tiltakspenger.soknad.api.db.flywayMigrate
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -36,6 +38,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
+import java.time.Clock
 
 fun main() {
     System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile())
@@ -48,6 +51,7 @@ fun main() {
 internal fun start(
     log: KLogger,
     port: Int = httpPort(),
+    clock: Clock = Clock.system(zoneIdOslo),
 ) {
     DefaultExports.initialize()
     val metricsCollector = MetricsCollector()
@@ -63,6 +67,7 @@ internal fun start(
         introspectionUrl = Configuration.naisTokenIntrospectionEndpoint,
         tokenUrl = Configuration.naisTokenEndpoint,
         tokenExchangeUrl = Configuration.tokenExchangeEndpoint,
+        clock = clock,
     )
 
     val dokarkivClient = DokarkivClient(baseUrl = Configuration.dokarkivUrl) {
@@ -79,7 +84,7 @@ internal fun start(
         dokarkivService = DokarkivService(dokarkivClient),
     )
 
-    val søknadRepo = SøknadRepo()
+    val søknadRepo = SøknadRepo(DataSource.dataSource)
     val pdlService = PdlService(
         pdlClient = PdlClient(
             endepunkt = Configuration.pdlUrl,

@@ -2,8 +2,7 @@ package no.nav.tiltakspenger.soknad.api.repository
 
 import io.kotest.matchers.shouldBe
 import no.nav.tiltakspenger.libs.common.fixedClock
-import no.nav.tiltakspenger.soknad.api.db.DataSource
-import no.nav.tiltakspenger.soknad.api.db.PostgresTestcontainer
+import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
@@ -11,40 +10,22 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
-import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@Testcontainers
 internal class SøknadRepoTest {
-    private val søknadRepo = SøknadRepo()
-
-    init {
-        PostgresTestcontainer.start()
-    }
-
-    @BeforeEach
-    fun setup() {
-        Flyway.configure()
-            .dataSource(DataSource.hikariDataSource)
-            .loggers("slf4j")
-            .encoding("UTF-8")
-            .cleanDisabled(false)
-            .load()
-            .run {
-                clean()
-                migrate()
-            }
+    private fun withCleanDb(test: (SøknadRepo) -> Unit) {
+        testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
+            test(SøknadRepo(dataSource))
+        }
     }
 
     @Nested
     inner class KanLagreSøknad {
         @Test
-        fun `lagrer en helt vanlig søknad`() {
+        fun `lagrer en helt vanlig søknad`() = withCleanDb { søknadRepo ->
             val nå = LocalDateTime.now(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
@@ -56,7 +37,7 @@ internal class SøknadRepoTest {
         }
 
         @Test
-        fun `kan lagre og hente en søknad som ikke har fnr i barnetillegg`() {
+        fun `kan lagre og hente en søknad som ikke har fnr i barnetillegg`() = withCleanDb { søknadRepo ->
             val nå = LocalDateTime.now(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
@@ -82,7 +63,7 @@ internal class SøknadRepoTest {
         }
 
         @Test
-        fun `kan lagre og hente en søknad som har fnr i barnetillegg`() {
+        fun `kan lagre og hente en søknad som har fnr i barnetillegg`() = withCleanDb { søknadRepo ->
             val nå = LocalDateTime.now(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
@@ -109,7 +90,7 @@ internal class SøknadRepoTest {
     }
 
     @Test
-    fun `lagrer mottat søknad, journalfører, og sender til sbh-api`() {
+    fun `lagrer mottat søknad, journalfører, og sender til sbh-api`() = withCleanDb { søknadRepo ->
         val nå = LocalDateTime.now()
         val søknad = søknad()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -156,7 +137,7 @@ internal class SøknadRepoTest {
     }
 
     @Test
-    fun `søknad til arena`() {
+    fun `søknad til arena`() = withCleanDb { søknadRepo ->
         val nå = LocalDateTime.now()
         val søknad = søknad()
         val mottattSøknad = genererMottattSøknadForTest(
@@ -187,7 +168,7 @@ internal class SøknadRepoTest {
     }
 
     @Test
-    fun `hent brukers søknader`() {
+    fun `hent brukers søknader`() = withCleanDb { søknadRepo ->
         val nå = LocalDateTime.now()
         val fnr = "12345678910"
         val mottattSøknad = genererMottattSøknadForTest(
