@@ -14,6 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import no.nav.tiltakspenger.libs.common.AccessToken
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
@@ -36,7 +37,7 @@ class DokarkivClient(
         request: JournalpostRequest,
         søknadId: SøknadId,
         callId: String,
-    ): String {
+    ): JournalpostId {
         try {
             log.info { "Henter credentials for å arkivere i dokarkiv" }
             val token = getToken().token
@@ -56,12 +57,12 @@ class DokarkivClient(
             if (request.kanFerdigstilleAutomatisk() && !response.journalpostferdigstilt) {
                 throw IllegalStateException("DokarkivClient: Journalpost ${response.journalpostId} for søknad $søknadId ble opprettet, men ikke ferdigstilt")
             }
-            return response.journalpostId
+            return JournalpostId(response.journalpostId)
         } catch (throwable: Throwable) {
             if (throwable is ClientRequestException && throwable.response.status == HttpStatusCode.Conflict) {
                 val response = throwable.response.call.body<DokarkivResponse>()
                 log.info { "Søknad med id $søknadId har allerede blitt journalført (409 Conflict) med journalpostId ${response.journalpostId}" }
-                return response.journalpostId
+                return JournalpostId(response.journalpostId)
             }
             if (throwable is IllegalStateException) {
                 throw RuntimeException("DokarkivClient: Fikk en IllegalStateException", throwable)

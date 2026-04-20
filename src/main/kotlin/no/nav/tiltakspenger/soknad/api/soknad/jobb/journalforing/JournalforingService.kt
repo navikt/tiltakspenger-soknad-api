@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
@@ -25,7 +26,7 @@ class JournalforingService(
         søknadId: SøknadId,
         saksnummer: String?,
         callId: String,
-    ): Pair<String, Søknad> {
+    ): Pair<JournalpostId, Søknad> {
         val vedleggsnavn = vedlegg.map { it.filnavn }
         val søknad = Søknad.toSøknad(
             id = søknadId.toString(),

@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.dokarkiv
 
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
@@ -15,7 +16,7 @@ class DokarkivService(
         søknadId: SøknadId,
         callId: String,
         saksnummer: String?,
-    ): String {
+    ): JournalpostId {
         val journalpost = JournalpostRequest.from(
             fnr = fnr,
             søknad = søknad,

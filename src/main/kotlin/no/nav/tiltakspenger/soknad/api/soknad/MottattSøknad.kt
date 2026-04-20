@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
@@ -21,7 +22,7 @@ data class MottattSøknad(
     // TODO post-mvp jah: Skal vi endre navnet på denne? Til saksbehandlingApi eller noe mer generelt?
     val sendtTilVedtak: LocalDateTime?,
     val journalført: LocalDateTime?,
-    val journalpostId: String?,
+    val journalpostId: JournalpostId?,
     val opprettet: LocalDateTime,
     val eier: Applikasjonseier,
     val saksnummer: String?,

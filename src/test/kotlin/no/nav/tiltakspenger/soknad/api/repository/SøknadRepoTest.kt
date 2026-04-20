@@ -1,6 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.repository
 
 import io.kotest.matchers.shouldBe
+import kotliquery.queryOf
+import kotliquery.sessionOf
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
@@ -14,11 +17,18 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
+import javax.sql.DataSource
 
 internal class SøknadRepoTest {
     private fun withCleanDb(test: (SøknadRepo) -> Unit) {
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
             test(SøknadRepo(dataSource))
+        }
+    }
+
+    private fun withCleanDbAndDataSource(test: (SøknadRepo, DataSource) -> Unit) {
+        testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
+            test(SøknadRepo(dataSource), dataSource)
         }
     }
 
@@ -121,7 +131,7 @@ internal class SøknadRepoTest {
             fornavn = "fornavn",
             etternavn = "etternavn",
             journalført = nå,
-            journalpostId = "123",
+            journalpostId = JournalpostId("123"),
         )
         søknadRepo.oppdater(journalførtSøknad)
         søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().size shouldBe 0
@@ -157,7 +167,7 @@ internal class SøknadRepoTest {
             fornavn = "fornavn",
             etternavn = "etternavn",
             journalført = nå,
-            journalpostId = "123",
+            journalpostId = JournalpostId("123"),
         )
         søknadRepo.oppdater(journalførtSøknad)
         søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().size shouldBe 0
@@ -182,5 +192,35 @@ internal class SøknadRepoTest {
         brukersSøknader.size shouldBe 1
         brukersSøknader.first().fnr shouldBe fnr
         brukersSøknader.first().eier shouldBe Applikasjonseier.Tiltakspenger
+    }
+
+    @Test
+    fun `lagrer journalpostId som ren streng i databasen`() = withCleanDbAndDataSource { søknadRepo, dataSource ->
+        val journalpostId = JournalpostId("123")
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = LocalDateTime.now(),
+            eier = Applikasjonseier.Tiltakspenger,
+        ).copy(
+            søknad = søknad(),
+            fornavn = "fornavn",
+            etternavn = "etternavn",
+            journalført = LocalDateTime.now(),
+            journalpostId = journalpostId,
+        )
+
+        søknadRepo.lagre(mottattSøknad)
+
+        val lagretJournalpostId = sessionOf(dataSource).use {
+            it.run(
+                queryOf(
+                    "select journalpostId from søknad where id = :id",
+                    mapOf("id" to mottattSøknad.id.toString()),
+                ).map { row ->
+                    row.string("journalpostId")
+                }.asSingle,
+            )
+        }
+
+        lagretJournalpostId shouldBe journalpostId.toString()
     }
 }

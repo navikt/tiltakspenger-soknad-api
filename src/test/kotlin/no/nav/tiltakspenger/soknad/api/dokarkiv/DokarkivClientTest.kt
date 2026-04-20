@@ -10,6 +10,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.AccessToken
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.httpClientGeneric
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 
 internal class DokarkivClientTest {
-    private val journalpostId = "1"
+    private val journalpostId = JournalpostId("1")
     private val søknadId = SøknadId.random()
     private val baseurl = "http://dokarkiv"
 

@@ -8,6 +8,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -33,7 +34,7 @@ class SøknadJobbServiceTest {
     private val saksbehandlingApiKlient = mockk<SaksbehandlingApiKlient>(relaxed = true)
     private val saksnummer = "1234"
     private val navn = getTestNavnFraPdl()
-    private val journalpostId = "15"
+    private val journalpostId = JournalpostId("15")
 
     private fun withSetup(test: suspend (SøknadRepo, SøknadJobbService) -> Unit) {
         clearMocks(saksbehandlingApiKlient, pdlService, pdfService, dokarkivClient)
@@ -165,7 +166,7 @@ class SøknadJobbServiceTest {
 
         coVerify {
             saksbehandlingApiKlient.sendSøknad(
-                match { it.søknadId == mottattSøknad.søknad?.id && it.journalpostId == mottattSøknad.journalpostId && it.saksnummer == mottattSøknad.saksnummer },
+                match { it.søknadId == mottattSøknad.søknad?.id && it.journalpostId == mottattSøknad.journalpostId?.toString() && it.saksnummer == mottattSøknad.saksnummer },
                 correlationId,
             )
         }

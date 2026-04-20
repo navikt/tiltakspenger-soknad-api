@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.saksbehandlingApi
 
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.soknad.BarnetilleggDTO
 import no.nav.tiltakspenger.libs.soknad.FraOgMedDatoSpmDTO
 import no.nav.tiltakspenger.libs.soknad.JaNeiSpmDTO
@@ -21,7 +22,7 @@ import java.time.LocalDate
 
 fun søknadMapper(
     søknad: Søknad,
-    jounalpostId: String,
+    jounalpostId: JournalpostId,
     saksnummer: String,
 ): SøknadDTO {
     val soknad = if (!søknad.spørsmålsbesvarelser.mottarAndreUtbetalinger) {
@@ -42,7 +43,7 @@ fun søknadMapper(
     return SøknadDTO(
         søknadId = soknad.id,
         versjon = soknad.versjon,
-        journalpostId = jounalpostId,
+        journalpostId = jounalpostId.toString(),
         personopplysninger = PersonopplysningerDTO(
             ident = soknad.personopplysninger.ident,
             fornavn = soknad.personopplysninger.fornavn,

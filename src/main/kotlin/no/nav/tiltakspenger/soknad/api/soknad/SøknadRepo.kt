@@ -4,6 +4,7 @@ import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.domain.toDbJson
 import no.nav.tiltakspenger.soknad.api.domain.toSøknadDbJson
@@ -33,7 +34,7 @@ class SøknadRepo(
                             "etternavn" to dto.etternavn,
                             "sendtTilVedtak" to dto.sendtTilVedtak,
                             "journalfort" to dto.journalført,
-                            "journalpostId" to dto.journalpostId,
+                            "journalpostId" to dto.journalpostId?.toString(),
                             "opprettet" to dto.opprettet,
                             "eier" to dto.eier.toDb(),
                             "saksnummer" to dto.saksnummer,
@@ -57,7 +58,7 @@ class SøknadRepo(
                             "etternavn" to dto.etternavn,
                             "sendtTilVedtak" to dto.sendtTilVedtak,
                             "journalfort" to dto.journalført,
-                            "journalpostId" to dto.journalpostId,
+                            "journalpostId" to dto.journalpostId?.toString(),
                             "saksnummer" to dto.saksnummer,
                         ),
                     ).asUpdate,
@@ -204,7 +205,7 @@ class SøknadRepo(
             etternavn = stringOrNull("etternavn"),
             sendtTilVedtak = localDateTimeOrNull("sendt_til_vedtak"),
             journalført = localDateTimeOrNull("journalført"),
-            journalpostId = stringOrNull("journalpostId"),
+            journalpostId = stringOrNull("journalpostId")?.let(::JournalpostId),
             opprettet = localDateTime("opprettet"),
             eier = Applikasjonseier.toApplikasjonseier(string("eier")),
             saksnummer = stringOrNull("saksnummer"),
