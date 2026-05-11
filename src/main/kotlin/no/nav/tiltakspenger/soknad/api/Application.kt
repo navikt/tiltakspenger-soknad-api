@@ -13,6 +13,7 @@ import no.nav.tiltakspenger.libs.jobber.LeaderPodLookup
 import no.nav.tiltakspenger.libs.jobber.LeaderPodLookupClient
 import no.nav.tiltakspenger.libs.jobber.LeaderPodLookupFeil
 import no.nav.tiltakspenger.libs.jobber.RunCheckFactory
+import no.nav.tiltakspenger.libs.jobber.TaskExecutor
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
@@ -25,7 +26,6 @@ import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseConsumer
 import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseService
-import no.nav.tiltakspenger.soknad.api.jobber.TaskExecutor
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
 import no.nav.tiltakspenger.soknad.api.pdf.PdfServiceImpl
@@ -39,6 +39,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingSe
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
 import java.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
     System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile())
@@ -71,7 +72,10 @@ internal fun start(
     )
 
     val dokarkivClient = DokarkivClient(baseUrl = Configuration.dokarkivUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.dokarkivScope, identityProvider = IdentityProvider.AZUREAD)
+        texasClient.getSystemToken(
+            audienceTarget = Configuration.dokarkivScope,
+            identityProvider = IdentityProvider.AZUREAD,
+        )
     }
 
     val journalforingService = JournalforingService(
@@ -91,13 +95,19 @@ internal fun start(
             pdlScope = Configuration.pdlScope,
             texasClient = texasClient,
         ) {
-            texasClient.getSystemToken(audienceTarget = Configuration.pdlScope, identityProvider = IdentityProvider.AZUREAD)
+            texasClient.getSystemToken(
+                audienceTarget = Configuration.pdlScope,
+                identityProvider = IdentityProvider.AZUREAD,
+            )
         },
     )
 
     val nySøknadService = NySøknadService(søknadRepo)
     val saksbehandlingApiKlient = SaksbehandlingApiKlient(baseUrl = Configuration.saksbehandlingApiUrl) {
-        texasClient.getSystemToken(audienceTarget = Configuration.saksbehandlingApiScope, identityProvider = IdentityProvider.AZUREAD)
+        texasClient.getSystemToken(
+            audienceTarget = Configuration.saksbehandlingApiScope,
+            identityProvider = IdentityProvider.AZUREAD,
+        )
     }
 
     val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
@@ -163,6 +173,8 @@ internal fun start(
         }
     TaskExecutor.startJob(
         runCheckFactory = runCheckFactory,
+        mdcCallIdKey = "call-id",
+        intervall = 60.seconds,
         tasks =
         listOf { correlationId ->
             søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
@@ -187,6 +199,7 @@ internal fun start(
     log.info { "Starter server" }
     server.start(wait = true)
 }
+
 val isReadyKey = AttributeKey<Boolean>("isReady")
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
