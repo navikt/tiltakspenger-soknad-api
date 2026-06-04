@@ -27,6 +27,7 @@ fun Route.tiltakRoutes(
     val log = KotlinLogging.logger { }
     route(TILTAK_PATH) {
         get {
+            log.trace { "Mottok GET-request på /tiltak med callId ${call.callId}" }
             try {
                 val principal = call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val fødselsnummer = principal.fnr
