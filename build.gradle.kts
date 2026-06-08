@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 val javaVersion = JavaVersion.VERSION_21
-val mockkVersion = "1.14.9"
+val mockkVersion = "1.14.11"
 val ktorVersion = "3.4.3"
 val kotestVersion = "6.1.11"
 val jacksonVersion = "3.1.3"
