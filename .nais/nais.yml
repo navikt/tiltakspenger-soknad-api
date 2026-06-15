@@ -6,8 +6,8 @@ metadata:
   labels:
     team: tpts
   annotations:
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
     config.linkerd.io/proxy-outbound-connect-timeout: 3000ms
 spec:
@@ -23,13 +23,14 @@ spec:
     path: /isready
     initialDelay: 15
     periodSeconds: 5
-    failureThreshold: 1
+    failureThreshold: 3
+    timeout: 5
   prometheus:
     enabled: true
     path: /metrics
   replicas:
     min: 2
-    max: 2
+    max: 4
   kafka:
     pool: {{ kafka.pool }}
   tokenx:
