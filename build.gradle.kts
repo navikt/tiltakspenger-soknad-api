@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 val javaVersion = JavaVersion.VERSION_25
 val mockkVersion = "1.14.11"
 val ktorVersion = "3.4.3"
-val kotestVersion = "6.1.11"
+val kotestVersion = "6.2.1"
 val jacksonVersion = "3.2.0"
 val jacksonAnnotationsVersion = "2.22"
 val kotlinxCoroutinesVersion = "1.11.0"
@@ -12,14 +12,14 @@ val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.7"
 val felleslibVersion = "0.0.827"
-val flywayVersjon = "12.8.1"
+val flywayVersjon = "12.9.0"
 val testContainersVersion = "2.0.5"
 
 plugins {
     application
     distribution
     kotlin("jvm") version "2.4.0"
-    id("com.diffplug.spotless") version "8.6.0"
+    id("com.diffplug.spotless") version "8.7.0"
 }
 
 repositories {
@@ -82,7 +82,7 @@ dependencies {
 
     // DB
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersjon")
-    implementation("com.zaxxer:HikariCP:7.0.2")
+    implementation("com.zaxxer:HikariCP:7.1.0")
     implementation("org.postgresql:postgresql:42.7.11")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
