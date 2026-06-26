@@ -36,9 +36,12 @@ jobs:
 
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v6.2.0
+        with:
+          # Midlertidig avskrudd for å tvinge et friskt bygg etter flyway-bump (cache mistenkt for stale artefakt)
+          cache-disabled: true
 
       - name: Test and build application
-        run: ./gradlew build --info installDist
+        run: ./gradlew clean build --info installDist --no-build-cache --no-configuration-cache
 
       - name: Build and push docker image
         uses: nais/docker-build-push@v0
