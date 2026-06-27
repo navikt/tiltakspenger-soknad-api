@@ -1,8 +1,5 @@
 package no.nav.tiltakspenger.soknad.api.soknad.validering
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Etterlønn
@@ -20,15 +17,11 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadflyktninger
 import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
+import no.nav.tiltakspenger.libs.json.objectMapper
 import java.time.LocalDate
 import java.util.UUID
 
-fun Any.toJsonString(): String {
-    val objectMapper = ObjectMapper().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false).registerModule(
-        JavaTimeModule(),
-    )
-    return objectMapper.writeValueAsString(this)
-}
+fun Any.toJsonString(): String = objectMapper.writeValueAsString(this)
 
 fun defaultPeriode() = Periode(
     fra = LocalDate.of(2025, 1, 1),
