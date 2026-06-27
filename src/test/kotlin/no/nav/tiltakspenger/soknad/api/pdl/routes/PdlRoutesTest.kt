@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
-import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.JWT
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -15,8 +15,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.security.mock.oauth2.MockOAuth2Server
-import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
@@ -28,9 +26,8 @@ import no.nav.tiltakspenger.soknad.api.pdl.Person
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
-import org.junit.jupiter.api.AfterAll
+import no.nav.tiltakspenger.soknad.api.util.lagTestToken
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -40,7 +37,6 @@ internal class PdlRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val tiltakservice = mockk<TiltakService>(relaxed = true)
-    private val mockOAuth2Server = MockOAuth2Server()
 
     private val testFødselsnummer = "12345678910"
 
@@ -60,12 +56,6 @@ internal class PdlRoutesTest {
         clearMocks(texasClient, pdlService)
         coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO()
     }
-
-    @BeforeAll
-    fun setup() = mockOAuth2Server.start(8080)
-
-    @AfterAll
-    fun after() = mockOAuth2Server.shutdown()
 
     @Test
     fun `get på personalia-endepunkt skal svare med personalia fra PDLService hvis tokenet er gyldig og validerer ok`() {
@@ -217,19 +207,12 @@ internal class PdlRoutesTest {
 
     private fun issueTestToken(
         issuer: String = "tokendings",
-        clientId: String = "testClientId",
         claims: Map<String, String> = mapOf(
             "acr" to "idporten-loa-high",
             "pid" to testFødselsnummer,
         ),
-    ): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuer,
-            clientId,
-            DefaultOAuth2TokenCallback(
-                audience = listOf("audience"),
-                claims = claims,
-            ),
-        )
+    ): JWT {
+        // issuer beholdes for kallkompatibilitet; tokenets innhold valideres ikke (introspect er mocket).
+        return lagTestToken(claims)
     }
 }

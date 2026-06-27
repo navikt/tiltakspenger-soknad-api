@@ -29,9 +29,14 @@ repositories {
 }
 
 dependencies {
-    // Align versions of all Kotlin components
+    // Lås versjonene på alle Kotlin-komponenter til samme versjon
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation(kotlin("stdlib"))
+
+    // Lås alle io.netty:* til samme versjon som forsikring mot fremtidig 4.1/4.2-drift.
+    // ktor-server-netty drar inn netty 4.2.x; en BOM hindrer at en transitiv avhengighet
+    // senere blander inn 4.1.x og legger duplikate baseklasser på classpath (jf. `-cp lib/*`).
+    implementation(platform("io.netty:netty-bom:4.2.12.Final"))
     implementation("ch.qos.logback:logback-classic:1.5.34")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
@@ -84,7 +89,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.11")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
-    // PDF handling
+    // PDF-håndtering
     implementation("org.apache.pdfbox:pdfbox:$pdfboxVersion")
 
     // Apache Tika
@@ -101,7 +106,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
-    testImplementation("no.nav.security:mock-oauth2-server:4.0.1")
+    // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.4.2")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
@@ -117,6 +123,11 @@ dependencies {
 
 application {
     mainClass.set("no.nav.tiltakspenger.soknad.api.ApplicationKt")
+}
+
+configurations.all {
+    // ekskluder JUnit 4
+    exclude(group = "junit", module = "junit")
 }
 
 apply(plugin = "com.diffplug.spotless")
@@ -143,13 +154,13 @@ tasks {
     }
 
     test {
-        // JUnit 5 support
+        // JUnit 5-støtte
         useJUnitPlatform()
         // https://phauer.com/2018/best-practices-unit-testing-kotlin/
         systemProperty("junit.jupiter.testinstance.lifecycle.default", "per_class")
 
         testLogging {
-            // We only want to log failed and skipped tests when running Gradle.
+            // Vi logger bare feilede og hoppede tester når Gradle kjører.
             events("skipped", "failed")
             exceptionFormat = TestExceptionFormat.FULL
         }

@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
-import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.JWT
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
@@ -15,7 +15,6 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
@@ -26,9 +25,8 @@ import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
-import org.junit.jupiter.api.AfterAll
+import no.nav.tiltakspenger.soknad.api.util.lagTestToken
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -36,18 +34,6 @@ internal class SøknadRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val avService = mockk<AvService>(relaxed = true)
-
-    companion object {
-        private val mockOAuth2Server = MockOAuth2Server()
-
-        @JvmStatic
-        @BeforeAll
-        fun setup(): Unit = mockOAuth2Server.start(8080)
-
-        @JvmStatic
-        @AfterAll
-        fun after(): Unit = mockOAuth2Server.shutdown()
-    }
 
     @BeforeEach
     fun setupMocks() {
@@ -237,15 +223,13 @@ internal class SøknadRoutesTest {
         }
     }
 
-    private fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuerId = "tokendings",
-            audience = "audience",
-            claims = mapOf(
+    private fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): JWT {
+        // expiry beholdes for kallkompatibilitet; tokenets innhold valideres ikke (introspect er mocket).
+        return lagTestToken(
+            mapOf(
                 "acr" to acr,
                 "pid" to "12345678910",
             ),
-            expiry = expiry,
         )
     }
 }

@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.JWT
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -15,8 +15,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.security.mock.oauth2.MockOAuth2Server
-import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
@@ -31,9 +29,8 @@ import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_F
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
-import org.junit.jupiter.api.AfterAll
+import no.nav.tiltakspenger.soknad.api.util.lagTestToken
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -44,7 +41,6 @@ internal class TiltakRoutesTest {
     private val pdlService = mockk<PdlService>()
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
     private val tiltakservice = TiltakService(tiltakspengerTiltakClient)
-    private val mockOAuth2Server = MockOAuth2Server()
     private val gjennomforingId = UUID.randomUUID().toString()
 
     private val mockedTiltak =
@@ -67,12 +63,6 @@ internal class TiltakRoutesTest {
         coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT
         coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns Result.success(mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS"))
     }
-
-    @BeforeAll
-    fun setup() = mockOAuth2Server.start(8080)
-
-    @AfterAll
-    fun after() = mockOAuth2Server.shutdown()
 
     @Test
     fun `get på tiltak-endepunkt skal svare med tiltak fra tiltakservice hvis tokenet er gyldig og validerer ok`() {
@@ -285,39 +275,21 @@ internal class TiltakRoutesTest {
     }
 
     private fun issueTestTokenOldAcr(
-        issuer: String = "tokendings",
-        clientId: String = "testClientId",
         claims: Map<String, String> = mapOf(
             "acr" to "Level4",
             "pid" to testFødselsnummer,
         ),
-    ): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuer,
-            clientId,
-            DefaultOAuth2TokenCallback(
-                audience = listOf("audience"),
-                claims = claims,
-            ),
-        )
-    }
+    ): JWT = lagTestToken(claims)
 
     private fun issueTestToken(
         issuer: String = "tokendings",
-        clientId: String = "testClientId",
         claims: Map<String, String> = mapOf(
             "acr" to "idporten-loa-high",
             "pid" to testFødselsnummer,
         ),
-    ): SignedJWT {
-        return mockOAuth2Server.issueToken(
-            issuer,
-            clientId,
-            DefaultOAuth2TokenCallback(
-                audience = listOf("audience"),
-                claims = claims,
-            ),
-        )
+    ): JWT {
+        // issuer beholdes for kallkompatibilitet; tokenets innhold valideres ikke (introspect er mocket).
+        return lagTestToken(claims)
     }
 
     private fun mockTiltakspengerTiltakResponse(arrangør: String = "Arrangør AS") =
