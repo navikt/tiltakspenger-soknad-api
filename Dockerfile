@@ -6,8 +6,8 @@ ENV LANG='nb_NO.UTF-8'
 
 WORKDIR /app
 
-COPY build/install/tiltakspenger-soknad-api/lib/*.jar ./
+COPY --chmod=0755 build/install/tiltakspenger-soknad-api/lib/*.jar /app/lib/
 
 USER nobody
 
-CMD ["tiltakspenger-soknad-api.jar"]
+ENTRYPOINT ["java", "-cp", "/app/lib/*", "no.nav.tiltakspenger.soknad.api.ApplicationKt"]

@@ -149,17 +149,6 @@ tasks {
         }
     }
 
-    jar {
-        dependsOn(configurations.runtimeClasspath)
-
-        manifest {
-            attributes["Main-Class"] = "no.nav.tiltakspenger.soknad.api.ApplicationKt"
-            attributes["Class-Path"] = configurations.runtimeClasspath
-                .get()
-                .joinToString(separator = " ") { file -> file.name }
-        }
-    }
-
     test {
         // JUnit 5 support
         useJUnitPlatform()

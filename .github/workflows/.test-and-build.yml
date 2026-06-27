@@ -41,7 +41,7 @@ jobs:
           cache-disabled: true
 
       - name: Test and build application
-        run: ./gradlew clean build --info installDist --no-build-cache --no-configuration-cache
+        run: ./gradlew build --info installDist --configuration-cache
 
       - name: Build and push docker image
         uses: nais/docker-build-push@v0
