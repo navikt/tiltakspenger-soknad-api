@@ -68,7 +68,6 @@ dependencies {
     implementation("io.ktor:ktor-server:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("io.ktor:ktor-server-request-validation:$ktorVersion")
 
     // Arrow
@@ -104,6 +103,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("com.lemonappdev:konsist:0.17.3")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
     // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.
