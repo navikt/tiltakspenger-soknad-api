@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.validering
 
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.Etterlønn
@@ -17,7 +18,6 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadflyktninger
 import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
-import no.nav.tiltakspenger.libs.json.objectMapper
 import java.time.LocalDate
 import java.util.UUID
 
