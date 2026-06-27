@@ -166,8 +166,68 @@ tasks {
         }
     }
 
+    register("checkFlywayMigrationNames") {
+        val sqlMigrationDir = project.file("src/main/resources/db/migration")
+        val kotlinMigrationDir = project.file("src/main/kotlin/db/migration")
+        doLast {
+            val sqlFiles =
+                sqlMigrationDir
+                    .walk()
+                    .filter { it.isFile && it.extension == "sql" }
+                    .toList()
+
+            val invalidSqlFiles =
+                sqlFiles
+                    .filterNot { it.name.matches(Regex("V[0-9]+__[a-zA-Z0-9][\\w]+\\.sql")) }
+                    .map { it.name }
+
+            if (invalidSqlFiles.isNotEmpty()) {
+                throw GradleException("Invalid SQL migration filenames:\n${invalidSqlFiles.joinToString("\n")}")
+            }
+            val kotlinFiles =
+                kotlinMigrationDir
+                    .walk()
+                    .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
+                    .toList()
+
+            val invalidKotlinFiles =
+                kotlinFiles
+                    .filterNot { it.name.matches(Regex("V[0-9]+__[a-zA-Z0-9][\\w]+\\.(kt|java)")) }
+                    .map { it.name }
+
+            if (invalidKotlinFiles.isNotEmpty()) {
+                throw GradleException("Invalid Kotlin/Java migration filenames:\n${invalidKotlinFiles.joinToString("\n")}")
+            }
+
+            // Sjekk for dupliserte versjoner på tvers av ALLE migreringstyper
+            val allFiles = sqlFiles + kotlinFiles
+            val duplicateVersions =
+                allFiles
+                    .mapNotNull {
+                        it.name
+                            .split("__")
+                            .firstOrNull()
+                            ?.removePrefix("V")
+                            ?.toIntOrNull()
+                    }.groupBy { it }
+                    .filter { it.value.size > 1 }
+                    .keys
+
+            if (duplicateVersions.isNotEmpty()) {
+                throw GradleException(
+                    "Duplicate version numbers found:\n${duplicateVersions.joinToString("\n") { "Version $it is used multiple times" }}",
+                )
+            }
+
+            println("All migration filenames are valid and version numbers are unique.")
+        }
+    }
+
     register<Copy>("gitHooks") {
-        from(file(".scripts/pre-commit"))
+        group = "git hooks"
+        description = "Installerer git-hooks fra .gitHooks/ til .git/hooks/."
+        from(file(".gitHooks"))
         into(file(".git/hooks"))
+        filePermissions { unix("rwxr-xr-x") }
     }
 }
