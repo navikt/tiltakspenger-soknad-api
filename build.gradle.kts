@@ -107,7 +107,7 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
     // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.4.2")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
