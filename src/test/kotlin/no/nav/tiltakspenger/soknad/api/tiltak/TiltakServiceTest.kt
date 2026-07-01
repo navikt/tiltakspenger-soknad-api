@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -8,7 +9,6 @@ import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 internal class TiltakServiceTest {
@@ -47,12 +47,11 @@ internal class TiltakServiceTest {
     @Test
     fun `ved feil mot tiltakspenger-arena kastes en IllegalStateException`() {
         runBlocking {
-            assertThrows<IllegalStateException> {
+            val exception = shouldThrow<IllegalStateException> {
                 coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns Result.failure(IllegalStateException())
                 tiltakService.hentTiltak("subjectToken", Fnr.random(), false)
-            }.also {
-                assertEquals(it.message, "Noe gikk galt under kall til tiltakspenger-tiltak")
             }
+            assertEquals(exception.message, "Noe gikk galt under kall til tiltakspenger-tiltak")
         }
     }
 

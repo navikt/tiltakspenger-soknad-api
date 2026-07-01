@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -24,7 +25,6 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -246,7 +246,7 @@ internal class PdlServiceTest {
     @Test
     fun `når fetchSøker med tokenx mot PDL feiler, kastes en IllegalStateExcepiton`() {
         val token = "token"
-        assertThrows<IllegalStateException> {
+        val exception = shouldThrow<IllegalStateException> {
             mockedPdlClient.also { mock ->
                 coEvery { mock.fetchSøker(any(), any(), any()) } throws IllegalStateException("verify in test")
             }
@@ -257,7 +257,8 @@ internal class PdlServiceTest {
                     callId = "test",
                 )
             }
-        }.message shouldBe "verify in test"
+        }
+        exception.message shouldBe "verify in test"
     }
 
     @Test

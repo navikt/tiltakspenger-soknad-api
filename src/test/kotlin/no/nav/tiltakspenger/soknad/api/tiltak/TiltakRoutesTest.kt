@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
 import com.nimbusds.jwt.JWT
+import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -30,11 +31,9 @@ import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.util.lagTestToken
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
-import kotlin.test.assertEquals
 
 internal class TiltakRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
@@ -88,9 +87,9 @@ internal class TiltakRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${token.serialize()}")
                 }
-                Assertions.assertEquals(HttpStatusCode.OK, response.status)
+                response.status shouldBe HttpStatusCode.OK
                 val body: TiltakDto = response.body()
-                assertEquals(mockedTiltak, body.tiltak)
+                body.tiltak shouldBe mockedTiltak
             }
         }
     }
@@ -120,9 +119,9 @@ internal class TiltakRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenAcrLevel4.serialize()}")
                 }
-                Assertions.assertEquals(HttpStatusCode.OK, response.status)
+                response.status shouldBe HttpStatusCode.OK
                 val body: TiltakDto = response.body()
-                assertEquals(mockedTiltak, body.tiltak)
+                body.tiltak shouldBe mockedTiltak
             }
         }
     }
@@ -153,10 +152,10 @@ internal class TiltakRoutesTest {
                         contentType(type = ContentType.Application.Json)
                         header("Authorization", "Bearer ${token.serialize()}")
                     }
-                    Assertions.assertEquals(HttpStatusCode.OK, response.status)
+                    response.status shouldBe HttpStatusCode.OK
                     val body: TiltakDto = response.body()
 
-                    assertEquals("", body.tiltak.first().arrangør)
+                    body.tiltak.first().arrangør shouldBe ""
                 }
             }
         }
@@ -208,7 +207,7 @@ internal class TiltakRoutesTest {
                 val response = client.get(TILTAK_PATH) {
                     contentType(type = ContentType.Application.Json)
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
     }
@@ -239,7 +238,7 @@ internal class TiltakRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedUgyldigIssuer.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
     }
@@ -269,7 +268,7 @@ internal class TiltakRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedManglendeClaim.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
     }

@@ -1,5 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
 import io.ktor.http.ContentDisposition
 import io.ktor.http.HeaderValueParam
 import io.ktor.http.Headers
@@ -25,10 +27,8 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 import no.nav.tiltakspenger.soknad.api.util.Detect
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 class SoknadRequestMapperTest {
@@ -93,8 +93,8 @@ class SoknadRequestMapperTest {
 
         runBlocking {
             val (søknad, vedlegg) = taInnSøknadSomMultipart(mockMultiPartData)
-            assertEquals(søknad.tiltak.aktivitetId, "123")
-            assertEquals(vedlegg.size, 2)
+            søknad.tiltak.aktivitetId shouldBe "123"
+            vedlegg.size shouldBe 2
         }
     }
 
@@ -131,7 +131,7 @@ class SoknadRequestMapperTest {
         )
 
         runBlocking {
-            assertThrows<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData) }
+            shouldThrow<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData) }
         }
     }
 }

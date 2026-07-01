@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
 import com.nimbusds.jwt.JWT
+import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -27,11 +28,9 @@ import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.util.lagTestToken
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import kotlin.test.assertEquals
 
 internal class PdlRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
@@ -81,11 +80,11 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${token.serialize()}")
                 }
-                Assertions.assertEquals(HttpStatusCode.Companion.OK, response.status)
+                response.status shouldBe HttpStatusCode.Companion.OK
                 val body: PersonDTO = response.body()
-                assertEquals(mockedPerson.fornavn, body.fornavn)
-                assertEquals(mockedPerson.etternavn, body.etternavn)
-                assertEquals(mockedPerson.mellomnavn, body.mellomnavn)
+                body.fornavn shouldBe mockedPerson.fornavn
+                body.etternavn shouldBe mockedPerson.etternavn
+                body.mellomnavn shouldBe mockedPerson.mellomnavn
             }
         }
     }
@@ -138,7 +137,7 @@ internal class PdlRoutesTest {
                 val response = client.get("/personalia") {
                     contentType(type = ContentType.Application.Json)
                 }
-                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Companion.Unauthorized
             }
         }
     }
@@ -170,7 +169,7 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedUgyldigIssuer.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Companion.Unauthorized
             }
         }
     }
@@ -200,7 +199,7 @@ internal class PdlRoutesTest {
                     contentType(type = ContentType.Application.Json)
                     header("Authorization", "Bearer ${tokenMedManglendeClaim.serialize()}")
                 }
-                assertEquals(HttpStatusCode.Companion.Unauthorized, response.status)
+                response.status shouldBe HttpStatusCode.Companion.Unauthorized
             }
         }
     }

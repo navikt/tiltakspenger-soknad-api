@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
 import com.nimbusds.jwt.JWT
+import io.kotest.matchers.shouldBe
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
@@ -26,7 +27,6 @@ import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.util.lagTestToken
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -69,7 +69,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
@@ -95,7 +95,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
@@ -123,7 +123,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
@@ -151,7 +151,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.BadRequest, response.status)
+            response.status shouldBe HttpStatusCode.BadRequest
         }
     }
 
@@ -182,7 +182,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.BadRequest, response.status)
+            response.status shouldBe HttpStatusCode.BadRequest
         }
     }
 
@@ -219,7 +219,7 @@ internal class SøknadRoutesTest {
                     ),
                 )
             }
-            assertEquals(HttpStatusCode.Created, response.status)
+            response.status shouldBe HttpStatusCode.Created
         }
     }
 
