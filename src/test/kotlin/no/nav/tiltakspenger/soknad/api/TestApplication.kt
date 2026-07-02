@@ -6,6 +6,7 @@ import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.mockk
+import no.nav.tiltakspenger.libs.ktor.common.oppstart.Readiness
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
@@ -21,6 +22,7 @@ fun ApplicationTestBuilder.configureTestApplication(
     tiltakService: TiltakService = mockk(),
     avService: AvService = mockk(),
     metricsCollector: MetricsCollector = mockk(relaxed = true),
+    readiness: Readiness = Readiness(),
 ) {
     application {
         install(CallId) {
@@ -36,6 +38,7 @@ fun ApplicationTestBuilder.configureTestApplication(
             avService = avService,
             metricsCollector = metricsCollector,
             nySøknadService = nySøknadService,
+            readiness = readiness,
         )
         installJacksonFeature()
     }

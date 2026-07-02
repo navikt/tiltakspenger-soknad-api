@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakType
+import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakTypeDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import java.time.LocalDate
 
@@ -11,7 +11,7 @@ data class Deltakelsesperiode(
 
 data class TiltaksdeltakelseDto(
     val aktivitetId: String,
-    val type: TiltakType,
+    val type: TiltakTypeDTO,
     val typeNavn: String,
     val arenaRegistrertPeriode: Deltakelsesperiode,
     val arrangør: String,

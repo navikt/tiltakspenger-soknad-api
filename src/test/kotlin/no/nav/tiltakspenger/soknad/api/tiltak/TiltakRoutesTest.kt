@@ -46,7 +46,7 @@ internal class TiltakRoutesTest {
         listOf(
             TiltaksdeltakelseDto(
                 aktivitetId = "123456",
-                type = TiltakResponsDTO.TiltakType.ABOPPF,
+                type = TiltakResponsDTO.TiltakTypeDTO.ABOPPF,
                 typeNavn = "typenavn",
                 arenaRegistrertPeriode = Deltakelsesperiode(null, null),
                 arrangør = "Testarrangør AS",
@@ -297,7 +297,7 @@ internal class TiltakRoutesTest {
                 id = "123456",
                 gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
                     id = gjennomforingId,
-                    arenaKode = TiltakResponsDTO.TiltakType.ABOPPF,
+                    arenaKode = TiltakResponsDTO.TiltakTypeDTO.ABOPPF,
                     typeNavn = "typenavn",
                     arrangornavn = arrangør,
                     deltidsprosent = 100.0,

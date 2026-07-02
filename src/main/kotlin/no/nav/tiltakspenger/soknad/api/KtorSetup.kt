@@ -15,11 +15,12 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.routing.routing
 import no.nav.tiltakspenger.libs.json.objectMapper
+import no.nav.tiltakspenger.libs.ktor.common.oppstart.Readiness
+import no.nav.tiltakspenger.libs.ktor.common.oppstart.healthRoutes
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.TexasAuthenticationProvider
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.health.healthRoutes
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
@@ -38,6 +39,7 @@ internal fun Application.ktorSetup(
     avService: AvService,
     metricsCollector: MetricsCollector,
     nySøknadService: NySøknadService,
+    readiness: Readiness,
 ) {
     installCallLogging()
     installJacksonFeature()
@@ -52,6 +54,7 @@ internal fun Application.ktorSetup(
         avService = avService,
         metricsCollector = metricsCollector,
         nySøknadService = nySøknadService,
+        readiness = readiness,
     )
 }
 
@@ -62,6 +65,7 @@ internal fun Application.setupRouting(
     tiltakService: TiltakService,
     avService: AvService,
     metricsCollector: MetricsCollector,
+    readiness: Readiness,
 ) {
     authentication {
         register(
@@ -94,7 +98,7 @@ internal fun Application.setupRouting(
                 pdlService = pdlService,
             )
         }
-        healthRoutes()
+        healthRoutes { readiness.erKlar() }
         metricRoutes()
     }
 }

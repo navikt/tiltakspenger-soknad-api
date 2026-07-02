@@ -61,7 +61,7 @@ internal class TiltakServiceTest {
                 id = "123456",
                 gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
                     id = "123456",
-                    arenaKode = TiltakResponsDTO.TiltakType.ABIST,
+                    arenaKode = TiltakResponsDTO.TiltakTypeDTO.ABIST,
                     typeNavn = "typenavn",
                     arrangornavn = arrangør,
                     deltidsprosent = 100.0,
