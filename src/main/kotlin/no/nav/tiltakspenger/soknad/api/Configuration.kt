@@ -55,6 +55,7 @@ object Configuration {
                 "VEDTAK_SCOPE" to "localhost",
                 "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to "http://host.docker.internal:8080",
                 "PDF_ENDPOINT_URL" to "http://localhost:8085",
+                "PDFGENRS_ENDPOINT_URL" to "http://localhost:8084",
                 "AV_ENDPOINT_URL" to "http://localhost:8484/av",
                 "TILTAKSPENGER_TILTAK_SCOPE" to "localhost",
                 "TILTAKSPENGER_TILTAK_ENDPOINT_URL" to "http://localhost:8484",
@@ -103,6 +104,7 @@ object Configuration {
 
     fun isNais() = applicationProfile() != Profile.LOCAL
     fun isProd() = applicationProfile() == Profile.PROD
+    fun isLocalOrDev() = !isProd()
 
     fun electorPath(): String = config()[Key("ELECTOR_PATH", stringType)]
 
@@ -115,6 +117,7 @@ object Configuration {
     val dokarkivUrl: String by lazy { config()[Key("DOKARKIV_ENDPOINT_URL", stringType)] }
     val saksbehandlingApiUrl: String by lazy { config()[Key("TILTAKSPENGER_VEDTAK_ENDPOINT_URL", stringType)] }
     val pdfUrl: String by lazy { config()[Key("PDF_ENDPOINT_URL", stringType)] }
+    val pdfgenrsUrl: String by lazy { config()[Key("PDFGENRS_ENDPOINT_URL", stringType)] }
     val avUrl: String by lazy { config()[Key("AV_ENDPOINT_URL", stringType)] }
     val tiltakspengerTiltakUrl: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_ENDPOINT_URL", stringType)] }
 

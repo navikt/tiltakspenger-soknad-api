@@ -40,7 +40,7 @@ class SøknadJobbServiceTest {
         clearMocks(saksbehandlingApiKlient, pdlService, pdfService, dokarkivClient)
         coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns saksnummer
         coEvery { pdlService.hentNavnForFnr(any(), any()) } returns navn
-        coEvery { pdfService.lagPdf(any()) } returns "pdf".toByteArray()
+        coEvery { pdfService.lagPdf(any()) } returns ("pdf".toByteArray() to null)
         coEvery { pdfService.konverterVedlegg(any()) } returns emptyList()
         coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } returns journalpostId
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->

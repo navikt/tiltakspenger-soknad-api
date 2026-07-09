@@ -28,13 +28,43 @@ internal class PdfClientTest {
         val client = httpClientGeneric(mock)
         val pdfClient = PdfClient(
             pdfEndpoint = "http://pdf",
+            pdfgenrsEndpoint = "http://pdfgenrs",
+            isLocalOrDev = false,
             client = client,
         )
 
         runTest {
             val resp = pdfClient.genererPdf(søknad())
 
-            resp shouldBe pdf
+            resp.first shouldBe pdf
+            resp.second shouldBe null
+        }
+    }
+
+    @Test
+    fun `genererer også skygge-pdf fra pdfgenrs i local og dev`() {
+        val pdf = "dette er innholdet i pdf vi får tilbake fra pdfGen".toByteArray()
+        val mock = MockEngine {
+            respond(
+                content = pdf,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+        val client = httpClientGeneric(mock)
+        val pdfClient = PdfClient(
+            pdfEndpoint = "http://pdf",
+            pdfgenrsEndpoint = "http://pdfgenrs",
+            isLocalOrDev = true,
+            client = client,
+        )
+
+        runTest {
+            val resp = pdfClient.genererPdf(søknad())
+
+            resp.first shouldBe pdf
+            resp.second shouldBe pdf
+            mock.requestHistory.map { it.url.host }.toSet() shouldBe setOf("pdf", "pdfgenrs")
         }
     }
 
@@ -51,6 +81,8 @@ internal class PdfClientTest {
         val client = httpClientGeneric(mock)
         val pdfClient = PdfClient(
             pdfEndpoint = "http://pdf",
+            pdfgenrsEndpoint = "http://pdfgenrs",
+            isLocalOrDev = false,
             client = client,
         )
 

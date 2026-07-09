@@ -63,6 +63,7 @@ spec:
       rules:
         - application: tiltakspenger-tiltak
         - application: tiltakspenger-pdfgen
+        - application: tiltakspenger-pdfgenrs
         - application: tiltakspenger-saksbehandling-api
         - application: clamav
           namespace: nais-system
@@ -86,6 +87,8 @@ spec:
       value: {{ endpoints.tiltakspengervedtak }}
     - name: PDF_ENDPOINT_URL
       value: {{ endpoints.pdf }}
+    - name: PDFGENRS_ENDPOINT_URL
+      value: {{ endpoints.pdfgenrs }}
     - name: AV_ENDPOINT_URL
       value: {{ endpoints.av }}
     - name: TILTAKSPENGER_TILTAK_ENDPOINT_URL

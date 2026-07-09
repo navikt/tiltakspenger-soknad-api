@@ -77,6 +77,8 @@ internal fun start(
         pdfService = PdfServiceImpl(
             PdfClient(
                 pdfEndpoint = Configuration.pdfUrl,
+                pdfgenrsEndpoint = Configuration.pdfgenrsUrl,
+                isLocalOrDev = Configuration.isLocalOrDev(),
                 client = httpClientCIO(timeout = 30L),
             ),
         ),

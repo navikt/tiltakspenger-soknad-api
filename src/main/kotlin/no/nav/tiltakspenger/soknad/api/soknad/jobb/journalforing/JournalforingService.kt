@@ -38,7 +38,7 @@ class JournalforingService(
             innsendingTidspunkt = innsendingTidspunkt,
             vedleggsnavn = vedleggsnavn,
         )
-        val pdf = pdfService.lagPdf(søknad)
+        val (pdf, pdfgenrsPdf) = pdfService.lagPdf(søknad)
         log.info { "Generering av søknadsPDF OK" }
         val vedleggSomPdfer = pdfService.konverterVedlegg(vedlegg)
         log.info { "Vedleggskonvertering OK" }
@@ -51,6 +51,22 @@ class JournalforingService(
             callId = callId,
             saksnummer = saksnummer,
         )
+        /*
+            TODO - pdfgenrs: fjern journalføringen av pdfgenrs-pdf'en når det er verifisert at pdf'en er ok.
+                Vi journalfører den kun for å manuelt kunne sjekke at pdfgenrs genererer riktig pdf i dev.
+                Vedleggene journalføres kun på den ordinære journalposten.
+         */
+        pdfgenrsPdf?.let {
+            dokarkivService.sendPdfTilDokarkiv(
+                pdf = it,
+                søknad = søknad,
+                fnr = fnr,
+                vedlegg = emptyList(),
+                søknadId = søknadId,
+                callId = callId,
+                saksnummer = saksnummer,
+            )
+        }
         return Pair(journalpostId, søknad)
     }
 }

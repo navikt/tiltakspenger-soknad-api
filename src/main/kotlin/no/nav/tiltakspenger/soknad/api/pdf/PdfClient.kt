@@ -10,6 +10,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.ByteArrayContent
 import io.ktor.http.contentType
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.util.Bilde
@@ -21,6 +23,7 @@ import no.nav.tiltakspenger.soknad.api.util.PdfTools
 import no.nav.tiltakspenger.soknad.api.util.UnsupportedContentException
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import java.util.UUID
+import kotlin.time.measureTimedValue
 
 internal const val PDFGEN_PATH = "api/v1/genpdf/tpts"
 internal const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
@@ -28,21 +31,50 @@ internal const val SOKNAD_TEMPLATE = "soknad"
 
 class PdfClient(
     private val pdfEndpoint: String,
+    private val pdfgenrsEndpoint: String,
+    private val isLocalOrDev: Boolean,
     private val client: HttpClient,
 ) : PdfGenerator {
     private val log = KotlinLogging.logger {}
 
-    override suspend fun genererPdf(søknad: Søknad): ByteArray {
+    /*
+        TODO - pdfgenrs: skift tilbake til ByteArray når det er verifisert at PDF fra pdfgenrs er ok.
+            I local/dev kalles pdfgenrs i parallell (skygge-kall) slik at begge PDF-ene kan
+            journalføres og sammenlignes manuelt i Gosys.
+     */
+    override suspend fun genererPdf(søknad: Søknad): Pair<ByteArray, ByteArray?> {
+        log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
+        return if (isLocalOrDev) {
+            coroutineScope {
+                val pdfgenDeferred = async {
+                    measureTimedValue { genererPdf(søknad, pdfEndpoint) }
+                }
+                val pdfgenrsDeferred = async {
+                    measureTimedValue { genererPdf(søknad, pdfgenrsEndpoint) }
+                }
+
+                val (pdfgen, pdfgenDuration) = pdfgenDeferred.await()
+                val (pdfgenrs, pdfgenrsDuration) = pdfgenrsDeferred.await()
+
+                log.info { "pdfgen brukte $pdfgenDuration, pdfgenrs brukte $pdfgenrsDuration" }
+
+                Pair(pdfgen, pdfgenrs)
+            }
+        } else {
+            Pair(genererPdf(søknad, pdfEndpoint), null)
+        }
+    }
+
+    private suspend fun genererPdf(søknad: Søknad, endpoint: String): ByteArray {
         try {
-            log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
-            return client.post("$pdfEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE") {
+            return client.post("$endpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE") {
                 accept(ContentType.Application.Json)
                 header("X-Correlation-ID", UUID.randomUUID())
                 contentType(ContentType.Application.Json)
                 setBody(objectMapper.writeValueAsString(søknad))
             }.body()
         } catch (throwable: Throwable) {
-            throw RuntimeException("PdfClient: Feilet å lage PDF for søknad ${søknad.id}", throwable)
+            throw RuntimeException("PdfClient: Feilet å lage PDF for søknad ${søknad.id} mot $endpoint", throwable)
         }
     }
 
