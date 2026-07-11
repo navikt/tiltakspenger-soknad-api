@@ -16,6 +16,15 @@ import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.soknad.SøknadDTO
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
+/**
+ * Klient for å sende søknader og hente saksnummer fra tiltakspenger-saksbehandling-api.
+ *
+ * Kildekode: https://github.com/navikt/tiltakspenger-saksbehandling-api
+ * Dokumentasjon: README-en i kildekode-repoet
+ * API-spec: -
+ * Slack: #tiltakspenger-værsågod (eget team)
+ * Teamkatalog: https://teamkatalogen.nav.no/team/15bca3d2-2584-4167-85ba-faab1f1cfb53
+ */
 class SaksbehandlingApiKlient(
     private val httpClient: HttpClient = httpClientWithRetry(timeout = 10L),
     private val baseUrl: String,

@@ -17,6 +17,15 @@ import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 import java.time.Duration
 
+/**
+ * Klient for å hente tiltaksdeltakelser fra tiltakspenger-tiltak.
+ *
+ * Kildekode: https://github.com/navikt/tiltakspenger-tiltak
+ * Dokumentasjon: README-en i kildekode-repoet
+ * API-spec: -
+ * Slack: #tiltakspenger-værsågod (eget team)
+ * Teamkatalog: https://teamkatalogen.nav.no/team/15bca3d2-2584-4167-85ba-faab1f1cfb53
+ */
 class TiltakspengerTiltakClient(
     private val httpClient: HttpClient = httpClientWithRetry(timeout = 10L),
     private val tiltakspengerTiltakEndpoint: String,

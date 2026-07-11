@@ -29,6 +29,15 @@ internal const val PDFGEN_PATH = "api/v1/genpdf/tpts"
 internal const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
 internal const val SOKNAD_TEMPLATE = "soknad"
 
+/**
+ * Klient for å generere søknads-PDF-er via tiltakspenger-pdfgen, med skygge-kall til tiltakspenger-pdfgenrs i local/dev.
+ *
+ * Kildekode: https://github.com/navikt/tiltakspenger-pdfgen og https://github.com/navikt/tiltakspenger-pdfgenrs
+ * Dokumentasjon: README-ene i kildekode-repoene
+ * API-spec: -
+ * Slack: #tiltakspenger-værsågod (eget team)
+ * Teamkatalog: https://teamkatalogen.nav.no/team/15bca3d2-2584-4167-85ba-faab1f1cfb53
+ */
 class PdfClient(
     private val pdfEndpoint: String,
     private val pdfgenrsEndpoint: String,

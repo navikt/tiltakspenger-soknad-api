@@ -19,13 +19,19 @@ import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
 
-// https://confluence.adeo.no/display/BOA/opprettJournalpost
-// swagger: https://dokarkiv-q2.dev.intern.nav.no/swagger-ui/index.html#/
-
 const val INDIVIDSTONAD = "IND"
 
 internal const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
 
+/**
+ * Klient for å opprette journalposter i dokarkiv (Joark).
+ *
+ * Kildekode: https://github.com/navikt/dokarkiv
+ * Dokumentasjon: https://confluence.adeo.no/display/BOA/dokarkiv og https://confluence.adeo.no/display/BOA/opprettJournalpost
+ * API-spec: https://dokarkiv.dev.intern.nav.no/swagger-ui/index.html
+ * Slack: #team-dokumentløsninger (https://nav-it.slack.com/archives/C6W9E5GPJ)
+ * Teamkatalog: https://teamkatalogen.nav.no/team/f3388fcd-898e-40da-8d02-0bf1e3a79120
+ */
 class DokarkivClient(
     private val client: HttpClient = httpClientWithRetry(timeout = 30L),
     private val baseUrl: String,

@@ -9,6 +9,15 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
+/**
+ * Klient for å virusskanne vedlegg med ClamAV.
+ *
+ * Kildekode: ikke aktuelt — ClamAV tilbys som plattformtjeneste av Nais
+ * Dokumentasjon: https://doc.nais.io/services/antivirus/
+ * API-spec: - (ingen spec; REST-API-et er beskrevet i nais-dokumentasjonen)
+ * Slack: #nais
+ * Teamkatalog: ikke aktuelt (plattformtjeneste)
+ */
 class ClamAvClient(
     private val avEndpoint: String,
     private val client: HttpClient,
