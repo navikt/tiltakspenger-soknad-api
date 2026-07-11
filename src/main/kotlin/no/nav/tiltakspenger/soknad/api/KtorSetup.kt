@@ -7,6 +7,7 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -116,15 +117,18 @@ internal fun Application.installCallLogging() {
     install(CallLogging) {
         callIdMdc("call-id")
         filter { call ->
-            call.request.path().startsWith("/$SØKNAD_PATH")
-            call.request.path().startsWith("/$PERSONALIA_PATH")
+            val path = call.request.path()
+            path.startsWith(SØKNAD_PATH) ||
+                path.startsWith(PERSONALIA_PATH) ||
+                path.startsWith(TILTAK_PATH)
         }
         format { call ->
             val status = call.response.status()
             val httpMethod = call.request.httpMethod.value
-            val req = call.request
+            val path = call.request.path()
             val userAgent = call.request.headers["User-Agent"]
-            "Status: $status, HTTP method: $httpMethod, User agent: $userAgent req: $req"
+            val callId = call.callId
+            "Status: $status, HTTP method: $httpMethod, Path: $path, Call-id: $callId, User agent: $userAgent"
         }
     }
 }
