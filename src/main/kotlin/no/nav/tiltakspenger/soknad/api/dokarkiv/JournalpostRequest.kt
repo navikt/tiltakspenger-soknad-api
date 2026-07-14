@@ -32,6 +32,7 @@ data class JournalpostRequest private constructor(
             pdf: ByteArray,
             vedlegg: List<Vedlegg>,
             saksnummer: String?,
+            pdfgenrs: Boolean = false,
         ) = JournalpostRequest(
             journalfoerendeEnhet = saksnummer?.let { JOURNALFORENDE_ENHET_AUTOMATISK_BEHANDLING },
             avsenderMottaker = AvsenderMottaker(id = fnr),
@@ -47,7 +48,7 @@ data class JournalpostRequest private constructor(
             ).apply {
                 this.addAll(lagVedleggsdokumenter(vedlegg))
             },
-            eksternReferanseId = søknad.id,
+            eksternReferanseId = if (pdfgenrs) "${søknad.id}-pdfgenrs" else søknad.id,
         )
 
         private fun lagHoveddokument(pdf: ByteArray, søknad: Søknad): JournalpostDokument =

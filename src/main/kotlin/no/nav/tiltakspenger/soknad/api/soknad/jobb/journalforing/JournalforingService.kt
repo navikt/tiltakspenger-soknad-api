@@ -65,6 +65,7 @@ class JournalforingService(
                 søknadId = søknadId,
                 callId = callId,
                 saksnummer = saksnummer,
+                pdfgenrs = true,
             )
         }
         return Pair(journalpostId, søknad)

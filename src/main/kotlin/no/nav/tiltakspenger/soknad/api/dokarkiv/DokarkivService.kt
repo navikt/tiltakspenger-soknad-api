@@ -16,6 +16,7 @@ class DokarkivService(
         søknadId: SøknadId,
         callId: String,
         saksnummer: String?,
+        pdfgenrs: Boolean = false,
     ): JournalpostId {
         val journalpost = JournalpostRequest.from(
             fnr = fnr,
@@ -23,6 +24,7 @@ class DokarkivService(
             pdf = pdf,
             vedlegg = vedlegg,
             saksnummer = saksnummer,
+            pdfgenrs = pdfgenrs,
         )
         return dokarkivClient.opprettJournalpost(journalpost, søknadId, callId)
     }
