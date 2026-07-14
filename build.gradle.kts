@@ -86,7 +86,7 @@ dependencies {
     // DB
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersjon")
     implementation("com.zaxxer:HikariCP:7.1.0")
-    implementation("org.postgresql:postgresql:42.7.12")
+    implementation("org.postgresql:postgresql:42.7.13")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
     // PDF-håndtering
