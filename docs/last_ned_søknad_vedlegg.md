@@ -27,5 +27,6 @@ file_content
 FROM decoded_files;
 ```
 
-I DBeaver kan man høyre klikke på en kolonne og velge "export data". Format settings -> general -> binaries -> save to files.
+I DBeaver kan man høyre klikke på en kolonne og velge "export data".
+Format settings -> general -> binaries -> save to files.
 I IntelliJ kan man bare høyre klikke og trykke save to file eller lignende.

@@ -72,10 +72,9 @@ fun getGyldigTexasIntrospectionResponse(
     )
 
 /**
- * Lager et lokalt test-token (usignert [PlainJWT]) med de oppgitte claims. Erstatter tidligere
- * bruk av mock-oauth2-server: tokenets signatur valideres ikke i testene fordi
- * texasClient.introspectToken er mocket. Vi trenger kun et serialiserbart token med claims man
- * kan lese tilbake (pid/acr) inn i det mockede introspeksjonssvaret.
+ * Lager et lokalt test-token (usignert [PlainJWT]) med de oppgitte claims.
+ * Erstatter tidligere bruk av mock-oauth2-server: tokenets signatur valideres ikke i testene fordi texasClient.introspectToken er mocket.
+ * Vi trenger kun et serialiserbart token med claims man kan lese tilbake (pid/acr) inn i det mockede introspeksjonssvaret.
  */
 fun lagTestToken(claims: Map<String, String>): JWT {
     val builder = JWTClaimsSet.Builder()

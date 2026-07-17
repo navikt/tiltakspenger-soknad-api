@@ -14,7 +14,8 @@ data class Personopplysninger(
 
 /**
  * Søknaden rett før vi journalfører den.
- * TODO post-mvp jah: Denne tilfører ikke noe nytt over MottattSøknad, bør vi fjerne denne? Eventuelt endre den til å være en JournalførtSøknad?
+ * TODO post-mvp jah: Denne tilfører ikke noe nytt over MottattSøknad, bør vi fjerne denne?
+ * Eventuelt endre den til å være en JournalførtSøknad?
  */
 data class Søknad(
     val id: String,

@@ -1,6 +1,7 @@
 # Henting av antall svar på eøs-spørsmålet i søknaden. 
 
-### Lister opp antall ja og nei på eøs-spørsmålet og sorterer de etter måned. Tar med både manuelle og registrerte barn fra pdl i summen.
+### Lister opp antall ja og nei på eøs-spørsmålet og sorterer de etter måned.
+Tar med både manuelle og registrerte barn fra pdl i summen.
 
 ```
 SELECT

@@ -7,7 +7,8 @@ import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import java.time.LocalDateTime
 
 /**
- * Søknaden slik den er mottatt fra bruker. Her har vi kun gjort virussjekk av vedlegg.
+ * Søknaden slik den er mottatt fra bruker.
+ * Her har vi kun gjort virussjekk av vedlegg.
  */
 data class MottattSøknad(
     val id: SøknadId,
@@ -19,7 +20,8 @@ data class MottattSøknad(
     val fnr: String,
     val fornavn: String?,
     val etternavn: String?,
-    // TODO post-mvp jah: Skal vi endre navnet på denne? Til saksbehandlingApi eller noe mer generelt?
+    // TODO post-mvp jah: Skal vi endre navnet på denne?
+    // Til saksbehandlingApi eller noe mer generelt?
     val sendtTilVedtak: LocalDateTime?,
     val journalført: LocalDateTime?,
     val journalpostId: JournalpostId?,

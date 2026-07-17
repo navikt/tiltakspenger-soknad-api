@@ -48,8 +48,7 @@ class PdfClient(
 
     /*
         TODO - pdfgenrs: skift tilbake til ByteArray når det er verifisert at PDF fra pdfgenrs er ok.
-            I local/dev kalles pdfgenrs i parallell (skygge-kall) slik at begge PDF-ene kan
-            journalføres og sammenlignes manuelt i Gosys.
+            I local/dev kalles pdfgenrs i parallell (skygge-kall) slik at begge PDF-ene kan journalføres og sammenlignes manuelt i Gosys.
      */
     override suspend fun genererPdf(søknad: Søknad): Pair<ByteArray, ByteArray?> {
         log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
