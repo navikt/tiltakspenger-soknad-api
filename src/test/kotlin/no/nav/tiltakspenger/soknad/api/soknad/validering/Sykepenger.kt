@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockSykepenger
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -27,7 +28,7 @@ internal class Sykepenger {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -41,7 +42,7 @@ internal class Sykepenger {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på sykepenger er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
+        ).valider(fixedClock) shouldContain "Perioden på sykepenger er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
     }
 
     @Test
@@ -55,7 +56,7 @@ internal class Sykepenger {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Sykepenger med mottar = false kan ikke ha noen periode"
+        ).valider(fixedClock) shouldContain "Sykepenger med mottar = false kan ikke ha noen periode"
     }
 
     @Test
@@ -75,7 +76,7 @@ internal class Sykepenger {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på sykepenger er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på sykepenger er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -95,7 +96,7 @@ internal class Sykepenger {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på sykepenger er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på sykepenger er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -106,6 +107,6 @@ internal class Sykepenger {
                 periode = null,
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Sykepenger med mottar = true må ha periode"
+        ).valider(fixedClock) shouldContain "Sykepenger med mottar = true må ha periode"
     }
 }

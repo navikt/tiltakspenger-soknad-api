@@ -130,7 +130,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post på soknad-endepunkt skal svare med 400 hvis taInnSøknadSomMultipart svarer med BadRequest`() {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
-        coEvery { taInnSøknadSomMultipart(any()) } throws BadRequestException("1")
+        coEvery { taInnSøknadSomMultipart(any(), any()) } throws BadRequestException("1")
         val token = issueTestToken()
         coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
@@ -158,7 +158,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post på soknad-endepunkt skal svare med 400 hvis søknadJson ikke er gyldig`() {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
-        coEvery { taInnSøknadSomMultipart(any()) } throws RequestValidationException(
+        coEvery { taInnSøknadSomMultipart(any(), any()) } throws RequestValidationException(
             "søknadJson",
             listOf("Kvalifisering fra dato må være tidligere eller lik til dato"),
         )
@@ -189,7 +189,7 @@ internal class SøknadRoutesTest {
     @Test
     fun `post på soknad-endepunkt skal svare med 201 Created ved gyldig søknad `() {
         mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
-        coEvery { taInnSøknadSomMultipart(any()) } returns Pair(mockSpørsmålsbesvarelser(), emptyList())
+        coEvery { taInnSøknadSomMultipart(any(), any()) } returns Pair(mockSpørsmålsbesvarelser(), emptyList())
         val søknadRepoMock = mockk<SøknadRepo>().also { mock ->
             coEvery { mock.hentBrukersSøknader(any(), any()) } returns emptyList()
             coEvery { mock.lagre(any()) } returns Unit

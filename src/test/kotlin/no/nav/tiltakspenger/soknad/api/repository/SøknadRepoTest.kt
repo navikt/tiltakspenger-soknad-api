@@ -5,6 +5,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
@@ -36,7 +37,7 @@ internal class SøknadRepoTest {
     inner class KanLagreSøknad {
         @Test
         fun `lagrer en helt vanlig søknad`() = withCleanDb { søknadRepo ->
-            val nå = LocalDateTime.now(fixedClock)
+            val nå = nå(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
                 eier = Applikasjonseier.Tiltakspenger,
@@ -48,7 +49,7 @@ internal class SøknadRepoTest {
 
         @Test
         fun `kan lagre og hente en søknad som ikke har fnr i barnetillegg`() = withCleanDb { søknadRepo ->
-            val nå = LocalDateTime.now(fixedClock)
+            val nå = nå(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
                 eier = Applikasjonseier.Tiltakspenger,
@@ -74,7 +75,7 @@ internal class SøknadRepoTest {
 
         @Test
         fun `kan lagre og hente en søknad som har fnr i barnetillegg`() = withCleanDb { søknadRepo ->
-            val nå = LocalDateTime.now(fixedClock)
+            val nå = nå(fixedClock)
             val mottattSøknad = genererMottattSøknadForTest(
                 opprettet = nå,
                 eier = Applikasjonseier.Tiltakspenger,

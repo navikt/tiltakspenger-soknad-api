@@ -9,6 +9,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.JournalpostId
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -45,7 +46,7 @@ class SøknadJobbServiceTest {
         coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } returns journalpostId
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
             val søknadRepo = SøknadRepo(dataSource)
-            val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
+            val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, fixedClock)
             runBlocking { test(søknadRepo, søknadJobbService) }
         }
     }

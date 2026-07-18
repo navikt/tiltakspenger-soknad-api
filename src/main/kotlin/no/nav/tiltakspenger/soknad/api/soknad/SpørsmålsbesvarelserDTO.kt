@@ -7,6 +7,7 @@ import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.security.InvalidParameterException
+import java.time.Clock
 import java.time.LocalDate
 import java.util.Objects
 
@@ -245,7 +246,7 @@ data class SpørsmålsbesvarelserDTO(
     val harBekreftetAlleOpplysninger: Boolean,
     val harBekreftetÅSvareSåGodtManKan: Boolean,
 ) {
-    fun valider(): List<String> = valider(this)
+    fun valider(clock: Clock): List<String> = valider(this, clock)
 }
 
 fun String.toSpørsmålsbesvarelserDbJson(): SpørsmålsbesvarelserDTO {

@@ -21,6 +21,7 @@ import io.mockk.mockkStatic
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.asByteChannel
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.soknad.Introduksjonsprogram
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
@@ -92,7 +93,7 @@ class SoknadRequestMapperTest {
         )
 
         runBlocking {
-            val (søknad, vedlegg) = taInnSøknadSomMultipart(mockMultiPartData)
+            val (søknad, vedlegg) = taInnSøknadSomMultipart(mockMultiPartData, fixedClock)
             søknad.tiltak.aktivitetId shouldBe "123"
             vedlegg.size shouldBe 2
         }
@@ -131,7 +132,7 @@ class SoknadRequestMapperTest {
         )
 
         runBlocking {
-            shouldThrow<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData) }
+            shouldThrow<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData, fixedClock) }
         }
     }
 }

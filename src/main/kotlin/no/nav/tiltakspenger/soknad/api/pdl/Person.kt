@@ -19,7 +19,7 @@ data class Person(
     val adressebeskyttelseGradering: AdressebeskyttelseGradering,
     val geografiskTilknytning: String?,
 ) {
-    fun toPersonDTO(barn: List<Person> = emptyList()): PersonDTO {
+    fun toPersonDTO(dagensDato: LocalDate, barn: List<Person> = emptyList()): PersonDTO {
         val levendeBarn = barn.filterNot { it.erDød }
         return PersonDTO(
             fornavn = fornavn,
@@ -38,7 +38,7 @@ data class Person(
                     BarnDTO(fnr = it.fnr.verdi, fødselsdato = it.fødselsdato!!)
                 }
             },
-            harFylt18År = fødselsdato?.isSameOrBefore(LocalDate.now().minusYears(18))
+            harFylt18År = fødselsdato?.isSameOrBefore(dagensDato.minusYears(18))
                 ?: throw IllegalStateException("Søker mangler fødselsdato"),
         )
     }

@@ -17,6 +17,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
@@ -39,7 +40,7 @@ internal class TiltakRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
-    private val tiltakservice = TiltakService(tiltakspengerTiltakClient)
+    private val tiltakservice = TiltakService(tiltakspengerTiltakClient, fixedClock)
     private val gjennomforingId = UUID.randomUUID().toString()
 
     private val mockedTiltak =

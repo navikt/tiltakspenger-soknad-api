@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockBarnetillegg
 import no.nav.tiltakspenger.soknad.api.mockManueltRegistrertBarn
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
@@ -20,7 +21,7 @@ internal class BarnetilleggTest {
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
+        ).valider(fixedClock) shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
@@ -35,7 +36,7 @@ internal class BarnetilleggTest {
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
+        ).valider(fixedClock) shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
@@ -50,7 +51,7 @@ internal class BarnetilleggTest {
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
+        ).valider(fixedClock) shouldContain "Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn"
     }
 
     @Test
@@ -62,10 +63,10 @@ internal class BarnetilleggTest {
                         fornavn = "Test",
                         mellomnavn = "Test",
                         etternavn = "Test",
-                        fødselsdato = LocalDate.now().plusDays(1),
+                        fødselsdato = LocalDate.now(fixedClock).plusDays(1),
                     ),
                 ),
             ),
-        ).valider() shouldContain "Manuelt registrert barn er ugyldig: fødselsdato kan ikke registreres fram i tid"
+        ).valider(fixedClock) shouldContain "Manuelt registrert barn er ugyldig: fødselsdato kan ikke registreres fram i tid"
     }
 }

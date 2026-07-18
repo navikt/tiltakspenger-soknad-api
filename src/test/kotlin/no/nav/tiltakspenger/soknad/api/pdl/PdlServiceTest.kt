@@ -7,6 +7,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Dødsfall
@@ -34,6 +35,7 @@ import kotlin.test.assertTrue
 internal class PdlServiceTest {
     val testFødselsnummer = "02058938710"
     val testBarnFødselsnummer = "21062002856"
+    private val dagensDato = LocalDate.now(fixedClock)
 
     @BeforeEach
     fun setup() {
@@ -69,7 +71,7 @@ internal class PdlServiceTest {
     }
 
     fun mockFødsel(
-        fødselsdato: LocalDate = LocalDate.now(),
+        fødselsdato: LocalDate = LocalDate.now(fixedClock),
         metadata: EndringsMetadata = mockEndringsMetadata(),
         folkeregisterMetadata: FolkeregisterMetadata = mockFolkeregisterMetadata(),
     ): Fødsel {
@@ -147,7 +149,7 @@ internal class PdlServiceTest {
 
     private val søkersBarnDefaultMock: SøkersBarnRespons = mockSøkersBarn()
 
-    private val fødselsdatoUnder16År = LocalDate.now().minusYears(16).plusDays(1)
+    private val fødselsdatoUnder16År = dagensDato.minusYears(16).plusDays(1)
     private val søkersBarnUnder16År: SøkersBarnRespons = mockSøkersBarn(
         barn = listOf(
             mockSøkersBarnFraPdl(
@@ -156,7 +158,7 @@ internal class PdlServiceTest {
         ),
     )
 
-    private val fødselsdatoOver16År = LocalDate.now().minusYears(16)
+    private val fødselsdatoOver16År = dagensDato.minusYears(16)
     private val søkersBarnOver16År: SøkersBarnRespons = mockSøkersBarn(
         barn = listOf(
             mockSøkersBarnFraPdl(
@@ -201,6 +203,7 @@ internal class PdlServiceTest {
 
     private val pdlService = PdlService(
         pdlClient = mockedPdlClient,
+        clock = fixedClock,
     )
 
     @Test

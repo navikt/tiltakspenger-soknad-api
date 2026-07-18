@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockKvalifiseringsprogram
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -27,7 +28,7 @@ internal class KvalifiseringprogramTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -40,7 +41,7 @@ internal class KvalifiseringprogramTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Perioden på KVP er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
+        ).valider(fixedClock) shouldContain "Perioden på KVP er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
     }
 
     @Test
@@ -53,7 +54,7 @@ internal class KvalifiseringprogramTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Kvalifiseringsprogram med deltar = false kan ikke ha noen periode"
+        ).valider(fixedClock) shouldContain "Kvalifiseringsprogram med deltar = false kan ikke ha noen periode"
     }
 
     @Test
@@ -72,7 +73,7 @@ internal class KvalifiseringprogramTest {
                     til = LocalDate.of(2025, 1, 2),
                 ),
             ),
-        ).valider() shouldContain "Perioden på KVP er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på KVP er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -91,7 +92,7 @@ internal class KvalifiseringprogramTest {
                     til = LocalDate.of(2025, 1, 2),
                 ),
             ),
-        ).valider() shouldContain "Perioden på KVP er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på KVP er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -101,6 +102,6 @@ internal class KvalifiseringprogramTest {
                 deltar = true,
                 periode = null,
             ),
-        ).valider() shouldContain "Kvalifisering med deltagelse må ha periode"
+        ).valider(fixedClock) shouldContain "Kvalifisering med deltagelse må ha periode"
     }
 }

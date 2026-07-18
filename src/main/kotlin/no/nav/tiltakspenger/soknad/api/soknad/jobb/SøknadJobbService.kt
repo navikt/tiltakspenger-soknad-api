@@ -3,19 +3,21 @@ package no.nav.tiltakspenger.soknad.api.soknad.jobb
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
-import java.time.LocalDateTime
+import java.time.Clock
 
 class SøknadJobbService(
     private val søknadRepo: SøknadRepo,
     private val pdlService: PdlService,
     private val journalforingService: JournalforingService,
     private val saksbehandlingApiKlient: SaksbehandlingApiKlient,
+    private val clock: Clock,
 ) {
     private val log = KotlinLogging.logger {}
     suspend fun hentEllerOpprettSaksnummer(correlationId: CorrelationId) {
@@ -72,7 +74,7 @@ class SøknadJobbService(
                     fornavn = navn.fornavn,
                     etternavn = navn.etternavn,
                     journalpostId = journalpostId,
-                    journalført = LocalDateTime.now(),
+                    journalført = nå(clock),
                 ),
             )
             log.info { "Journalfør søknad jobb: Vi har journalført søknad ${søknad.id} " }
@@ -85,7 +87,7 @@ class SøknadJobbService(
             checkNotNull(søknad.journalpostId) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler journalpostId" }
             checkNotNull(søknad.saksnummer) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler saksnummer" }
             try {
-                val sendtTilSaksbehandlingApi = LocalDateTime.now()
+                val sendtTilSaksbehandlingApi = nå(clock)
                 saksbehandlingApiKlient.sendSøknad(
                     søknadDTO = søknadMapper(
                         søknad = søknad.søknad,

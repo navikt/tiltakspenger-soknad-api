@@ -14,7 +14,6 @@ import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
-import java.time.LocalDate
 
 fun Route.pdlRoutes(
     pdlService: PdlService,
@@ -41,7 +40,7 @@ fun Route.pdlRoutes(
 
                 val personDTO = pdlService.hentPersonaliaMedBarn(
                     fødselsnummer = fødselsnummer.verdi,
-                    styrendeDato = tiltakMedTidligsteFradato.let { it?.arenaRegistrertPeriode?.fra } ?: LocalDate.now(),
+                    styrendeDato = tiltakMedTidligsteFradato?.arenaRegistrertPeriode?.fra,
                     subjectToken = subjectToken,
                     callId = call.callId!!,
                 )

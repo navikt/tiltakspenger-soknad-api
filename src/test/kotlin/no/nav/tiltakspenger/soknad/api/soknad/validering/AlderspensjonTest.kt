@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockAlderspensjon
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -23,7 +24,7 @@ internal class AlderspensjonTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -34,7 +35,7 @@ internal class AlderspensjonTest {
                 fraDato = LocalDate.of(2025, 1, 1),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Alderspensjon med mottar = false kan ikke ha noen fra dato"
+        ).valider(fixedClock) shouldContain "Alderspensjon med mottar = false kan ikke ha noen fra dato"
     }
 
     @Test
@@ -51,7 +52,7 @@ internal class AlderspensjonTest {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Alderspensjon fra dato kan ikke være senere enn tiltakets periode"
+        ).valider(fixedClock) shouldContain "Alderspensjon fra dato kan ikke være senere enn tiltakets periode"
     }
 
     @Test
@@ -62,6 +63,6 @@ internal class AlderspensjonTest {
                 fraDato = null,
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Alderspensjon med mottar = true må ha fra dato"
+        ).valider(fixedClock) shouldContain "Alderspensjon med mottar = true må ha fra dato"
     }
 }

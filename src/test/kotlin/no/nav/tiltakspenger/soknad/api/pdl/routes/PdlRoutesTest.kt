@@ -17,6 +17,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
@@ -53,7 +54,7 @@ internal class PdlRoutesTest {
     @BeforeEach
     fun setupMocks() {
         clearMocks(texasClient, pdlService)
-        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO()
+        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO(LocalDate.now(fixedClock))
     }
 
     @Test

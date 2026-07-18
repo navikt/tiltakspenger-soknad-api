@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockPensjonsordning
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -26,7 +27,7 @@ internal class PensjonsordningTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -40,7 +41,7 @@ internal class PensjonsordningTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Perioden på pensjonsordning er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
+        ).valider(fixedClock) shouldContain "Perioden på pensjonsordning er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
     }
 
     @Test
@@ -54,7 +55,7 @@ internal class PensjonsordningTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Pensjonsordning med mottar = false kan ikke ha noen periode"
+        ).valider(fixedClock) shouldContain "Pensjonsordning med mottar = false kan ikke ha noen periode"
     }
 
     @Test
@@ -74,7 +75,7 @@ internal class PensjonsordningTest {
                     til = LocalDate.of(2025, 2, 1),
                 ),
             ),
-        ).valider() shouldContain "Perioden på pensjonsordning er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på pensjonsordning er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -94,7 +95,7 @@ internal class PensjonsordningTest {
                     til = LocalDate.of(2025, 1, 31),
                 ),
             ),
-        ).valider() shouldContain "Perioden på pensjonsordning er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på pensjonsordning er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -105,6 +106,6 @@ internal class PensjonsordningTest {
                 mottar = true,
                 periode = null,
             ),
-        ).valider() shouldContain "Pensjonsordning med mottar = true må ha periode"
+        ).valider(fixedClock) shouldContain "Pensjonsordning med mottar = true må ha periode"
     }
 }

@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.tiltak
 
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakTypeDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
+import java.time.Clock
 import java.time.LocalDate
 
 data class Deltakelsesperiode(
@@ -18,9 +19,9 @@ data class TiltaksdeltakelseDto(
     val gjennomforingId: String,
     val visningsnavn: String?,
 ) {
-    fun erInnenforRelevantTidsrom(): Boolean {
-        val datoFor6MånederSiden = LocalDate.now().minusMonths(6)
-        val dato2MånederFrem = LocalDate.now().plusMonths(2)
+    fun erInnenforRelevantTidsrom(clock: Clock): Boolean {
+        val datoFor6MånederSiden = LocalDate.now(clock).minusMonths(6)
+        val dato2MånederFrem = LocalDate.now(clock).plusMonths(2)
 
         return if (arenaRegistrertPeriode.fra == null) {
             true

@@ -40,13 +40,13 @@ fun main() {
 
     val log = KotlinLogging.logger {}
     log.info { "starting server" }
-    start(log)
+    start(log, clock = Clock.system(zoneIdOslo))
 }
 
 internal fun start(
     log: KLogger,
     port: Int = Configuration.httpPort(),
-    clock: Clock = Clock.system(zoneIdOslo),
+    clock: Clock,
     isNais: Boolean = Configuration.isNais(),
 ) {
     DefaultExports.initialize()
@@ -87,8 +87,10 @@ internal fun start(
 
     val søknadRepo = SøknadRepo(DataSource.dataSource)
     val pdlService = PdlService(
+        clock = clock,
         pdlClient = PdlClient(
             endepunkt = Configuration.pdlUrl,
+            clock = clock,
             pdlScope = Configuration.pdlScope,
             texasClient = texasClient,
         ) {
@@ -107,7 +109,7 @@ internal fun start(
         )
     }
 
-    val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient)
+    val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, clock)
     val avService = AvService(
         clamAvClient = ClamAvClient(
             avEndpoint = Configuration.avUrl,
@@ -119,7 +121,7 @@ internal fun start(
         tiltakspengerTiltakEndpoint = Configuration.tiltakspengerTiltakUrl,
         texasClient = texasClient,
     )
-    val tiltakService = TiltakService(tiltakspengerTiltakClient)
+    val tiltakService = TiltakService(tiltakspengerTiltakClient, clock)
 
     val identhendelseService = IdenthendelseService(
         søknadRepo = søknadRepo,
@@ -184,6 +186,7 @@ internal fun start(
             metricsCollector = metricsCollector,
             nySøknadService = nySøknadService,
             readiness = readiness,
+            clock = clock,
         )
     }
 }

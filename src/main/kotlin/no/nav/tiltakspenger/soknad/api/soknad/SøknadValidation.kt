@@ -5,11 +5,12 @@ import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import no.nav.tiltakspenger.soknad.api.isSameOrAfter
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
+import java.time.Clock
 import java.time.LocalDate
 
-fun RequestValidationConfig.validateSøknad() {
+fun RequestValidationConfig.validateSøknad(clock: Clock) {
     validate<SpørsmålsbesvarelserDTO> { søknad ->
-        val feilmeldinger = valider(søknad)
+        val feilmeldinger = valider(søknad, clock)
 
         if (feilmeldinger.isEmpty()) {
             ValidationResult.Valid
@@ -19,8 +20,8 @@ fun RequestValidationConfig.validateSøknad() {
     }
 }
 
-fun SpørsmålsbesvarelserDTO.validerRequest(): SpørsmålsbesvarelserDTO {
-    val feilmeldinger = valider(this)
+fun SpørsmålsbesvarelserDTO.validerRequest(clock: Clock): SpørsmålsbesvarelserDTO {
+    val feilmeldinger = valider(this, clock)
     if (feilmeldinger.isNotEmpty()) {
         throw RequestValidationException(this, feilmeldinger)
     }
@@ -265,14 +266,14 @@ fun validerAndreUtbetalinger(søknad: SpørsmålsbesvarelserDTO, tiltaksperiode:
 
 val navnMaxLength = 1000
 
-fun validerBarnetillegg(barnetillegg: Barnetillegg): List<String> {
+fun validerBarnetillegg(barnetillegg: Barnetillegg, clock: Clock): List<String> {
     val feilmeldinger = mutableListOf<String>()
     val manueltRegistrerteBarn = barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor
 
     val harEtBarnMedForLangtNavn = manueltRegistrerteBarn.any {
         (it.fornavn.length > navnMaxLength) || (it.etternavn.length > navnMaxLength) || ((it.mellomnavn != null) && (it.mellomnavn.length > navnMaxLength))
     }
-    val harEtBarnMedFødselsdatoFramITid = manueltRegistrerteBarn.any { it.fødselsdato.isSameOrAfter(LocalDate.now().plusDays(1)) }
+    val harEtBarnMedFødselsdatoFramITid = manueltRegistrerteBarn.any { it.fødselsdato.isSameOrAfter(LocalDate.now(clock).plusDays(1)) }
     if (harEtBarnMedForLangtNavn) {
         feilmeldinger.add("Manuelt registrert barn er ugyldig: fornavn, mellomnavn eller etternavn overskrider maksgrense på 1000 tegn")
     }
@@ -283,7 +284,7 @@ fun validerBarnetillegg(barnetillegg: Barnetillegg): List<String> {
     return feilmeldinger
 }
 
-fun valider(søknad: SpørsmålsbesvarelserDTO): List<String> {
+fun valider(søknad: SpørsmålsbesvarelserDTO, clock: Clock): List<String> {
     val feilmeldinger = mutableListOf<String>()
 
     if (søknad.harBekreftetAlleOpplysninger == false) {
@@ -301,7 +302,7 @@ fun valider(søknad: SpørsmålsbesvarelserDTO): List<String> {
     feilmeldinger.addAll(validerInstitusjonsopphold(søknad.institusjonsopphold, tiltaksperiode))
     feilmeldinger.addAll(validerSykepenger(søknad.sykepenger, tiltaksperiode))
     feilmeldinger.addAll(validerAndreUtbetalinger(søknad, tiltaksperiode))
-    feilmeldinger.addAll(validerBarnetillegg(søknad.barnetillegg))
+    feilmeldinger.addAll(validerBarnetillegg(søknad.barnetillegg, clock))
 
     return feilmeldinger
 }

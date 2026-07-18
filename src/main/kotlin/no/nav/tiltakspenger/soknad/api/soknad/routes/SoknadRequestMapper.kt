@@ -9,14 +9,15 @@ import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.validerRequest
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
+import java.time.Clock
 
-suspend fun taInnSøknadSomMultipart(søknadSomMultipart: MultiPartData): Pair<SpørsmålsbesvarelserDTO, List<Vedlegg>> {
+suspend fun taInnSøknadSomMultipart(søknadSomMultipart: MultiPartData, clock: Clock): Pair<SpørsmålsbesvarelserDTO, List<Vedlegg>> {
     lateinit var spørsmålsbesvarelserDTO: SpørsmålsbesvarelserDTO
     val vedleggListe = mutableListOf<Vedlegg>()
     søknadSomMultipart.forEachPart { part ->
         when (part) {
             is PartData.FormItem -> {
-                spørsmålsbesvarelserDTO = part.toSpørsmålsbesvarelser()
+                spørsmålsbesvarelserDTO = part.toSpørsmålsbesvarelser(clock)
             }
 
             is PartData.FileItem -> {
@@ -37,9 +38,9 @@ fun PartData.FileItem.toVedlegg(): Vedlegg {
     return Vedlegg(filnavn = filnavn, contentType = sjekkContentType(fileBytes), dokument = fileBytes)
 }
 
-fun PartData.FormItem.toSpørsmålsbesvarelser(): SpørsmålsbesvarelserDTO {
+fun PartData.FormItem.toSpørsmålsbesvarelser(clock: Clock): SpørsmålsbesvarelserDTO {
     if (this.name == "søknad") {
-        return deserialize<SpørsmålsbesvarelserDTO>(this.value).validerRequest()
+        return deserialize<SpørsmålsbesvarelserDTO>(this.value).validerRequest(clock)
     }
     throw UnrecognizedFormItemException(message = "Recieved multipart form with unknown key ${this.name}")
 }

@@ -116,7 +116,7 @@ fun mockManueltRegistrertBarn(
     fornavn: String = "Test",
     etternavn: String = "Testesen",
     mellomnavn: String? = null,
-    fødselsdato: LocalDate = LocalDate.now(),
+    fødselsdato: LocalDate = LocalDate.of(2025, 1, 1),
     oppholdInnenforEøs: Boolean = true,
 ): ManueltRegistrertBarn =
     ManueltRegistrertBarn(

@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockSupplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.mockTiltak
@@ -27,7 +28,7 @@ internal class SupplerendeStønadOver67 {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -41,7 +42,7 @@ internal class SupplerendeStønadOver67 {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -55,7 +56,7 @@ internal class SupplerendeStønadOver67 {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "SupplerendeStønadOver67 med mottar = false kan ikke ha noen periode"
+        ).valider(fixedClock) shouldContain "SupplerendeStønadOver67 med mottar = false kan ikke ha noen periode"
     }
 
     @Test
@@ -75,7 +76,7 @@ internal class SupplerendeStønadOver67 {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -95,7 +96,7 @@ internal class SupplerendeStønadOver67 {
                 ),
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
+        ).valider(fixedClock) shouldContain "Perioden på SupplerendeStønadOver67 er ugyldig. Perioden kan ikke gå utenfor perioden på tiltaket."
     }
 
     @Test
@@ -106,6 +107,6 @@ internal class SupplerendeStønadOver67 {
                 periode = null,
             ),
             mottarAndreUtbetalinger = true,
-        ).valider() shouldContain "SupplerendeStønadOver67 med mottar = true må ha periode"
+        ).valider(fixedClock) shouldContain "SupplerendeStønadOver67 med mottar = true må ha periode"
     }
 }

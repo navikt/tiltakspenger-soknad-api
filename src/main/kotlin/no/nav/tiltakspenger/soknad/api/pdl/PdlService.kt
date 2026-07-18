@@ -5,19 +5,26 @@ import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
+import java.time.Clock
 import java.time.LocalDate
 
 class PdlService(
     private val pdlClient: PdlClient,
+    private val clock: Clock,
 ) {
     private val log = KotlinLogging.logger {}
 
+    /**
+     * Barn filtreres på om de er under 16 år på [styrendeDato].
+     * Dersom [styrendeDato] er null brukes dagens dato.
+     */
     suspend fun hentPersonaliaMedBarn(
         fødselsnummer: String,
         subjectToken: String,
         callId: String,
-        styrendeDato: LocalDate = LocalDate.now(),
+        styrendeDato: LocalDate? = null,
     ): PersonDTO {
+        val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
         log.debug { "Henter søkers personalia fra PDL. Kallid: $callId" }
         val result =
             pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
@@ -28,12 +35,12 @@ class PdlService(
         val barn = if (barnsIdenter.isNotEmpty()) {
             pdlClient.fetchBarn(barnsIdenter, callId).toPersoner()
                 .mapNotNull { it }
-                .filter { it.erUnder16ÅrPåDato(dato = styrendeDato) }
+                .filter { it.erUnder16ÅrPåDato(dato = filtreringsdato) }
         } else {
             emptyList()
         }
         log.debug { "Henting personalia søkers barn har gått OK. Kallid: $callId" }
-        return person.toPersonDTO(barn)
+        return person.toPersonDTO(dagensDato = LocalDate.now(clock), barn = barn)
     }
 
     suspend fun hentAdressebeskyttelse(

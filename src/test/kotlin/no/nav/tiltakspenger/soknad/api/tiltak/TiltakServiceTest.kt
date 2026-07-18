@@ -5,6 +5,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
@@ -17,6 +18,7 @@ internal class TiltakServiceTest {
 
     private val tiltakService = TiltakService(
         tiltakspengerTiltakClient = tiltakspengerTiltakClient,
+        clock = fixedClock,
     )
 
     @Test

@@ -9,7 +9,7 @@ val kotlinxCoroutinesVersion = "1.11.0"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.7"
-val felleslibVersion = "0.0.863"
+val felleslibVersion = "0.0.20260718174757"
 val flywayVersjon = "12.10.0"
 val testContainersVersion = "2.0.5"
 
@@ -105,7 +105,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Delte arkitekturregler; drar inn konsist transitivt (api-avhengighet). Egen versjon inntil felleslibVersion bumpes.
-    testImplementation("com.github.navikt.tiltakspenger-libs:konsist-regler:0.0.895")
+    testImplementation("com.github.navikt.tiltakspenger-libs:konsist-regler:$felleslibVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
     // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.

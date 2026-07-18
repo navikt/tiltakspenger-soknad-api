@@ -25,6 +25,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnBolkQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentPersonQuery
 import tools.jackson.module.kotlin.readValue
+import java.time.Clock
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class PdlClient(
     endepunkt: String,
+    clock: Clock,
     private val pdlScope: String,
     private val texasClient: TexasHttpClient,
     private val getSystemToken: suspend () -> AccessToken,
@@ -51,6 +53,7 @@ class PdlClient(
     private val personklient =
         FellesPersonklient.create(
             endepunkt = endepunkt,
+            clock = clock,
             connectTimeout = 10.seconds,
             timeout = 10.seconds,
         )

@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.mockk.mockkClass
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
@@ -15,6 +16,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class PersonTest {
+    private val dagensDato = LocalDate.now(fixedClock)
+
     private fun mockForelderBarnRelasjon(id: String?, rolle: ForelderBarnRelasjonRolle): ForelderBarnRelasjon {
         return ForelderBarnRelasjon(
             relatertPersonsIdent = id,
@@ -67,7 +70,7 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal returnere personens navn og en tom liste med barn når det ikke er noen barn`() {
-        val personDTO = testpersonUgradert.toPersonDTO(emptyList())
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, emptyList())
         assertEquals(testpersonUgradert.fornavn, personDTO.fornavn)
         assertEquals(testpersonUgradert.mellomnavn, personDTO.mellomnavn)
         assertEquals(testpersonUgradert.etternavn, personDTO.etternavn)
@@ -76,7 +79,7 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal returnere personens navn og en liste med barn når man oppgir barn`() {
-        val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonUgradert))
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonUgradert))
         assertEquals(testpersonUgradert.fornavn, personDTO.fornavn)
         assertEquals(testpersonUgradert.mellomnavn, personDTO.mellomnavn)
         assertEquals(testpersonUgradert.etternavn, personDTO.etternavn)
@@ -90,7 +93,7 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering FORTROLIG`() {
-        val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonFortrolig))
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonFortrolig))
         val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
@@ -99,7 +102,7 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG`() {
-        val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonStrengtFortrolig))
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonStrengtFortrolig))
         val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
@@ -108,7 +111,7 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG_UTLAND`() {
-        val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonStrengtFortroligUtland))
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonStrengtFortroligUtland))
         val fortroligBarn = personDTO.barn[0]
         assertNull(fortroligBarn.fornavn)
         assertNull(fortroligBarn.mellomnavn)
@@ -127,7 +130,7 @@ internal class PersonTest {
 
     @Test
     fun `barn med dødsdato skal filtreres ut`() {
-        val personDTO = testpersonUgradert.toPersonDTO(listOf(testpersonUgradert, dødTestPerson))
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonUgradert, dødTestPerson))
         assertEquals(personDTO.barn.size, 1)
         val barn = personDTO.barn[0]
         assertNotEquals(barn.fornavn, "Død")
@@ -135,17 +138,17 @@ internal class PersonTest {
 
     @Test
     fun `toPersonDTO skal sette harFylt18År = false hvis fødselsdato på personen er mindre enn 18 år tilbake i tid`() {
-        val fødselsdatoUnder18År = LocalDate.now().minusYears(18).plusDays(1)
+        val fødselsdatoUnder18År = dagensDato.minusYears(18).plusDays(1)
         val personSomIkkeHarFylt18År = mockPerson(fødselsdato = fødselsdatoUnder18År)
-        val harFylt18År = personSomIkkeHarFylt18År.toPersonDTO().harFylt18År
+        val harFylt18År = personSomIkkeHarFylt18År.toPersonDTO(dagensDato).harFylt18År
         assertFalse(harFylt18År!!)
     }
 
     @Test
     fun `toPersonDTO skal sette harFylt18År = true hvis fødselsdato på personen 18 år tilbake i tid`() {
-        val fødselsdato18År = LocalDate.now().minusYears(18)
+        val fødselsdato18År = dagensDato.minusYears(18)
         val personSomHarFylt18År = mockPerson(fødselsdato = fødselsdato18År)
-        val harFylt18År = personSomHarFylt18År.toPersonDTO().harFylt18År
+        val harFylt18År = personSomHarFylt18År.toPersonDTO(dagensDato).harFylt18År
         assertTrue(harFylt18År!!)
     }
 }

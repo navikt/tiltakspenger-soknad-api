@@ -31,6 +31,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.routes.søknadRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.validateSøknad
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.tiltakRoutes
+import java.time.Clock
 import java.util.UUID.randomUUID
 
 internal fun Application.ktorSetup(
@@ -41,11 +42,12 @@ internal fun Application.ktorSetup(
     metricsCollector: MetricsCollector,
     nySøknadService: NySøknadService,
     readiness: Readiness,
+    clock: Clock,
 ) {
     installCallLogging()
     installJacksonFeature()
     install(RequestValidation) {
-        validateSøknad()
+        validateSøknad(clock)
     }
 
     setupRouting(
@@ -56,6 +58,7 @@ internal fun Application.ktorSetup(
         metricsCollector = metricsCollector,
         nySøknadService = nySøknadService,
         readiness = readiness,
+        clock = clock,
     )
 }
 
@@ -67,6 +70,7 @@ internal fun Application.setupRouting(
     avService: AvService,
     metricsCollector: MetricsCollector,
     readiness: Readiness,
+    clock: Clock,
 ) {
     authentication {
         register(
@@ -92,6 +96,7 @@ internal fun Application.setupRouting(
                 avService = avService,
                 metricsCollector = metricsCollector,
                 nySøknadService = nySøknadService,
+                clock = clock,
             )
             tiltakRoutes(
                 tiltakService = tiltakService,

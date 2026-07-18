@@ -13,6 +13,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
@@ -20,12 +21,13 @@ import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
-import java.time.LocalDateTime
+import java.time.Clock
 
 fun Route.søknadRoutes(
     nySøknadService: NySøknadService,
     avService: AvService,
     metricsCollector: MetricsCollector,
+    clock: Clock,
 ) {
     val log = KotlinLogging.logger { }
     route(SØKNAD_PATH) {
@@ -35,8 +37,8 @@ fun Route.søknadRoutes(
             try {
                 val principal =
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
-                val innsendingTidspunkt = LocalDateTime.now()
-                val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart())
+                val innsendingTidspunkt = nå(clock)
+                val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart(), clock)
                 if (vedlegg.isNotEmpty()) {
                     log.info { "Utfører virussjekk" }
                     avService.gjørVirussjekkAvVedlegg(vedlegg)

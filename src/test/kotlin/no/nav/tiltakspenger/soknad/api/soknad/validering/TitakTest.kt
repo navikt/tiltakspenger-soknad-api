@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.mockTiltak
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
@@ -23,7 +24,7 @@ internal class TitakTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldBe emptyList()
+        ).valider(fixedClock) shouldBe emptyList()
     }
 
     @Test
@@ -39,7 +40,7 @@ internal class TitakTest {
                     til = LocalDate.of(2025, 1, 2),
                 ),
             ),
-        ).valider() shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
+        ).valider(fixedClock) shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
     }
 
     @Test
@@ -55,7 +56,7 @@ internal class TitakTest {
                     til = LocalDate.of(2025, 1, 2),
                 ),
             ),
-        ).valider() shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
+        ).valider(fixedClock) shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
     }
 
     @Test
@@ -71,7 +72,7 @@ internal class TitakTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
+        ).valider(fixedClock) shouldContain "Bruker kan ikke søke utenfor den registrerte tiltaksperioden"
     }
 
     @Test
@@ -83,6 +84,6 @@ internal class TitakTest {
                     til = LocalDate.of(2025, 1, 1),
                 ),
             ),
-        ).valider() shouldContain "Perioden på tiltaket er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
+        ).valider(fixedClock) shouldContain "Perioden på tiltaket er ugyldig. Fra-dato må være tidligere enn, eller lik, til-dato."
     }
 }

@@ -2,9 +2,11 @@ package no.nav.tiltakspenger.soknad.api.tiltak
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.Fnr
+import java.time.Clock
 
 class TiltakService(
     private val tiltakspengerTiltakClient: TiltakspengerTiltakClient,
+    private val clock: Clock,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -19,7 +21,7 @@ class TiltakService(
             val tiltak = result.getOrNull()
             if (tiltak !== null) {
                 return tiltak.toTiltakDto(maskerArrangørnavn).filter {
-                    it.erInnenforRelevantTidsrom()
+                    it.erInnenforRelevantTidsrom(clock)
                 }
             }
         }
