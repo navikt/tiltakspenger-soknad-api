@@ -43,7 +43,7 @@ class FellesArkitekturKonsistTest {
 
     @Test
     fun `bruk nå fra libs-common, ikke LocalDateTime-now`() {
-        IngenLocalDateTimeNow.assert(Konsist.scopeFromProduction())
+        IngenLocalDateTimeNow.assert(Konsist.scopeFromProject())
     }
 
     @Test

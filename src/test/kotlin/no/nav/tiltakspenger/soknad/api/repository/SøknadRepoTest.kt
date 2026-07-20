@@ -102,7 +102,7 @@ internal class SøknadRepoTest {
 
     @Test
     fun `lagrer mottat søknad, journalfører, og sender til sbh-api`() = withCleanDb { søknadRepo ->
-        val nå = LocalDateTime.now()
+        val nå = nå(fixedClock)
         val søknad = søknad()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå,
@@ -149,7 +149,7 @@ internal class SøknadRepoTest {
 
     @Test
     fun `søknad til arena`() = withCleanDb { søknadRepo ->
-        val nå = LocalDateTime.now()
+        val nå = nå(fixedClock)
         val søknad = søknad()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå,
@@ -180,7 +180,7 @@ internal class SøknadRepoTest {
 
     @Test
     fun `hent brukers søknader`() = withCleanDb { søknadRepo ->
-        val nå = LocalDateTime.now()
+        val nå = nå(fixedClock)
         val fnr = "12345678910"
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå,
@@ -199,13 +199,13 @@ internal class SøknadRepoTest {
     fun `lagrer journalpostId som ren streng i databasen`() = withCleanDbAndDataSource { søknadRepo, dataSource ->
         val journalpostId = JournalpostId("123")
         val mottattSøknad = genererMottattSøknadForTest(
-            opprettet = LocalDateTime.now(),
+            opprettet = nå(fixedClock),
             eier = Applikasjonseier.Tiltakspenger,
         ).copy(
             søknad = søknad(),
             fornavn = "fornavn",
             etternavn = "etternavn",
-            journalført = LocalDateTime.now(),
+            journalført = nå(fixedClock),
             journalpostId = journalpostId,
         )
 

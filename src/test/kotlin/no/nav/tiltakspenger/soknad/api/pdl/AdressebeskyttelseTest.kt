@@ -1,6 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.kotest.assertions.throwables.shouldThrow
+import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Endring
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
@@ -14,20 +16,20 @@ const val FREG = "FREG"
 internal class AdressebeskyttelseTest {
 
     fun mockFolkeregistermetadata(
-        ajourholdstidspunkt: LocalDateTime = LocalDateTime.now(),
+        ajourholdstidspunkt: LocalDateTime = nå(fixedClock),
     ): FolkeregisterMetadata =
         FolkeregisterMetadata(
             aarsak = "test",
             ajourholdstidspunkt = ajourholdstidspunkt,
-            gyldighetstidspunkt = LocalDateTime.now(),
+            gyldighetstidspunkt = nå(fixedClock),
             kilde = "test",
-            opphoerstidspunkt = LocalDateTime.now(),
+            opphoerstidspunkt = nå(fixedClock),
             sekvens = 0,
         )
 
     fun mockEndringsmetadata(
         master: String = FREG,
-        registrert: LocalDateTime = LocalDateTime.now(),
+        registrert: LocalDateTime = nå(fixedClock),
         kilde: String = Kilde.BRUKER_SELV,
     ): EndringsMetadata =
         EndringsMetadata(
@@ -43,13 +45,13 @@ internal class AdressebeskyttelseTest {
             ),
         )
 
-    fun mockUdokumentertEndringsmetadata(endringstidspunkt: LocalDateTime = LocalDateTime.now()) =
+    fun mockUdokumentertEndringsmetadata(endringstidspunkt: LocalDateTime = nå(fixedClock)) =
         mockEndringsmetadata(master = Kilde.PDL, kilde = Kilde.BRUKER_SELV, registrert = endringstidspunkt)
 
     fun mockDokumentertEndringsmetadata(
         master: String = Kilde.PDL,
         kilde: String = Kilde.PDL,
-        endringstidspunkt: LocalDateTime = LocalDateTime.now(),
+        endringstidspunkt: LocalDateTime = nå(fixedClock),
     ) = mockEndringsmetadata(master = master, kilde = kilde, registrert = endringstidspunkt)
 
     fun mockAdressebeskyttelse(

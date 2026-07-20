@@ -4,6 +4,8 @@ import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.PlainJWT
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.pdl.Navn
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
@@ -17,7 +19,7 @@ fun genererMottattSøknadForTest(
     id: SøknadId = SøknadId.random(),
     søknadSpm: SpørsmålsbesvarelserDTO = spørsmålsbesvarelser(),
     fnr: String = "12345678901",
-    opprettet: LocalDateTime = LocalDateTime.now(),
+    opprettet: LocalDateTime = nå(fixedClock),
     vedlegg: List<Vedlegg> = listOf(
         Vedlegg(
             filnavn = "filnavn",

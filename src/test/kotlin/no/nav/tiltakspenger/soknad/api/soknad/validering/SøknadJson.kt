@@ -1,6 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.soknad.validering
 
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.domain.Personopplysninger
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
@@ -16,7 +18,7 @@ fun søknad(
     spørsmålsbesvarelser = spørsmålsbesvarelser,
     vedleggsnavn = listOf("test.pdf"),
     personopplysninger = personopplysninger,
-    innsendingTidspunkt = LocalDateTime.now(),
+    innsendingTidspunkt = nå(fixedClock),
 )
 
 private fun personopplysninger() =

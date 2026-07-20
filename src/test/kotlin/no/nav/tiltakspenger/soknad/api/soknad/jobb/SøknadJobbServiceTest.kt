@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
@@ -54,7 +55,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier TP - henter og lagrer saksnummer`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Tiltakspenger,
@@ -71,7 +72,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `hentEllerOpprettSaksnummer - saksnummer mangler, eier Arena - oppdaterer ikke`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Arena,
@@ -89,7 +90,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `journalførLagredeSøknader - eier TP - journalfører og ferdigstiller automatisk`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Tiltakspenger,
@@ -118,7 +119,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `journalførLagredeSøknader - eier arena - oppretter journalpost, ferdigstiller ikke`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Arena,
@@ -147,7 +148,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier TP - sender til saksbehandling-api`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Tiltakspenger,
@@ -176,7 +177,7 @@ class SøknadJobbServiceTest {
     @Test
     fun `sendJournalførteSøknaderTilSaksbehandlingApi - eier Arena - sender ikke til saksbehandling-api`() = withSetup { søknadRepo, søknadJobbService ->
         val correlationId = CorrelationId.generate()
-        val opprettet = LocalDateTime.now()
+        val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,
             eier = Applikasjonseier.Arena,

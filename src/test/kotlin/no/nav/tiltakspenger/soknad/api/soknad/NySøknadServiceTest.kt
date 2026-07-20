@@ -4,6 +4,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
+import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import org.junit.jupiter.api.BeforeEach
@@ -22,7 +24,7 @@ class NySøknadServiceTest {
             acr = "Level4",
             fnr = "12345678910",
             vedlegg = listOf(),
-            innsendingTidspunkt = LocalDateTime.now(),
+            innsendingTidspunkt = nå(fixedClock),
         )
         mockkObject(Configuration)
     }
