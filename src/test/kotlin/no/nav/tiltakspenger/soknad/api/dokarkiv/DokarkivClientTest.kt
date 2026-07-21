@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.AccessToken
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.httpClientGeneric
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
@@ -158,7 +159,7 @@ internal class DokarkivClientTest {
     }
 
     private fun getMockToken(): AccessToken {
-        return AccessToken("token", Instant.now().plusSeconds(3600))
+        return AccessToken("token", Instant.now(fixedClock).plusSeconds(3600))
     }
 
     private fun journalpostRequest(
