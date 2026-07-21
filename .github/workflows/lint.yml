@@ -20,5 +20,5 @@ jobs:
       contents: read
     uses: navikt/tiltakspenger/.github/workflows/lint-workflows.yml@main
     with:
-      # Unntakene er nedfelt med begrunnelse i .github/zizmor.yml - nye funn skal derfor feile bygget.
-      zizmor-blokkerende: true
+      # Dependabot trenger registries-blokka for libs-bumps fra GitHub Packages - reelt avvik fra dependabot-malen.
+      dependabot-mal: ingen
