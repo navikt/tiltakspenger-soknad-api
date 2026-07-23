@@ -9,14 +9,14 @@ services:
       POSTGRES_PASSWORD: test
       POSTGRES_DB: soknad
     ports:
-      - 5436:5432
+      - "127.0.0.1:5436:5432"
     volumes:
       - postgres-soknad-data:/var/lib/postgresql/data
   auth:
     image: "ghcr.io/navikt/mock-oauth2-server:0.5.1"
     container_name: auth
     ports:
-      - "6969:6969"
+      - "127.0.0.1:6969:6969"
     environment:
       SERVER_PORT: 6969
       JSON_CONFIG: >

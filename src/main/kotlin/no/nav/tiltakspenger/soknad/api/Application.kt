@@ -46,6 +46,7 @@ fun main() {
 internal fun start(
     log: KLogger,
     port: Int = Configuration.httpPort(),
+    host: String = "0.0.0.0",
     clock: Clock,
     isNais: Boolean = Configuration.isNais(),
 ) {
@@ -134,6 +135,7 @@ internal fun start(
     startApp(
         log = log,
         port = port,
+        host = host,
         isNais = isNais,
         oppsett = Bakgrunnsprosessoppsett(
             mdcCallIdKey = "call-id",
