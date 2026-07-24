@@ -15,8 +15,7 @@ import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
-import no.nav.tiltakspenger.soknad.api.db.DataSource
-import no.nav.tiltakspenger.soknad.api.db.flywayMigrate
+import no.nav.tiltakspenger.soknad.api.db.DataSourceSetup
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseConsumer
@@ -59,7 +58,7 @@ internal fun start(
     }
     log.info { "starting server" }
 
-    flywayMigrate()
+    val dataSource = DataSourceSetup.createDatasource(Configuration.database().url)
 
     val texasClient = TexasHttpClient(
         introspectionUrl = Configuration.naisTokenIntrospectionEndpoint,
@@ -87,7 +86,7 @@ internal fun start(
         dokarkivService = DokarkivService(dokarkivClient),
     )
 
-    val søknadRepo = SøknadRepo(DataSource.dataSource)
+    val søknadRepo = SøknadRepo(dataSource)
     val pdlService = PdlService(
         clock = clock,
         pdlClient = PdlClient(

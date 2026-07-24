@@ -157,9 +157,6 @@ kover {
                         "no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient*",
                         // TODO jah: Profil/miljøvariabler leses fra global system-env (System.getenv/getProperty); DEV/PROD-grenene kan ikke dekkes uten å mutere JVM-global tilstand delt mellom tester. Gjør profil/cluster-navn injiserbart.
                         "no.nav.tiltakspenger.soknad.api.Configuration*",
-                        // TODO jah: `DataSource` er en global `by lazy`-singleton låst til DB_JDBC_URL ved første bruk, og `flywayMigrate()` bruker den. Gjør datasourcen injiserbar så den kan testes uten å mutere global tilstand.
-                        "no.nav.tiltakspenger.soknad.api.db.DataSource",
-                        "no.nav.tiltakspenger.soknad.api.db.FlywayMigrateKt",
                     )
                 }
             }
