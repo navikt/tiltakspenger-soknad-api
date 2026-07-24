@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.asByteChannel
@@ -28,6 +29,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 import no.nav.tiltakspenger.soknad.api.util.Detect
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -44,6 +46,12 @@ class SoknadRequestMapperTest {
     @BeforeEach
     fun setup() {
         clearAllMocks()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        // mockkStatic muterer global statisk tilstand; unmock så det ikke lekker til andre testklasser (jf. DetectTest).
+        unmockkAll()
     }
 
     @Test
@@ -134,5 +142,27 @@ class SoknadRequestMapperTest {
         runBlocking {
             shouldThrow<RequestValidationException> { taInnSøknadSomMultipart(mockMultiPartData, fixedClock) }
         }
+    }
+
+    @Test
+    fun `toSpørsmålsbesvarelser kaster UnrecognizedFormItemException ved ukjent form-nøkkel`() {
+        val formItemMedUkjentNøkkel = PartData.FormItem(
+            gyldigSpørsmålsbesvarelser.toJsonString(),
+            {},
+            Headers.build {
+                append(HttpHeaders.ContentType, "application/json")
+                append(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition("ukjent", listOf(HeaderValueParam("name", "ukjent"))),
+                )
+            },
+        )
+
+        shouldThrow<UnrecognizedFormItemException> { formItemMedUkjentNøkkel.toSpørsmålsbesvarelser(fixedClock) }
+    }
+
+    @Test
+    fun `MissingContentException bærer meldingen videre`() {
+        MissingContentException("mangler innhold").message shouldBe "mangler innhold"
     }
 }

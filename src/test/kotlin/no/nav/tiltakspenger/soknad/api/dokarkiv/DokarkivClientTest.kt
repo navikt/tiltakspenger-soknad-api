@@ -158,6 +158,31 @@ internal class DokarkivClientTest {
         }
     }
 
+    @Test
+    fun `nettverksfeil pakkes inn i RuntimeException`() {
+        // IOException er verken 409-Conflict eller IllegalStateException og treffer ukjent exception-grenen.
+        val mock = MockEngine {
+            throw java.io.IOException("connection reset")
+        }
+
+        val client = httpClientGeneric(mock)
+        val dokarkivClient = DokarkivClient(
+            client = client,
+            baseUrl = baseurl,
+        ) { getMockToken() }
+
+        runTest {
+            val exception = shouldThrow<RuntimeException> {
+                dokarkivClient.opprettJournalpost(
+                    request = journalpostRequest(),
+                    søknadId = søknadId,
+                    callId = "123",
+                )
+            }
+            exception.message shouldBe "DokarkivClient: Fikk en ukjent exception."
+        }
+    }
+
     private fun getMockToken(): AccessToken {
         return AccessToken("token", Instant.now(fixedClock).plusSeconds(3600))
     }

@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.hotspot.DefaultExports
 import no.nav.tiltakspenger.libs.jobber.TaskResultat
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Bakgrunnsprosessoppsett
@@ -51,7 +52,7 @@ internal fun start(
     isNais: Boolean = Configuration.isNais(),
 ) {
     DefaultExports.initialize()
-    val metricsCollector = MetricsCollector()
+    val metricsCollector = MetricsCollector(CollectorRegistry.defaultRegistry)
 
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         log.error(e) { e.message }
@@ -171,7 +172,7 @@ internal fun start(
                     KafkaConsumerOppsett(
                         navn = "identhendelse-consumer",
                         start = { identhendelseConsumer.run() },
-                        stopp = {},
+                        stopp = { identhendelseConsumer.stop() },
                     ),
                 )
             } else {

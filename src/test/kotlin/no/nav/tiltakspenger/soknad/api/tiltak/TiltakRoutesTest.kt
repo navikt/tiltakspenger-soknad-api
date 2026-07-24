@@ -281,6 +281,31 @@ internal class TiltakRoutesTest {
         ),
     ): JWT = lagTestToken(claims)
 
+    @Test
+    fun `get på tiltak-endepunkt skal svare med 500 hvis et av kallene feiler`() {
+        val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
+        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } throws RuntimeException("pdl er nede")
+
+        testApplication {
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
+            runBlocking {
+                val response = client.get(TILTAK_PATH) {
+                    contentType(type = ContentType.Application.Json)
+                    header("Authorization", "Bearer ${token.serialize()}")
+                }
+                response.status shouldBe HttpStatusCode.InternalServerError
+            }
+        }
+    }
+
     private fun issueTestToken(
         issuer: String = "tokendings",
         claims: Map<String, String> = mapOf(

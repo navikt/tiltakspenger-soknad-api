@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
@@ -150,5 +151,11 @@ internal class PersonTest {
         val personSomHarFylt18År = mockPerson(fødselsdato = fødselsdato18År)
         val harFylt18År = personSomHarFylt18År.toPersonDTO(dagensDato).harFylt18År
         assertTrue(harFylt18År!!)
+    }
+
+    @Test
+    fun `erUnder16ÅrPåDato skal kaste når barnet mangler fødselsdato`() {
+        val barnUtenFødselsdato = mockPerson().copy(fødselsdato = null)
+        assertFailsWith<IllegalStateException> { barnUtenFødselsdato.erUnder16ÅrPåDato(dagensDato) }
     }
 }

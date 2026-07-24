@@ -1,13 +1,17 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import arrow.core.left
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.Configuration
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -26,7 +30,15 @@ class NySøknadServiceTest {
             vedlegg = listOf(),
             innsendingTidspunkt = nå(fixedClock),
         )
+        // TODO jah: NySøknadService leser Configuration.isProd() direkte, så vi mockkObject-er singletonen.
+        // Injiser profil/eier-avgjørelsen i stedet, så mock og global tilstand forsvinner.
         mockkObject(Configuration)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        // mockkObject muterer den globale Configuration-singletonen; unmock så den ikke lekker til andre testklasser.
+        unmockkObject(Configuration)
     }
 
     @Test
@@ -45,5 +57,15 @@ class NySøknadServiceTest {
 
         verify { søknadRepo.lagre(match { it.eier == Applikasjonseier.Tiltakspenger }) }
         resultat.isRight()
+    }
+
+    @Test
+    fun `feil under lagring gir KunneIkkeLagreSøknad`() {
+        every { Configuration.isProd() } returns false
+        every { søknadRepo.lagre(any()) } throws RuntimeException("databasen er nede")
+
+        val resultat = nySøknadService.nySøknad(kommando)
+
+        resultat shouldBe KunneIkkeMottaNySøknad.KunneIkkeLagreSøknad.left()
     }
 }

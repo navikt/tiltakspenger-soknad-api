@@ -7,26 +7,33 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import no.nav.tiltakspenger.libs.common.CorrelationId
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Dødsfall
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Endring
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Fødsel
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.GeografiskTilknytning
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Kilde
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Navn
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerFraPDL
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDL
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnFraPDLBolk
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.avklarFødsel
+import no.nav.tiltakspenger.soknad.api.pdl.client.dto.avklarNavn
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -513,5 +520,92 @@ internal class PdlServiceTest {
                 barn2Under16ÅrPåTiltaksstartdato.toBarnDTO(),
             )
         }
+    }
+
+    @Test
+    fun `hentAdressebeskyttelse henter søker og returnerer graderingen`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøker(any(), any(), any()) } returns mockSøkerRespons()
+
+            val gradering = pdlService.hentAdressebeskyttelse(
+                fødselsnummer = testFødselsnummer,
+                subjectToken = "token",
+                callId = "test",
+            )
+
+            gradering shouldBe AdressebeskyttelseGradering.UGRADERT
+        }
+    }
+
+    @Test
+    fun `hentNavnForFnr henter søker som systembruker og returnerer navnet`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøkerSystembruker(any(), any()) } returns mockSøkerRespons()
+
+            val navn = pdlService.hentNavnForFnr(
+                fnr = Fnr.fromString(testFødselsnummer),
+                correlationId = CorrelationId.generate(),
+            )
+
+            navn shouldBe no.nav.tiltakspenger.soknad.api.pdl.Navn(fornavn = "foo", mellomnavn = "baz", etternavn = "bar")
+        }
+    }
+
+    @Test
+    fun `toPerson kaster når søker er registrert som død i PDL`() {
+        val respons = mockSøkerRespons().let {
+            it.copy(hentPerson = it.hentPerson!!.copy(doedsfall = listOf(Dødsfall(doedsdato = LocalDate.of(2020, 1, 1)))))
+        }
+
+        shouldThrow<IllegalStateException> { respons.toPerson(Fnr.fromString(testFødselsnummer)) }
+    }
+
+    @Test
+    fun `avklarNavn kaster når alle navnene har udokumentert kilde`() {
+        val udokumentertNavn = mockNavn().copy(
+            metadata = EndringsMetadata(
+                endringer = listOf(
+                    Endring(
+                        kilde = Kilde.BRUKER_SELV,
+                        registrert = LocalDateTime.of(2020, 1, 1, 12, 0),
+                        registrertAv = "bruker",
+                        systemkilde = "test",
+                        type = "OPPRETT",
+                    ),
+                ),
+                master = Kilde.PDL,
+            ),
+        )
+
+        shouldThrow<IllegalStateException> { avklarNavn(listOf(udokumentertNavn)) }
+    }
+
+    @Test
+    fun `avklarFødsel kaster når det ikke finnes noen fødselsdato`() {
+        shouldThrow<IllegalStateException> { avklarFødsel(emptyList()) }
+    }
+
+    @Test
+    fun `getGT returnerer riktig verdi for alle typene geografisk tilknytning`() {
+        GeografiskTilknytning(gtType = "KOMMUNE", gtKommune = "1122", gtBydel = null, gtLand = null).getGT() shouldBe "1122"
+        GeografiskTilknytning(gtType = "BYDEL", gtKommune = null, gtBydel = "112233", gtLand = null).getGT() shouldBe "112233"
+        GeografiskTilknytning(gtType = "UTLAND", gtKommune = null, gtBydel = null, gtLand = "SWE").getGT() shouldBe "SWE"
+        GeografiskTilknytning(gtType = "UDEFINERT", gtKommune = null, gtBydel = null, gtLand = null).getGT() shouldBe "UDEFINERT"
+        GeografiskTilknytning(gtType = "UKJENT_TYPE", gtKommune = null, gtBydel = null, gtLand = null).getGT() shouldBe null
+    }
+
+    @Test
+    fun `toPersoner gir null for barn som ikke ble funnet i bolkoppslaget`() {
+        val respons = SøkersBarnRespons(
+            hentPersonBolk = listOf(
+                SøkersBarnFraPDLBolk(
+                    ident = testBarnFødselsnummer,
+                    person = null,
+                    code = PdlPersonBolkCode.NOT_FOUND,
+                ),
+            ),
+        )
+
+        respons.toPersoner() shouldBe listOf(null)
     }
 }

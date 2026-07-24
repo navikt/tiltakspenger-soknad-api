@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.clearMocks
@@ -25,7 +26,6 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import no.nav.tiltakspenger.soknad.api.util.getTestNavnFraPdl
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class SøknadJobbServiceTest {
     private val pdlService = mockk<PdlService>()
@@ -172,6 +172,90 @@ class SøknadJobbServiceTest {
                 correlationId,
             )
         }
+    }
+
+    @Test
+    fun `hentEllerOpprettSaksnummer - kallet feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
+        coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } throws RuntimeException("saksbehandling-api er nede")
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = nå(fixedClock),
+            eier = Applikasjonseier.Tiltakspenger,
+            saksnummer = null,
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        søknadJobbService.hentEllerOpprettSaksnummer(CorrelationId.generate())
+
+        søknadRepo.hentSoknad(mottattSøknad.id)?.saksnummer shouldBe null
+    }
+
+    @Test
+    fun `journalførLagredeSøknader - TP-søknad mangler saksnummer - kaster`() = withSetup { søknadRepo, søknadJobbService ->
+        // Tomt saksnummer passerer repo-spørringens `saksnummer is not null`, men skal stoppes av guarden i jobben.
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = nå(fixedClock),
+            eier = Applikasjonseier.Tiltakspenger,
+            saksnummer = "",
+            vedlegg = emptyList(),
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        shouldThrow<IllegalStateException> {
+            søknadJobbService.journalførLagredeSøknader(CorrelationId.generate())
+        }
+    }
+
+    @Test
+    fun `journalførLagredeSøknader - pdl-kallet feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
+        coEvery { pdlService.hentNavnForFnr(any(), any()) } throws RuntimeException("pdl er nede")
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = nå(fixedClock),
+            eier = Applikasjonseier.Tiltakspenger,
+            saksnummer = "232323",
+            vedlegg = emptyList(),
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        søknadJobbService.journalførLagredeSøknader(CorrelationId.generate())
+
+        søknadRepo.hentSoknad(mottattSøknad.id)?.journalført shouldBe null
+    }
+
+    @Test
+    fun `journalførLagredeSøknader - journalføringen feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
+        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } throws RuntimeException("dokarkiv er nede")
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = nå(fixedClock),
+            eier = Applikasjonseier.Tiltakspenger,
+            saksnummer = "232323",
+            vedlegg = emptyList(),
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        søknadJobbService.journalførLagredeSøknader(CorrelationId.generate())
+
+        søknadRepo.hentSoknad(mottattSøknad.id)?.journalført shouldBe null
+    }
+
+    @Test
+    fun `sendJournalførteSøknaderTilSaksbehandlingApi - sending feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
+        coEvery { saksbehandlingApiKlient.sendSøknad(any(), any()) } throws RuntimeException("saksbehandling-api er nede")
+        val opprettet = nå(fixedClock)
+        val mottattSøknad = genererMottattSøknadForTest(
+            opprettet = opprettet,
+            eier = Applikasjonseier.Tiltakspenger,
+            saksnummer = "232323",
+            vedlegg = emptyList(),
+        ).copy(
+            søknad = søknad(),
+            journalpostId = journalpostId,
+            journalført = opprettet,
+        )
+        søknadRepo.lagre(mottattSøknad)
+
+        søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(CorrelationId.generate())
+
+        søknadRepo.hentSoknad(mottattSøknad.id)?.sendtTilVedtak shouldBe null
     }
 
     @Test

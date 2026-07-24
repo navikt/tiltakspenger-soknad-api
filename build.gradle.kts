@@ -1,3 +1,5 @@
+import kotlinx.kover.gradle.plugin.dsl.AggregationType
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 val mockkVersion = "1.14.11"
@@ -18,6 +20,7 @@ plugins {
     distribution
     kotlin("jvm") version "2.4.10"
     id("com.diffplug.spotless") version "8.8.0"
+    id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
 
 repositories {
@@ -133,6 +136,61 @@ configurations.all {
 }
 
 apply(plugin = "com.diffplug.spotless")
+
+// --- Kover --------------------------------------------------------------------
+// Holder 100 % linjedekning for all produksjonskode utenom eksplisitte unntak.
+// Dekningen rapporteres som HTML/XML på `check`, og bygget feiler hvis terskelen ikke holdes.
+kover {
+    reports {
+        total {
+            filters {
+                excludes {
+                    classes(
+                        // TODO jah: Bootstrap som starter selve serveren (main/start, inkl. wiring-lambdaene); vurder å teste start() ved å gjøre startApp-oppsettet verifiserbart uten å blokkere.
+                        "no.nav.tiltakspenger.soknad.api.ApplicationKt*",
+                        // TODO jah: Ktor-klient-buildere og HTTP-klienter som skrives om ved migreringen til libs `httpklient` (tiltakspenger-soknad-api#840); Kover-dekning seedes der, jf. epic-konvensjonen «Kover 100 % for migrerte klienter».
+                        "no.nav.tiltakspenger.soknad.api.DefaultObjectsKt*",
+                        "no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient*",
+                        "no.nav.tiltakspenger.soknad.api.pdf.PdfClient*",
+                        "no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient*",
+                        "no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient*",
+                        "no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient*",
+                        // TODO jah: Profil/miljøvariabler leses fra global system-env (System.getenv/getProperty); DEV/PROD-grenene kan ikke dekkes uten å mutere JVM-global tilstand delt mellom tester. Gjør profil/cluster-navn injiserbart.
+                        "no.nav.tiltakspenger.soknad.api.Configuration*",
+                        // TODO jah: `DataSource` er en global `by lazy`-singleton låst til DB_JDBC_URL ved første bruk, og `flywayMigrate()` bruker den. Gjør datasourcen injiserbar så den kan testes uten å mutere global tilstand.
+                        "no.nav.tiltakspenger.soknad.api.db.DataSource",
+                        "no.nav.tiltakspenger.soknad.api.db.FlywayMigrateKt",
+                    )
+                }
+            }
+            html {
+                onCheck = true
+            }
+            xml {
+                onCheck = true
+            }
+            verify {
+                onCheck = true
+                rule("all produksjonskode utenom eksplisitte unntak skal ha 100 % linjedekning") {
+                    bound {
+                        minValue = 100
+                        coverageUnits = CoverageUnit.LINE
+                        aggregationForGroup = AggregationType.COVERED_PERCENTAGE
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.named("koverXmlReport") {
+    val xmlReport = layout.buildDirectory.file("reports/kover/report.xml")
+    doLast {
+        val xml = xmlReport.get().asFile
+        val classCount = xml.readText().split("<class ").size - 1
+        if (classCount == 0) throw GradleException("Kover-rapporten inneholder ingen klasser – ekskluderingsfilteret er trolig for grådig.")
+    }
+}
 
 spotless {
     kotlin {
