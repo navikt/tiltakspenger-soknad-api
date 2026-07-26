@@ -3,7 +3,6 @@ package no.nav.tiltakspenger.soknad.api.testutils
 import io.prometheus.client.CollectorRegistry
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
-import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.soknad.api.ApplicationContext
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
@@ -28,11 +27,6 @@ open class TestApplicationContext(
      * Default er `false`, altså prod-oppførselen, fordi skygge-kallet gjøres i parallell mot den samme FIFO-transporten.
      */
     isLocalOrDev: Boolean = false,
-    /**
-     * Settes når alle klientene skal dele én rutende transport i stedet for hver sin kø.
-     * Brukes til å verifisere [LokalHttpTransport], som er det lokal kjøring står på.
-     */
-    private val fellesTransport: HttpTransport? = null,
 ) : ApplicationContext(
     clock = clock,
     søknadRepo = søknadRepo,
@@ -48,48 +42,48 @@ open class TestApplicationContext(
 
     override val texasClient = TexasClientFake(clock)
 
-    override val pdlClient = PdlClient(
+    override val personKlient = PdlClient(
         endepunkt = "http://pdl.test/graphql",
         clock = clock,
         pdlScope = "pdl-scope",
         texasClient = texasClient,
         authTokenProvider = TestTokenProvider(),
-        transport = fellesTransport ?: pdlTransport,
+        transport = pdlTransport,
     )
 
-    override val tiltakspengerTiltakClient = TiltakspengerTiltakClient(
+    override val tiltakKlient = TiltakspengerTiltakClient(
         tiltakspengerTiltakEndpoint = "http://tiltak.test",
         clock = clock,
         tiltakspengerTiltakScope = "tiltak-scope",
         texasClient = texasClient,
-        transport = fellesTransport ?: tiltakTransport,
+        transport = tiltakTransport,
     )
 
-    override val clamAvClient = ClamAvClient(
+    override val avKlient = ClamAvClient(
         avEndpoint = "http://clamav.test/scan",
         clock = clock,
-        transport = fellesTransport ?: clamAvTransport,
+        transport = clamAvTransport,
     )
 
-    override val pdfClient = PdfClient(
+    override val pdfGenerator = PdfClient(
         pdfEndpoint = "http://pdfgen.test",
         pdfgenrsEndpoint = "http://pdfgenrs.test",
         isLocalOrDev = isLocalOrDev,
         clock = clock,
-        transport = fellesTransport ?: pdfTransport,
+        transport = pdfTransport,
     )
 
-    override val dokarkivClient = DokarkivClient(
+    override val journalpostKlient = DokarkivClient(
         baseUrl = "http://dokarkiv.test",
         clock = clock,
         authTokenProvider = TestTokenProvider(),
-        transport = fellesTransport ?: dokarkivTransport,
+        transport = dokarkivTransport,
     )
 
-    override val saksbehandlingApiKlient = SaksbehandlingApiKlient(
+    override val saksbehandlingKlient = SaksbehandlingApiKlient(
         baseUrl = "http://saksbehandling.test",
         clock = clock,
         authTokenProvider = TestTokenProvider(),
-        transport = fellesTransport ?: saksbehandlingApiTransport,
+        transport = saksbehandlingApiTransport,
     )
 }

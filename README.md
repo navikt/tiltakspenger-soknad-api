@@ -35,9 +35,12 @@ docker compose -f ../docker-compose-soknad.yml up postgresSoknad
 ```
 
 `LokalMain` kjører nøyaktig samme `start()`-rutine som i drift, men med `LokalApplicationContext`.
-Den svarer på alle utgående kall — PDL, tiltak, virussjekk, PDF-generering, journalføring og oversending til saksbehandling-api — med faste, gyldige svar, og godtar hvilket som helst token.
-Klientene er de ekte; det er kun transporten som er byttet ut, så hele klient-pipelinen kjører også lokalt.
+Der er hver utgående avhengighet — PDL, tiltak, virussjekk, PDF-generering, journalføring og oversending til saksbehandling-api — byttet ut med sin egen fake, og hvilket som helst token godtas.
+Fakene ligger i testkildene ved siden av de andre testhjelperne, og implementerer den samme porten som produksjonsklienten.
+Klientene selv er dekket av sine egne tester over `FakeHttpTransport`; lokal kjøring skal bare gi en app som står på egne bein.
 Testbrukeren har to barn under 16 år og ett aktivt tiltak, slik at hele søknaden kan fylles ut.
+
+`LokalApplicationContextTest` kjører hele søknadsflyten mot den samme konteksten, slik at oppsettet ikke kan råtne i det stille.
 
 Sett `BRUK_MOCK_API=true` for å gå mot compose-oppsettet i stedet, altså [tiltakspenger-soknad-mock-api](https://github.com/navikt/tiltakspenger-soknad-mock-api), pdfgen og authserveren.
 

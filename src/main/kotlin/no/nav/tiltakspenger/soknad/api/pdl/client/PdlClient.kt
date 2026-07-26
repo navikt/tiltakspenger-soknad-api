@@ -58,7 +58,7 @@ class PdlClient(
     connectTimeout: Duration = 10.seconds,
     timeout: Duration = 10.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
-) {
+) : PersonKlient {
     private val httpKlient: HttpKlient = HttpKlient(
         clock = clock,
         config = HttpKlientConfig(
@@ -77,7 +77,7 @@ class PdlClient(
         .build()
 
     /** Tar en [Nel] fordi et bolkoppslag uten identer er meningsløst; kallstedet har allerede tatt stilling til det tilfellet. */
-    suspend fun fetchBarn(identer: Nel<String>): Either<KanIkkeHentePerson, SøkersBarnRespons> =
+    override suspend fun fetchBarn(identer: Nel<String>): Either<KanIkkeHentePerson, SøkersBarnRespons> =
         httpKlient.postJson<GraphQLRespons<SøkersBarnRespons>>(
             uri = uri,
             body = hentBarnBolkQuery(identer),
@@ -86,7 +86,7 @@ class PdlClient(
         ).tilData()
 
     /** Henter søker med brukerens eget token, vekslet til PDL via TokenX. */
-    suspend fun fetchSøker(
+    override suspend fun fetchSøker(
         fødselsnummer: String,
         subjectToken: String,
     ): Either<KanIkkeHentePerson, SøkerRespons> {
@@ -100,7 +100,7 @@ class PdlClient(
     }
 
     /** Henter søker med systemtoken; brukes fra jobber der det ikke finnes en innlogget bruker. */
-    suspend fun fetchSøkerSystembruker(fødselsnummer: String): Either<KanIkkeHentePerson, SøkerRespons> {
+    override suspend fun fetchSøkerSystembruker(fødselsnummer: String): Either<KanIkkeHentePerson, SøkerRespons> {
         cache.getIfPresent(fødselsnummer)?.let { return it.right() }
         return fetchSøkerFraPdl(fødselsnummer = fødselsnummer, token = null)
     }

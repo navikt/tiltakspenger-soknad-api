@@ -8,6 +8,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Readiness
+import no.nav.tiltakspenger.soknad.api.ApplicationContext
 import no.nav.tiltakspenger.soknad.api.ktorSetup
 
 /**
@@ -18,12 +19,23 @@ fun medTestApplikasjon(
     tac: TestApplicationContext = TestApplicationContext(),
     testBlock: suspend ApplicationTestBuilder.(TestApplicationContext) -> Unit,
 ) {
+    medApplikasjon(tac) { testBlock(tac) }
+}
+
+/**
+ * Samme oppsett for en vilkårlig [ApplicationContext].
+ * Brukes av `LokalApplicationContextTest`, som kjører mot konteksten `LokalMain` bruker, ikke test-konteksten.
+ */
+fun medApplikasjon(
+    applicationContext: ApplicationContext,
+    testBlock: suspend ApplicationTestBuilder.() -> Unit,
+) {
     testApplication {
         application {
             // Readiness settes klar av livssyklusen i startApp, som ikke kjører her; /isready svarer derfor 503 i testene.
-            ktorSetup(tac, Readiness())
+            ktorSetup(applicationContext, Readiness())
         }
-        testBlock(tac)
+        testBlock()
     }
 }
 

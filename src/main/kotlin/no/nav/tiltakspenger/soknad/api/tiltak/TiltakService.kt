@@ -9,7 +9,7 @@ import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import java.time.Clock
 
 class TiltakService(
-    private val tiltakspengerTiltakClient: TiltakspengerTiltakClient,
+    private val tiltakKlient: TiltakKlient,
     private val clock: Clock,
     private val sikkerlogg: Sikkerlogg,
 ) {
@@ -20,7 +20,7 @@ class TiltakService(
         fnr: Fnr,
         maskerArrangørnavn: Boolean,
     ): Either<HttpKlientError, List<TiltaksdeltakelseDto>> =
-        tiltakspengerTiltakClient.fetchTiltak(subjectToken = subjectToken, fnr = fnr)
+        tiltakKlient.fetchTiltak(subjectToken = subjectToken, fnr = fnr)
             .onLeft { it.loggFeil(log, "henting av tiltak fra tiltakspenger-tiltak", "", sikkerlogg) }
             .map { tiltak ->
                 tiltak.toTiltakDto(maskerArrangørnavn).filter { it.erInnenforRelevantTidsrom(clock) }

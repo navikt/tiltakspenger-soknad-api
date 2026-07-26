@@ -47,7 +47,7 @@ class DokarkivClient(
     connectTimeout: Duration = 30.seconds,
     timeout: Duration = 30.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
-) {
+) : JournalpostKlient {
     private val httpKlient: HttpKlient = HttpKlient(
         clock = clock,
         config = HttpKlientConfig(
@@ -60,7 +60,7 @@ class DokarkivClient(
 
     private val journalpostUri = URI.create("$baseUrl/$DOKARKIV_PATH")
 
-    suspend fun opprettJournalpost(
+    override suspend fun opprettJournalpost(
         request: JournalpostRequest,
         callId: String,
     ): Either<KunneIkkeJournalføre, JournalpostId> {

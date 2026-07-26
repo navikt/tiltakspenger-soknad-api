@@ -1,116 +1,70 @@
 package no.nav.tiltakspenger.soknad.api
 
 import io.prometheus.client.CollectorRegistry
-import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
-import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
-import no.nav.tiltakspenger.soknad.api.db.DataSourceSetup
-import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
-import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
-import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
-import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
-import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
-import no.nav.tiltakspenger.soknad.api.testutils.LokalHttpTransport
-import no.nav.tiltakspenger.soknad.api.testutils.TestTokenProvider
+import no.nav.tiltakspenger.soknad.api.antivirus.AvKlient
+import no.nav.tiltakspenger.soknad.api.dokarkiv.JournalpostKlient
+import no.nav.tiltakspenger.soknad.api.pdf.PdfGenerator
+import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
+import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingKlient
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
+import no.nav.tiltakspenger.soknad.api.testutils.AvKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.JournalpostKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.PdfGeneratorFake
+import no.nav.tiltakspenger.soknad.api.testutils.PersonKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.SaksbehandlingKlientFake
 import no.nav.tiltakspenger.soknad.api.testutils.TexasClientFakeLokal
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
-import java.net.URI
+import no.nav.tiltakspenger.soknad.api.testutils.TiltakKlientFake
+import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
 import java.time.Clock
+import java.time.LocalDate
 
 /**
  * Konteksten [LokalMain] kjører med.
- * Det eneste som må kjøre ved siden av, er postgres fra docker-compose; alt utgående besvares av [LokalHttpTransport], og Texas godtar hvilket som helst token.
+ * Hver utgående avhengighet er byttet ut med sin egen fake, og Texas godtar hvilket som helst token, så postgres er det eneste som må kjøre ved siden av.
  *
- * Sett `BRUK_MOCK_API=true` for å gå mot compose-oppsettet i stedet (`tiltakspenger-soknad-mock-api`, pdfgen og authserveren), altså slik det var før fakene kom.
- * Klientene er de ekte i begge tilfeller — det er kun transporten som byttes, så hele klient-pipelinen kjører uansett.
+ * Sett `BRUK_MOCK_API=true` for å gå mot compose-oppsettet i stedet (`tiltakspenger-soknad-mock-api`, pdfgen og authserveren), altså med de ekte klientene over nettverket.
+ * Klientene selv dekkes av sine egne tester over `FakeHttpTransport`; her er poenget at appen kjører uten eksterne avhengigheter.
+ *
+ * Konteksten gjør ingen I/O ved konstruksjon — [søknadRepo] tas inn ferdig, akkurat som i [ApplicationContext] — slik at den kan bygges i en test.
  */
 class LokalApplicationContext(
     clock: Clock,
+    søknadRepo: SøknadRepo,
     private val fnr: String = "12345678910",
+    /** Drift bruker det globale registeret; tester sender inn sitt eget, slik at to kontekster i samme JVM ikke kolliderer. */
+    collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry,
 ) : ApplicationContext(
     clock = clock,
-    søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(Configuration.database().url)),
-    collectorRegistry = CollectorRegistry.defaultRegistry,
+    søknadRepo = søknadRepo,
+    collectorRegistry = collectorRegistry,
 ) {
     private val brukMockApi: Boolean = System.getenv("BRUK_MOCK_API").toBoolean()
 
-    private val transport: HttpTransport = LokalHttpTransport(
-        clock = clock,
-        fnr = fnr,
-        avPath = URI.create(Configuration.avUrl).path,
+    /** Barn under 16 år, slik at barnetillegg kan fylles ut lokalt. */
+    private val barn: Map<String, LocalDate> = mapOf(
+        "01011012345" to LocalDate.now(clock).minusYears(8),
+        "02022014567" to LocalDate.now(clock).minusYears(12),
     )
 
     override val texasClient: TexasClient =
         if (brukMockApi) super.texasClient else TexasClientFakeLokal(clock, fnr)
 
-    override val pdlClient: PdlClient =
-        if (brukMockApi) {
-            super.pdlClient
-        } else {
-            PdlClient(
-                endepunkt = Configuration.pdlUrl,
-                clock = clock,
-                pdlScope = Configuration.pdlScope,
-                texasClient = texasClient,
-                authTokenProvider = TestTokenProvider(),
-                transport = transport,
-            )
-        }
+    override val personKlient: PersonKlient =
+        if (brukMockApi) super.personKlient else PersonKlientFake(clock = clock, standardBarn = barn)
 
-    override val tiltakspengerTiltakClient: TiltakspengerTiltakClient =
-        if (brukMockApi) {
-            super.tiltakspengerTiltakClient
-        } else {
-            TiltakspengerTiltakClient(
-                tiltakspengerTiltakEndpoint = Configuration.tiltakspengerTiltakUrl,
-                clock = clock,
-                tiltakspengerTiltakScope = Configuration.tiltakspengerTiltakScope,
-                texasClient = texasClient,
-                transport = transport,
-            )
-        }
+    override val tiltakKlient: TiltakKlient =
+        if (brukMockApi) super.tiltakKlient else TiltakKlientFake(clock)
 
-    override val clamAvClient: ClamAvClient =
-        if (brukMockApi) {
-            super.clamAvClient
-        } else {
-            ClamAvClient(avEndpoint = Configuration.avUrl, clock = clock, transport = transport)
-        }
+    override val avKlient: AvKlient =
+        if (brukMockApi) super.avKlient else AvKlientFake()
 
-    override val pdfClient: PdfClient =
-        if (brukMockApi) {
-            super.pdfClient
-        } else {
-            PdfClient(
-                pdfEndpoint = Configuration.pdfUrl,
-                pdfgenrsEndpoint = Configuration.pdfgenrsUrl,
-                isLocalOrDev = Configuration.isLocalOrDev(),
-                clock = clock,
-                transport = transport,
-            )
-        }
+    override val pdfGenerator: PdfGenerator =
+        if (brukMockApi) super.pdfGenerator else PdfGeneratorFake()
 
-    override val dokarkivClient: DokarkivClient =
-        if (brukMockApi) {
-            super.dokarkivClient
-        } else {
-            DokarkivClient(
-                baseUrl = Configuration.dokarkivUrl,
-                clock = clock,
-                authTokenProvider = TestTokenProvider(),
-                transport = transport,
-            )
-        }
+    override val journalpostKlient: JournalpostKlient =
+        if (brukMockApi) super.journalpostKlient else JournalpostKlientFake()
 
-    override val saksbehandlingApiKlient: SaksbehandlingApiKlient =
-        if (brukMockApi) {
-            super.saksbehandlingApiKlient
-        } else {
-            SaksbehandlingApiKlient(
-                baseUrl = Configuration.saksbehandlingApiUrl,
-                clock = clock,
-                authTokenProvider = TestTokenProvider(),
-                transport = transport,
-            )
-        }
+    override val saksbehandlingKlient: SaksbehandlingKlient =
+        if (brukMockApi) super.saksbehandlingKlient else SaksbehandlingKlientFake()
 }

@@ -32,12 +32,12 @@ internal class ApplicationContextTest {
             context.sikkerlogg
             context.texasClient
             context.metricsCollector
-            context.pdlClient
-            context.tiltakspengerTiltakClient
-            context.clamAvClient
-            context.pdfClient
-            context.dokarkivClient
-            context.saksbehandlingApiKlient
+            context.personKlient
+            context.tiltakKlient
+            context.avKlient
+            context.pdfGenerator
+            context.journalpostKlient
+            context.saksbehandlingKlient
             context.pdfService
             context.dokarkivService
             context.journalforingService
@@ -58,8 +58,8 @@ internal class ApplicationContextTest {
 
         // Klientene holder både HTTP-klient og cache, så en ny instans per oppslag ville vært en reell feil i drift.
         context.texasClient shouldBeSameInstanceAs context.texasClient
-        context.pdlClient shouldBeSameInstanceAs context.pdlClient
-        context.tiltakspengerTiltakClient shouldBeSameInstanceAs context.tiltakspengerTiltakClient
+        context.personKlient shouldBeSameInstanceAs context.personKlient
+        context.tiltakKlient shouldBeSameInstanceAs context.tiltakKlient
         context.pdlService shouldBeSameInstanceAs context.pdlService
         context.søknadJobbService shouldBeSameInstanceAs context.søknadJobbService
         context.metricsCollector shouldBeSameInstanceAs context.metricsCollector

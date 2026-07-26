@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 class DokarkivService(
-    private val dokarkivClient: DokarkivClient,
+    private val journalpostKlient: JournalpostKlient,
 ) {
     suspend fun sendPdfTilDokarkiv(
         pdf: ByteArray,
@@ -25,6 +25,6 @@ class DokarkivService(
             saksnummer = saksnummer,
             pdfgenrs = pdfgenrs,
         )
-        return dokarkivClient.opprettJournalpost(journalpost, callId)
+        return journalpostKlient.opprettJournalpost(journalpost, callId)
     }
 }

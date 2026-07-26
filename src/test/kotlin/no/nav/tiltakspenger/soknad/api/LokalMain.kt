@@ -7,6 +7,8 @@ import no.nav.tiltakspenger.libs.lokal.LokalPostgresConfig
 import no.nav.tiltakspenger.libs.lokal.somMelding
 import no.nav.tiltakspenger.libs.lokal.startLokalPostgres
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
+import no.nav.tiltakspenger.soknad.api.db.DataSourceSetup
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import java.time.Clock
 import kotlin.system.exitProcess
 
@@ -44,6 +46,9 @@ fun main() {
         // Bind til loopback lokalt, slik at porten ikke eksponeres på nettverket.
         host = "127.0.0.1",
         isNais = false,
-        applicationContext = LokalApplicationContext(clock),
+        applicationContext = LokalApplicationContext(
+            clock = clock,
+            søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(Configuration.database().url)),
+        ),
     )
 }

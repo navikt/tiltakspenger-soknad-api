@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.libs.konsist.IngenJupiterAsserts
 import no.nav.tiltakspenger.libs.konsist.IngenLocalDateTimeNow
 import no.nav.tiltakspenger.libs.konsist.IngenLokaleJacksonMappere
 import no.nav.tiltakspenger.libs.konsist.IngenNowUtenClock
+import no.nav.tiltakspenger.libs.konsist.IngenRewriteAudienceTarget
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
@@ -93,6 +94,16 @@ class FellesArkitekturKonsistTest {
     @Test
     fun `markdown-filer brekker ikke en setning over flere linjer`() {
         EnSetningPerLinje.assertBrukneSetningerIMarkdown(repoRot())
+    }
+
+    /**
+     * `rewriteAudienceTarget` er utgått: `TexasHttpClient` utleder selv om target må skrives om, av formen på scope-verdien.
+     * Feil kombinasjon av flagg og scope-verdi ga `invalid_scope` fra Entra ID og tok ned søknad-api i produksjon to ganger, andre gang fordi wiringen ble flyttet til en ny fil og flagget ble med på flyttelasset.
+     * Regelen kjøres kun på produksjonskoden; test-fakes som implementerer `TexasClient` må beholde parameteret i signaturen så lenge det står i grensesnittet.
+     */
+    @Test
+    fun `ingen bruk av det utgåtte rewriteAudienceTarget-flagget`() {
+        IngenRewriteAudienceTarget.assert(Konsist.scopeFromProduction())
     }
 
     /** Enmodul-repo: testens arbeidskatalog er repo-rota. */

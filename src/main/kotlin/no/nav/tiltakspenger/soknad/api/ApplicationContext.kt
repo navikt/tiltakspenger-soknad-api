@@ -6,23 +6,29 @@ import no.nav.tiltakspenger.libs.logging.infra.KotlinLoggingSikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasSystemTokenProvider
+import no.nav.tiltakspenger.soknad.api.antivirus.AvKlient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
+import no.nav.tiltakspenger.soknad.api.dokarkiv.JournalpostKlient
 import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseConsumer
 import no.nav.tiltakspenger.soknad.api.identhendelse.IdenthendelseService
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdf.PdfClient
+import no.nav.tiltakspenger.soknad.api.pdf.PdfGenerator
 import no.nav.tiltakspenger.soknad.api.pdf.PdfService
 import no.nav.tiltakspenger.soknad.api.pdf.PdfServiceImpl
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
+import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
+import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingKlient
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
+import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
 import java.time.Clock
@@ -68,7 +74,7 @@ open class ApplicationContext(
         audienceTarget = scope,
     )
 
-    open val pdlClient: PdlClient by lazy {
+    open val personKlient: PersonKlient by lazy {
         PdlClient(
             endepunkt = Configuration.pdlUrl,
             clock = clock,
@@ -78,7 +84,7 @@ open class ApplicationContext(
         )
     }
 
-    open val tiltakspengerTiltakClient: TiltakspengerTiltakClient by lazy {
+    open val tiltakKlient: TiltakKlient by lazy {
         TiltakspengerTiltakClient(
             tiltakspengerTiltakEndpoint = Configuration.tiltakspengerTiltakUrl,
             clock = clock,
@@ -87,14 +93,14 @@ open class ApplicationContext(
         )
     }
 
-    open val clamAvClient: ClamAvClient by lazy {
+    open val avKlient: AvKlient by lazy {
         ClamAvClient(
             avEndpoint = Configuration.avUrl,
             clock = clock,
         )
     }
 
-    open val pdfClient: PdfClient by lazy {
+    open val pdfGenerator: PdfGenerator by lazy {
         PdfClient(
             pdfEndpoint = Configuration.pdfUrl,
             pdfgenrsEndpoint = Configuration.pdfgenrsUrl,
@@ -103,7 +109,7 @@ open class ApplicationContext(
         )
     }
 
-    open val dokarkivClient: DokarkivClient by lazy {
+    open val journalpostKlient: JournalpostKlient by lazy {
         DokarkivClient(
             baseUrl = Configuration.dokarkivUrl,
             clock = clock,
@@ -111,7 +117,7 @@ open class ApplicationContext(
         )
     }
 
-    open val saksbehandlingApiKlient: SaksbehandlingApiKlient by lazy {
+    open val saksbehandlingKlient: SaksbehandlingKlient by lazy {
         SaksbehandlingApiKlient(
             baseUrl = Configuration.saksbehandlingApiUrl,
             clock = clock,
@@ -119,8 +125,8 @@ open class ApplicationContext(
         )
     }
 
-    open val pdfService: PdfService by lazy { PdfServiceImpl(pdfClient) }
-    open val dokarkivService: DokarkivService by lazy { DokarkivService(dokarkivClient) }
+    open val pdfService: PdfService by lazy { PdfServiceImpl(pdfGenerator) }
+    open val dokarkivService: DokarkivService by lazy { DokarkivService(journalpostKlient) }
     open val journalforingService: JournalforingService by lazy {
         JournalforingService(
             pdfService = pdfService,
@@ -129,9 +135,9 @@ open class ApplicationContext(
         )
     }
 
-    open val pdlService: PdlService by lazy { PdlService(pdlClient, clock, sikkerlogg) }
-    open val tiltakService: TiltakService by lazy { TiltakService(tiltakspengerTiltakClient, clock, sikkerlogg) }
-    open val avService: AvService by lazy { AvService(clamAvClient, sikkerlogg) }
+    open val pdlService: PdlService by lazy { PdlService(personKlient, clock, sikkerlogg) }
+    open val tiltakService: TiltakService by lazy { TiltakService(tiltakKlient, clock, sikkerlogg) }
+    open val avService: AvService by lazy { AvService(avKlient, sikkerlogg) }
     open val nySøknadService: NySøknadService by lazy { NySøknadService(søknadRepo) }
     open val identhendelseService: IdenthendelseService by lazy { IdenthendelseService(søknadRepo) }
     open val identhendelseConsumer: IdenthendelseConsumer by lazy {
@@ -146,7 +152,7 @@ open class ApplicationContext(
             søknadRepo = søknadRepo,
             pdlService = pdlService,
             journalforingService = journalforingService,
-            saksbehandlingApiKlient = saksbehandlingApiKlient,
+            saksbehandlingKlient = saksbehandlingKlient,
             clock = clock,
             sikkerlogg = sikkerlogg,
         )

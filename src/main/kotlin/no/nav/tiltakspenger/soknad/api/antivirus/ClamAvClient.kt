@@ -39,7 +39,7 @@ class ClamAvClient(
     connectTimeout: Duration = 30.seconds,
     timeout: Duration = 30.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
-) {
+) : AvKlient {
     private val httpKlient: HttpKlient = HttpKlient(
         clock = clock,
         config = HttpKlientConfig(
@@ -51,7 +51,7 @@ class ClamAvClient(
 
     private val uri = URI.create(avEndpoint)
 
-    suspend fun scan(vedleggsListe: Nel<Vedlegg>): Either<HttpKlientError, List<AvSjekkResultat>> =
+    override suspend fun scan(vedleggsListe: Nel<Vedlegg>): Either<HttpKlientError, List<AvSjekkResultat>> =
         httpKlient.postMultipart<List<AvSjekkResultat>>(
             uri = uri,
             // Feltnavnene er indeksbaserte, som før migreringen; MultipartDeler håndhever at de er unike.

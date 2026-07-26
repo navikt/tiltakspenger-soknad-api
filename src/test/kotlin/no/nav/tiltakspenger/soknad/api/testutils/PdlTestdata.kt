@@ -96,33 +96,3 @@ private fun barnIBolk(ident: String, fornavn: String, etternavn: String, fødsel
       }
     }
 """.trimIndent()
-
-/**
- * Ett svar som dekker både `hentPerson` og `hentPersonBolk`.
- * Brukes ved lokal kjøring, der den samme transporten svarer på begge spørringene uten å se hvilken som ble sendt.
- * Det går fordi den delte objectMapper-en ignorerer ukjente felter: søkeroppslaget leser `hentPerson`, og bolkoppslaget leser `hentPersonBolk`.
- */
-fun søkerOgBarnRespons(
-    fornavn: String,
-    etternavn: String,
-    fødselsdato: String,
-    barn: Map<String, String>,
-): String = """
-    {
-      "data": {
-        "hentPerson": {
-          "navn": [ ${navn(fornavn, null, etternavn)} ],
-          "adressebeskyttelse": [],
-          "foedselsdato": [ ${fødsel(fødselsdato)} ],
-          "forelderBarnRelasjon": [ ${barn.keys.joinToString(",") { barnRelasjon(it) }} ],
-          "doedsfall": []
-        },
-        "hentGeografiskTilknytning": {
-          "gtType": "KOMMUNE", "gtKommune": "1122", "gtBydel": null, "gtLand": null
-        },
-        "hentPersonBolk": [
-          ${barn.entries.joinToString(",") { (ident, dato) -> barnIBolk(ident, "Barn$ident".take(9), "Barnesen", dato) }}
-        ]
-      }
-    }
-""".trimIndent()

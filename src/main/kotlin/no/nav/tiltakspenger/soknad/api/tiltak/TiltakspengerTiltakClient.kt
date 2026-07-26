@@ -42,7 +42,7 @@ class TiltakspengerTiltakClient(
     connectTimeout: Duration = 10.seconds,
     timeout: Duration = 10.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
-) {
+) : TiltakKlient {
     private val httpKlient: HttpKlient = HttpKlient(
         clock = clock,
         config = HttpKlientConfig(
@@ -59,7 +59,7 @@ class TiltakspengerTiltakClient(
         .expireAfterWrite(java.time.Duration.ofMinutes(60))
         .build()
 
-    suspend fun fetchTiltak(subjectToken: String, fnr: Fnr): Either<HttpKlientError, List<TiltakshistorikkDTO>> {
+    override suspend fun fetchTiltak(subjectToken: String, fnr: Fnr): Either<HttpKlientError, List<TiltakshistorikkDTO>> {
         cache.getIfPresent(fnr.verdi)?.let { return Either.Right(it) }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,

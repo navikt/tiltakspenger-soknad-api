@@ -27,13 +27,13 @@ sealed interface VirussjekkFeil {
 }
 
 class AvService(
-    private val clamAvClient: ClamAvClient,
+    private val avKlient: AvKlient,
     private val sikkerlogg: Sikkerlogg,
 ) {
     private val log = KotlinLogging.logger { }
 
     suspend fun gjørVirussjekkAvVedlegg(vedleggsListe: Nel<Vedlegg>): Either<VirussjekkFeil, Unit> =
-        clamAvClient.scan(vedleggsListe).mapLeft { feil ->
+        avKlient.scan(vedleggsListe).mapLeft { feil ->
             feil.loggFeil(log, "virussjekk av vedlegg", "Antall vedlegg: ${vedleggsListe.size}", sikkerlogg)
             VirussjekkFeil.KallFeilet(feil)
         }.flatMap { resultat -> resultat.tilUtfall() }

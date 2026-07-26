@@ -41,7 +41,7 @@ class SaksbehandlingApiKlient(
     connectTimeout: Duration = 10.seconds,
     timeout: Duration = 10.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
-) {
+) : SaksbehandlingKlient {
     private val httpKlient: HttpKlient = HttpKlient(
         clock = clock,
         config = HttpKlientConfig(
@@ -55,7 +55,7 @@ class SaksbehandlingApiKlient(
     private val søknadUri = URI.create("$baseUrl/soknad")
     private val saksnummerUri = URI.create("$baseUrl/saksnummer")
 
-    suspend fun sendSøknad(
+    override suspend fun sendSøknad(
         søknadDTO: SøknadDTO,
         correlationId: CorrelationId,
     ): Either<HttpKlientError, Unit> =
@@ -66,7 +66,7 @@ class SaksbehandlingApiKlient(
             godta = Statusregel.Eksakt(200),
         ).map { }
 
-    suspend fun hentEllerOpprettSaksnummer(
+    override suspend fun hentEllerOpprettSaksnummer(
         fnr: Fnr,
         correlationId: CorrelationId,
     ): Either<HttpKlientError, String> =

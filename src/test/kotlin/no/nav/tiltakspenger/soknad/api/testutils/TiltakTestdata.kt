@@ -4,7 +4,10 @@ import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import java.time.LocalDate
 
-/** Ett tiltakshistorikk-element slik tiltakspenger-tiltak svarer, til køing på [TestApplicationContext.tiltakTransport]. */
+/**
+ * Ett tiltakshistorikk-element slik tiltakspenger-tiltak svarer.
+ * Køes på [TestApplicationContext.tiltakTransport] i klienttestene, og deles ut direkte av [TiltakKlientFake] ved lokal kjøring.
+ */
 fun tiltakshistorikk(
     id: String = "123456",
     gjennomforingId: String = "gjennomforing-1",

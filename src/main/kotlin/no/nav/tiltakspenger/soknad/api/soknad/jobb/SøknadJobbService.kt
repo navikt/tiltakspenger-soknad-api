@@ -8,7 +8,7 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.httpklient.loggFeil
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
-import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
+import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
@@ -19,7 +19,7 @@ class SøknadJobbService(
     private val søknadRepo: SøknadRepo,
     private val pdlService: PdlService,
     private val journalforingService: JournalforingService,
-    private val saksbehandlingApiKlient: SaksbehandlingApiKlient,
+    private val saksbehandlingKlient: SaksbehandlingKlient,
     private val clock: Clock,
     private val sikkerlogg: Sikkerlogg,
 ) {
@@ -28,7 +28,7 @@ class SøknadJobbService(
     suspend fun hentEllerOpprettSaksnummer(correlationId: CorrelationId) {
         søknadRepo.hentSoknaderUtenSaksnummer().forEach { soknad ->
             log.info { "Henter eller oppretter saksnummer for søknad med id ${soknad.id}" }
-            val saksnummer = saksbehandlingApiKlient.hentEllerOpprettSaksnummer(
+            val saksnummer = saksbehandlingKlient.hentEllerOpprettSaksnummer(
                 Fnr.fromString(soknad.fnr),
                 correlationId,
             ).getOrElse { feil ->
@@ -82,7 +82,7 @@ class SøknadJobbService(
             checkNotNull(søknad.journalpostId) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler journalpostId" }
             checkNotNull(søknad.saksnummer) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler saksnummer" }
             val sendtTilSaksbehandlingApi = nå(clock)
-            saksbehandlingApiKlient.sendSøknad(
+            saksbehandlingKlient.sendSøknad(
                 søknadDTO = søknadMapper(
                     søknad = søknad.søknad,
                     jounalpostId = søknad.journalpostId,

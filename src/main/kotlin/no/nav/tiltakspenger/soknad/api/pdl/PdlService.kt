@@ -8,14 +8,14 @@ import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
-import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
+import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
 import no.nav.tiltakspenger.soknad.api.pdl.client.logg
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import java.time.Clock
 import java.time.LocalDate
 
 class PdlService(
-    private val pdlClient: PdlClient,
+    private val personKlient: PersonKlient,
     private val clock: Clock,
     private val sikkerlogg: Sikkerlogg,
 ) {
@@ -32,12 +32,12 @@ class PdlService(
         styrendeDato: LocalDate?,
     ): Either<KanIkkeHentePerson, PersonDTO> = either {
         val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
-        val person = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
+        val person = personKlient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
             .loggFeil("henting av søkers personalia fra PDL", callId)
             .bind()
             .toPerson(Fnr.fromString(fødselsnummer))
         val barn = person.barnsIdenter().toNonEmptyListOrNull()?.let { identer ->
-            pdlClient.fetchBarn(identer)
+            personKlient.fetchBarn(identer)
                 .loggFeil("henting av personalia for søkers barn fra PDL", callId)
                 .bind()
                 .toPersoner()
@@ -52,7 +52,7 @@ class PdlService(
         subjectToken: String,
         callId: String,
     ): Either<KanIkkeHentePerson, AdressebeskyttelseGradering> =
-        pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
+        personKlient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
             .loggFeil("henting av adressebeskyttelse fra PDL", callId)
             .map { it.toPerson(Fnr.fromString(fødselsnummer)).adressebeskyttelseGradering }
 
@@ -60,7 +60,7 @@ class PdlService(
         fnr: Fnr,
         correlationId: CorrelationId,
     ): Either<KanIkkeHentePerson, Navn> =
-        pdlClient.fetchSøkerSystembruker(fødselsnummer = fnr.verdi)
+        personKlient.fetchSøkerSystembruker(fødselsnummer = fnr.verdi)
             .loggFeil("henting av navn fra PDL", correlationId.toString())
             .map { it.toPerson(fnr).getNavn() }
 
