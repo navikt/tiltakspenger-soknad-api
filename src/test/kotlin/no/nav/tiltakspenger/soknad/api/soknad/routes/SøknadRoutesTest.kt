@@ -1,6 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
 import arrow.core.left
+import arrow.core.nonEmptyListOf
+import arrow.core.right
 import com.nimbusds.jwt.JWT
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -22,6 +24,7 @@ import io.mockk.unmockkAll
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
+import no.nav.tiltakspenger.soknad.api.antivirus.VirussjekkFeil
 import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
@@ -43,14 +46,15 @@ internal class SøknadRoutesTest {
 
     @BeforeEach
     fun setupMocks() {
-        clearMocks(texasClient, pdlService)
+        clearMocks(texasClient, pdlService, avService)
+        coEvery { avService.gjørVirussjekkAvVedlegg(any()) } returns Unit.right()
         coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns PersonDTO(
             fornavn = "fornavn",
             mellomnavn = null,
             etternavn = "etternavn",
             barn = emptyList(),
             harFylt18År = true,
-        )
+        ).right()
     }
 
     @AfterEach
@@ -332,8 +336,52 @@ internal class SøknadRoutesTest {
                 )
             }
             response.status shouldBe HttpStatusCode.Created
-            coVerify(exactly = 1) { avService.gjørVirussjekkAvVedlegg(listOf(vedlegg)) }
+            coVerify(exactly = 1) { avService.gjørVirussjekkAvVedlegg(nonEmptyListOf(vedlegg)) }
         }
+    }
+
+    @Test
+    fun `post på soknad-endepunkt svarer 400 når virussjekken finner skadevare`() {
+        virussjekkSvarer(VirussjekkFeil.SkadevareFunnet) shouldBe HttpStatusCode.BadRequest
+    }
+
+    @Test
+    fun `post på soknad-endepunkt svarer 500 når virussjekken selv feiler`() {
+        virussjekkSvarer(VirussjekkFeil.SkanningFeilet(nonEmptyListOf("fil.pdf"))) shouldBe HttpStatusCode.InternalServerError
+    }
+
+    /** Kjører /soknad med ett vedlegg der virussjekken gir [feil], og returnerer statusen ruta svarer med. */
+    private fun virussjekkSvarer(feil: VirussjekkFeil): HttpStatusCode {
+        mockkStatic("no.nav.tiltakspenger.soknad.api.soknad.routes.SoknadRequestMapperKt")
+        val vedlegg = Vedlegg(filnavn = "fil.pdf", contentType = "application/pdf", dokument = ByteArray(1))
+        coEvery { taInnSøknadSomMultipart(any(), any()) } returns Pair(mockSpørsmålsbesvarelser(), listOf(vedlegg))
+        coEvery { avService.gjørVirussjekkAvVedlegg(any()) } returns feil.left()
+
+        val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
+
+        lateinit var status: HttpStatusCode
+        testApplication {
+            configureTestApplication(
+                texasClient = texasClient,
+                avService = avService,
+                nySøknadService = NySøknadService(mockk<SøknadRepo>()),
+            )
+            status = client.post("/soknad") {
+                header("Authorization", "Bearer ${token.serialize()}")
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {},
+                        "WebAppBoundary",
+                        ContentType.MultiPart.FormData.withParameter("boundary", "WebAppBoundary"),
+                    ),
+                )
+            }.status
+        }
+        return status
     }
 
     private fun issueTestToken(acr: String = "idporten-loa-high", expiry: Long = 3600): JWT {

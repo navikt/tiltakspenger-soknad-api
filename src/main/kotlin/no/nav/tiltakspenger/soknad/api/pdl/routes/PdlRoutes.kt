@@ -1,7 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
+import arrow.core.getOrElse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.callid.callId
 import io.ktor.server.response.respond
@@ -14,6 +16,11 @@ import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
+
+private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollector) {
+    metricsCollector.antallFeilVedHentPersonaliaCounter.inc()
+    respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
+}
 
 fun Route.pdlRoutes(
     pdlService: PdlService,
@@ -28,11 +35,12 @@ fun Route.pdlRoutes(
                 val fødselsnummer = principal.fnr
                 val subjectToken = principal.token
 
+                // Feilene er allerede logget i servicene; ruta oversetter dem bare til 500, som før migreringen.
                 val tiltak = tiltakService.hentTiltak(
                     subjectToken = subjectToken,
                     fnr = fødselsnummer,
                     maskerArrangørnavn = true,
-                )
+                ).getOrElse { return@get call.serverFeil(metricsCollector) }
                 val tiltakMedTidligsteFradato = tiltak
                     .filter { it.arenaRegistrertPeriode.fra != null }
                     .sortedBy { it.arenaRegistrertPeriode.fra }
@@ -43,12 +51,11 @@ fun Route.pdlRoutes(
                     styrendeDato = tiltakMedTidligsteFradato?.arenaRegistrertPeriode?.fra,
                     subjectToken = subjectToken,
                     callId = call.callId!!,
-                )
+                ).getOrElse { return@get call.serverFeil(metricsCollector) }
                 call.respond(personDTO)
             } catch (e: Exception) {
-                metricsCollector.antallFeilVedHentPersonaliaCounter.inc()
                 log.error(e) { "Feil under pdlRoute" }
-                call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
+                call.serverFeil(metricsCollector)
             }
         }
     }

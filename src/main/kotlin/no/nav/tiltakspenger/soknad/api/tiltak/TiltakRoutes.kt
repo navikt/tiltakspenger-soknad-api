@@ -1,7 +1,9 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
+import arrow.core.getOrElse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.callid.callId
 import io.ktor.server.response.respond
@@ -19,6 +21,11 @@ data class TiltakDto(
     val tiltak: List<TiltaksdeltakelseDto>,
 )
 
+private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollector) {
+    metricsCollector.antallFeilVedHentTiltakCounter.inc()
+    respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
+}
+
 fun Route.tiltakRoutes(
     tiltakService: TiltakService,
     metricsCollector: MetricsCollector,
@@ -34,20 +41,19 @@ fun Route.tiltakRoutes(
                 val subjectToken = principal.token
 
                 val callId = call.callId!!
+                // Feilene er allerede logget i servicene; ruta oversetter dem bare til 500, som før migreringen.
                 val adressebeskyttelse = pdlService.hentAdressebeskyttelse(fødselsnummer.verdi, subjectToken, callId)
-                val tiltakDto = TiltakDto(
-                    tiltakService.hentTiltak(
-                        subjectToken = subjectToken,
-                        maskerArrangørnavn = adressebeskyttelse != UGRADERT,
-                        fnr = fødselsnummer,
-                    ),
-                )
+                    .getOrElse { return@get call.serverFeil(metricsCollector) }
+                val tiltak = tiltakService.hentTiltak(
+                    subjectToken = subjectToken,
+                    maskerArrangørnavn = adressebeskyttelse != UGRADERT,
+                    fnr = fødselsnummer,
+                ).getOrElse { return@get call.serverFeil(metricsCollector) }
 
-                call.respond(tiltakDto)
+                call.respond(TiltakDto(tiltak))
             } catch (e: Exception) {
                 log.error(e) { "Ukjent feil under tiltakroute." }
-                metricsCollector.antallFeilVedHentTiltakCounter.inc()
-                call.respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
+                call.serverFeil(metricsCollector)
             }
         }
     }

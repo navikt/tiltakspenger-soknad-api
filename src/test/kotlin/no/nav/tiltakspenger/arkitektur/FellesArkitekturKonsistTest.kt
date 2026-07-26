@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.arkitektur
 
 import com.lemonappdev.konsist.api.Konsist
 import no.nav.tiltakspenger.libs.konsist.EnSetningPerLinje
+import no.nav.tiltakspenger.libs.konsist.IngenAndreHttpKlienter
 import no.nav.tiltakspenger.libs.konsist.IngenClockDefault
 import no.nav.tiltakspenger.libs.konsist.IngenJUnit4
 import no.nav.tiltakspenger.libs.konsist.IngenJackson2
@@ -49,6 +50,15 @@ class FellesArkitekturKonsistTest {
     @Test
     fun `Clock-parametre har ikke default-verdi i produksjonskode`() {
         IngenClockDefault.assert(Konsist.scopeFromProduction())
+    }
+
+    /**
+     * Produksjonskoden er fri for andre HTTP-klienter etter httpklient-migreringen, så regelen trenger ingen unntak her.
+     * Testkoden holdes utenfor scopet: rute-testene bruker ktor sin `testApplication`-klient, som er eneste vei inn til test-serveren.
+     */
+    @Test
+    fun `ingen andre http-klienter enn libs httpklient i produksjonskode`() {
+        IngenAndreHttpKlienter.assert(Konsist.scopeFromProduction())
     }
 
     @Test

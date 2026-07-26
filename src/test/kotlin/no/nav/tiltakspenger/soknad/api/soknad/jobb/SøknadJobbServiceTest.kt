@@ -1,5 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb
 
+import arrow.core.left
+import arrow.core.right
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -12,12 +14,18 @@ import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.nå
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientMetadata
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientTidsstempler
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivClient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.DokarkivService
 import no.nav.tiltakspenger.soknad.api.dokarkiv.JOURNALFORENDE_ENHET_AUTOMATISK_BEHANDLING
+import no.nav.tiltakspenger.soknad.api.dokarkiv.KunneIkkeJournalføre
 import no.nav.tiltakspenger.soknad.api.pdf.PdfService
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
+import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
@@ -25,14 +33,28 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingSe
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import no.nav.tiltakspenger.soknad.api.util.getTestNavnFraPdl
+import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import org.junit.jupiter.api.Test
 
 class SøknadJobbServiceTest {
+    /** [HttpKlientMetadata] har bevisst ingen defaults, så testene fyller alle feltene eksplisitt. */
+    private fun tomMetadata() = HttpKlientMetadata(
+        rawRequestString = "",
+        rawResponseString = null,
+        requestHeaders = emptyMap(),
+        responseHeaders = emptyMap(),
+        statusCode = 500,
+        attempts = 1,
+        attemptDurations = emptyList(),
+        totalDuration = kotlin.time.Duration.ZERO,
+        tidsstempler = HttpKlientTidsstempler.INGEN,
+    )
+
     private val pdlService = mockk<PdlService>()
     private val pdfService = mockk<PdfService>()
     private val dokarkivClient = mockk<DokarkivClient>()
     private val dokarkivService = DokarkivService(dokarkivClient)
-    private val journalforingService = JournalforingService(pdfService, dokarkivService)
+    private val journalforingService = JournalforingService(pdfService, dokarkivService, Sikkerlogg)
     private val saksbehandlingApiKlient = mockk<SaksbehandlingApiKlient>(relaxed = true)
     private val saksnummer = "1234"
     private val navn = getTestNavnFraPdl()
@@ -40,14 +62,15 @@ class SøknadJobbServiceTest {
 
     private fun withSetup(test: suspend (SøknadRepo, SøknadJobbService) -> Unit) {
         clearMocks(saksbehandlingApiKlient, pdlService, pdfService, dokarkivClient)
-        coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns saksnummer
-        coEvery { pdlService.hentNavnForFnr(any(), any()) } returns navn
-        coEvery { pdfService.lagPdf(any()) } returns ("pdf".toByteArray() to null)
-        coEvery { pdfService.konverterVedlegg(any()) } returns emptyList()
-        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } returns journalpostId
+        coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns saksnummer.right()
+        coEvery { pdlService.hentNavnForFnr(any(), any()) } returns navn.right()
+        coEvery { pdfService.lagPdf(any()) } returns ("pdf".toByteArray() to null).right()
+        coEvery { pdfService.konverterVedlegg(any()) } returns emptyList<Vedlegg>().right()
+        coEvery { dokarkivClient.opprettJournalpost(any(), any()) } returns journalpostId.right()
+        coEvery { saksbehandlingApiKlient.sendSøknad(any(), any()) } returns Unit.right()
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
             val søknadRepo = SøknadRepo(dataSource)
-            val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, fixedClock)
+            val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, fixedClock, Sikkerlogg)
             runBlocking { test(søknadRepo, søknadJobbService) }
         }
     }
@@ -110,7 +133,6 @@ class SøknadJobbServiceTest {
         coVerify {
             dokarkivClient.opprettJournalpost(
                 match { it.journalfoerendeEnhet == JOURNALFORENDE_ENHET_AUTOMATISK_BEHANDLING && it.sak?.fagsakId == mottattSøknad.saksnummer && it.kanFerdigstilleAutomatisk() },
-                mottattSøknad.id,
                 any(),
             )
         }
@@ -139,7 +161,6 @@ class SøknadJobbServiceTest {
         coVerify {
             dokarkivClient.opprettJournalpost(
                 match { it.journalfoerendeEnhet == null && it.sak == null && !it.kanFerdigstilleAutomatisk() },
-                mottattSøknad.id,
                 any(),
             )
         }
@@ -176,7 +197,8 @@ class SøknadJobbServiceTest {
 
     @Test
     fun `hentEllerOpprettSaksnummer - kallet feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
-        coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } throws RuntimeException("saksbehandling-api er nede")
+        coEvery { saksbehandlingApiKlient.hentEllerOpprettSaksnummer(any(), any()) } returns
+            HttpKlientError.UventetStatus(500, "saksbehandling-api er nede", tomMetadata()).left()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå(fixedClock),
             eier = Applikasjonseier.Tiltakspenger,
@@ -207,7 +229,8 @@ class SøknadJobbServiceTest {
 
     @Test
     fun `journalførLagredeSøknader - pdl-kallet feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
-        coEvery { pdlService.hentNavnForFnr(any(), any()) } throws RuntimeException("pdl er nede")
+        coEvery { pdlService.hentNavnForFnr(any(), any()) } returns
+            KanIkkeHentePerson.KallFeilet(HttpKlientError.UventetStatus(500, "pdl er nede", tomMetadata())).left()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå(fixedClock),
             eier = Applikasjonseier.Tiltakspenger,
@@ -223,7 +246,8 @@ class SøknadJobbServiceTest {
 
     @Test
     fun `journalførLagredeSøknader - journalføringen feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
-        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any()) } throws RuntimeException("dokarkiv er nede")
+        coEvery { dokarkivClient.opprettJournalpost(any(), any()) } returns
+            KunneIkkeJournalføre.KallFeilet(HttpKlientError.UventetStatus(500, "dokarkiv er nede", tomMetadata())).left()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå(fixedClock),
             eier = Applikasjonseier.Tiltakspenger,
@@ -239,7 +263,8 @@ class SøknadJobbServiceTest {
 
     @Test
     fun `sendJournalførteSøknaderTilSaksbehandlingApi - sending feiler - hopper over søknaden uten å kaste`() = withSetup { søknadRepo, søknadJobbService ->
-        coEvery { saksbehandlingApiKlient.sendSøknad(any(), any()) } throws RuntimeException("saksbehandling-api er nede")
+        coEvery { saksbehandlingApiKlient.sendSøknad(any(), any()) } returns
+            HttpKlientError.UventetStatus(500, "saksbehandling-api er nede", tomMetadata()).left()
         val opprettet = nå(fixedClock)
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = opprettet,

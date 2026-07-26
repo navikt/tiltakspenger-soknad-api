@@ -10,8 +10,10 @@ import no.nav.tiltakspenger.libs.ktor.common.oppstart.KafkaConsumerOppsett
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Miljøverdi
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Task
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.startApp
-import no.nav.tiltakspenger.libs.texas.IdentityProvider
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
+import no.nav.tiltakspenger.libs.logging.infra.KotlinLoggingSikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasSystemTokenProvider
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
@@ -60,6 +62,11 @@ internal fun start(
 
     val dataSource = DataSourceSetup.createDatasource(Configuration.database().url)
 
+    val sikkerlogg: Sikkerlogg = KotlinLoggingSikkerlogg(
+        appNavn = Configuration.naisAppName,
+        gcpProsjektId = Configuration.gcpTeamProjectId,
+    )
+
     val texasClient = TexasHttpClient(
         introspectionUrl = Configuration.naisTokenIntrospectionEndpoint,
         tokenUrl = Configuration.naisTokenEndpoint,
@@ -67,12 +74,17 @@ internal fun start(
         clock = clock,
     )
 
-    val dokarkivClient = DokarkivClient(baseUrl = Configuration.dokarkivUrl) {
-        texasClient.getSystemToken(
-            audienceTarget = Configuration.dokarkivScope,
-            identityProvider = IdentityProvider.AZUREAD,
-        )
-    }
+    fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
+        texasClient = texasClient,
+        audienceTarget = scope,
+        rewriteAudienceTarget = false,
+    )
+
+    val dokarkivClient = DokarkivClient(
+        baseUrl = Configuration.dokarkivUrl,
+        clock = clock,
+        authTokenProvider = systemTokenProvider(Configuration.dokarkivScope),
+    )
 
     val journalforingService = JournalforingService(
         pdfService = PdfServiceImpl(
@@ -80,58 +92,52 @@ internal fun start(
                 pdfEndpoint = Configuration.pdfUrl,
                 pdfgenrsEndpoint = Configuration.pdfgenrsUrl,
                 isLocalOrDev = Configuration.isLocalOrDev(),
-                client = httpClientCIO(timeout = 30L),
+                clock = clock,
             ),
         ),
         dokarkivService = DokarkivService(dokarkivClient),
+        sikkerlogg = sikkerlogg,
     )
 
     val søknadRepo = SøknadRepo(dataSource)
     val pdlService = PdlService(
         clock = clock,
+        sikkerlogg = sikkerlogg,
         pdlClient = PdlClient(
             endepunkt = Configuration.pdlUrl,
             clock = clock,
             pdlScope = Configuration.pdlScope,
             texasClient = texasClient,
-        ) {
-            texasClient.getSystemToken(
-                audienceTarget = Configuration.pdlScope,
-                identityProvider = IdentityProvider.AZUREAD,
-            )
-        },
+            authTokenProvider = systemTokenProvider(Configuration.pdlScope),
+        ),
     )
 
     val nySøknadService = NySøknadService(søknadRepo)
-    val saksbehandlingApiKlient = SaksbehandlingApiKlient(baseUrl = Configuration.saksbehandlingApiUrl) {
-        texasClient.getSystemToken(
-            audienceTarget = Configuration.saksbehandlingApiScope,
-            identityProvider = IdentityProvider.AZUREAD,
-        )
-    }
+    val saksbehandlingApiKlient = SaksbehandlingApiKlient(
+        baseUrl = Configuration.saksbehandlingApiUrl,
+        clock = clock,
+        authTokenProvider = systemTokenProvider(Configuration.saksbehandlingApiScope),
+    )
 
-    val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, clock)
+    val søknadJobbService = SøknadJobbService(søknadRepo, pdlService, journalforingService, saksbehandlingApiKlient, clock, sikkerlogg)
     val avService = AvService(
         clamAvClient = ClamAvClient(
             avEndpoint = Configuration.avUrl,
-            client = httpClientCIO(timeout = 30L),
+            clock = clock,
         ),
+        sikkerlogg = sikkerlogg,
     )
     val tiltakspengerTiltakClient = TiltakspengerTiltakClient(
         tiltakspengerTiltakScope = Configuration.tiltakspengerTiltakScope,
         tiltakspengerTiltakEndpoint = Configuration.tiltakspengerTiltakUrl,
+        clock = clock,
         texasClient = texasClient,
     )
-    val tiltakService = TiltakService(tiltakspengerTiltakClient, clock)
+    val tiltakService = TiltakService(tiltakspengerTiltakClient, clock, sikkerlogg)
 
     val identhendelseService = IdenthendelseService(
         søknadRepo = søknadRepo,
     )
-    val identhendelseConsumer = IdenthendelseConsumer(
-        identhendelseService = identhendelseService,
-        topic = Configuration.identhendelseTopic,
-    )
-
     startApp(
         log = log,
         port = port,
@@ -167,6 +173,10 @@ internal fun start(
                 ),
             ),
             kafkaConsumers = if (isNais) {
+                val identhendelseConsumer = IdenthendelseConsumer(
+                    identhendelseService = identhendelseService,
+                    topic = Configuration.identhendelseTopic,
+                )
                 listOf(
                     KafkaConsumerOppsett(
                         navn = "identhendelse-consumer",

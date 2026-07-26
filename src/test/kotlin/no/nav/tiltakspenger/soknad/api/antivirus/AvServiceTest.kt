@@ -1,43 +1,60 @@
 package no.nav.tiltakspenger.soknad.api.antivirus
 
-import io.kotest.assertions.throwables.shouldNotThrowAny
-import io.kotest.assertions.throwables.shouldThrow
-import io.mockk.coEvery
-import io.mockk.mockk
+import arrow.core.nonEmptyListOf
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
+import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.getOrFail
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import org.junit.jupiter.api.Test
 
-// TODO jah: ClamAvClient mockes her.
-//  I denne fila kan man heller bruke en fake og hvis man får til endre fra service test til e2e.
-//  Går an å ta en titt hvordan andre repo gjør det.
-//  Kanskje vi kan fyre den opp med testcontainers.
-class AvServiceTest {
-    private val clamAvClient = mockk<ClamAvClient>()
-    private val avService = AvService(clamAvClient)
-
-    private val vedlegg = listOf(
+/** Bruker reell [ClamAvClient] med [FakeHttpTransport], slik at hele klient-pipelinen kjører sammen med servicen. */
+internal class AvServiceTest {
+    private val vedlegg = nonEmptyListOf(
         Vedlegg(filnavn = "fil.pdf", contentType = "application/pdf", dokument = ByteArray(1)),
+    )
+
+    private fun avService(transport: FakeHttpTransport) = AvService(
+        clamAvClient = ClamAvClient(avEndpoint = "http://clamav/scan", clock = fixedClock, transport = transport),
+        sikkerlogg = Sikkerlogg,
     )
 
     @Test
     fun `rene vedlegg passerer virussjekken`() = runTest {
-        coEvery { clamAvClient.scan(any()) } returns listOf(AvSjekkResultat("fil.pdf", Status.OK))
+        val transport = FakeHttpTransport()
+        transport.leggIKøJson("""[{"Filename":"fil.pdf","Result":"OK"}]""")
 
-        shouldNotThrowAny { avService.gjørVirussjekkAvVedlegg(vedlegg) }
+        avService(transport).gjørVirussjekkAvVedlegg(vedlegg).getOrFail() shouldBe Unit
     }
 
     @Test
-    fun `funn av skadevare kaster MalwareFoundException`() = runTest {
-        coEvery { clamAvClient.scan(any()) } returns listOf(AvSjekkResultat("fil.pdf", Status.FOUND))
+    fun `funn av skadevare gir SkadevareFunnet`() = runTest {
+        val transport = FakeHttpTransport()
+        transport.leggIKøJson("""[{"Filename":"fil.pdf","Result":"FOUND"}]""")
 
-        shouldThrow<MalwareFoundException> { avService.gjørVirussjekkAvVedlegg(vedlegg) }
+        avService(transport).gjørVirussjekkAvVedlegg(vedlegg).leftOrNull()!! shouldBe VirussjekkFeil.SkadevareFunnet
     }
 
     @Test
-    fun `feil under virusscan kaster RuntimeException`() = runTest {
-        coEvery { clamAvClient.scan(any()) } returns listOf(AvSjekkResultat("fil.pdf", Status.ERROR))
+    fun `feil under skanning gir SkanningFeilet med filnavnene, og vinner over et samtidig virusfunn`() = runTest {
+        val transport = FakeHttpTransport()
+        transport.leggIKøJson("""[{"Filename":"fil.pdf","Result":"ERROR"},{"Filename":"annen.pdf","Result":"FOUND"}]""")
 
-        shouldThrow<RuntimeException> { avService.gjørVirussjekkAvVedlegg(vedlegg) }
+        avService(transport).gjørVirussjekkAvVedlegg(vedlegg).leftOrNull()!! shouldBe
+            VirussjekkFeil.SkanningFeilet(nonEmptyListOf("fil.pdf"))
+    }
+
+    @Test
+    fun `feilet kall til ClamAV gir KallFeilet`() = runTest {
+        val transport = FakeHttpTransport()
+        transport.leggIKøStatus(503, body = "clamav er nede")
+
+        avService(transport).gjørVirussjekkAvVedlegg(vedlegg).leftOrNull()!!
+            .shouldBeInstanceOf<VirussjekkFeil.KallFeilet>()
+            .feil.shouldBeInstanceOf<HttpKlientError.UventetStatus>().statusCode shouldBe 503
     }
 }

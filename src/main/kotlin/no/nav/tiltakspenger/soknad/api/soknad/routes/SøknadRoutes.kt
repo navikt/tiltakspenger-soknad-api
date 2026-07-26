@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
+import arrow.core.toNonEmptyListOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -17,7 +18,7 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.antivirus.MalwareFoundException
+import no.nav.tiltakspenger.soknad.api.antivirus.VirussjekkFeil
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
@@ -39,9 +40,28 @@ fun Route.søknadRoutes(
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = nå(clock)
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart(), clock)
-                if (vedlegg.isNotEmpty()) {
+                vedlegg.toNonEmptyListOrNull()?.let { vedleggSomSkalSkannes ->
                     log.info { "Utfører virussjekk" }
-                    avService.gjørVirussjekkAvVedlegg(vedlegg)
+                    // Feilen er allerede logget i AvService; ruta velger bare status.
+                    // Skadevare er brukerens feil (400), resten er vår (500).
+                    val virussjekkFeil = avService.gjørVirussjekkAvVedlegg(vedleggSomSkalSkannes).leftOrNull()
+                    if (virussjekkFeil != null) {
+                        metricsCollector.antallFeiledeInnsendingerCounter.inc()
+                        requestTimer.observeDuration()
+                        if (virussjekkFeil is VirussjekkFeil.SkadevareFunnet) {
+                            metricsCollector.antallUgyldigeSøknaderCounter.inc()
+                            return@post call.respondText(
+                                text = "Bad Request",
+                                contentType = ContentType.Text.Plain,
+                                status = HttpStatusCode.BadRequest,
+                            )
+                        }
+                        return@post call.respondText(
+                            text = "Internal server error",
+                            contentType = ContentType.Text.Plain,
+                            status = HttpStatusCode.InternalServerError,
+                        )
+                    }
                 }
                 val fødselsnummer = principal.fnr
                 val acr = principal.claims["acr"]!!.toString()
@@ -76,12 +96,12 @@ fun Route.søknadRoutes(
                     },
                 )
             } catch (exception: Exception) {
+                // TODO jah: Dette kan vel gjøres litt ryddigre?
                 when (exception) {
                     is CannotTransformContentToTypeException,
                     is BadRequestException,
                     is MissingContentException,
                     is UnrecognizedFormItemException,
-                    is MalwareFoundException,
                     is UninitializedPropertyAccessException,
                     is RequestValidationException,
                     -> {

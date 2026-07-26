@@ -1,10 +1,12 @@
 package no.nav.tiltakspenger.soknad.api.pdf
 
+import arrow.core.right
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.getOrFail
 import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
@@ -31,10 +33,10 @@ class PdfServiceImplTest {
         )
         val vedlegg = listOf(Vedlegg(filnavn = "fil.pdf", contentType = "application/pdf", dokument = ByteArray(1)))
         val pdf = ByteArray(2)
-        coEvery { pdfGenerator.genererPdf(søknad) } returns Pair(pdf, null)
-        coEvery { pdfGenerator.konverterVedlegg(vedlegg) } returns vedlegg
+        coEvery { pdfGenerator.genererPdf(søknad) } returns Pair(pdf, null).right()
+        coEvery { pdfGenerator.konverterVedlegg(vedlegg) } returns vedlegg.right()
 
-        pdfService.lagPdf(søknad) shouldBe Pair(pdf, null)
-        pdfService.konverterVedlegg(vedlegg) shouldBe vedlegg
+        pdfService.lagPdf(søknad).getOrFail() shouldBe Pair(pdf, null)
+        pdfService.konverterVedlegg(vedlegg).getOrFail() shouldBe vedlegg
     }
 }

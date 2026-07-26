@@ -1,9 +1,12 @@
 package no.nav.tiltakspenger.soknad.api.soknad.jobb
 
+import arrow.core.getOrElse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.nå
+import no.nav.tiltakspenger.libs.httpklient.loggFeil
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.søknadMapper
@@ -18,18 +21,18 @@ class SøknadJobbService(
     private val journalforingService: JournalforingService,
     private val saksbehandlingApiKlient: SaksbehandlingApiKlient,
     private val clock: Clock,
+    private val sikkerlogg: Sikkerlogg,
 ) {
     private val log = KotlinLogging.logger {}
+
     suspend fun hentEllerOpprettSaksnummer(correlationId: CorrelationId) {
         søknadRepo.hentSoknaderUtenSaksnummer().forEach { soknad ->
             log.info { "Henter eller oppretter saksnummer for søknad med id ${soknad.id}" }
-            val saksnummer = try {
-                saksbehandlingApiKlient.hentEllerOpprettSaksnummer(
-                    Fnr.fromString(soknad.fnr),
-                    correlationId,
-                )
-            } catch (e: Exception) {
-                log.error(e) { "Hent saksnummer-jobb: Feil ved henting av saksnummer for søknadId ${soknad.id}" }
+            val saksnummer = saksbehandlingApiKlient.hentEllerOpprettSaksnummer(
+                Fnr.fromString(soknad.fnr),
+                correlationId,
+            ).getOrElse { feil ->
+                feil.loggFeil(log, "henting av saksnummer", "Hent saksnummer-jobb: søknadId ${soknad.id}", sikkerlogg)
                 return@forEach
             }
             søknadRepo.oppdater(soknad.copy(saksnummer = saksnummer))
@@ -45,29 +48,21 @@ class SøknadJobbService(
                 throw IllegalStateException("Kan ikke journalføre søknad som mangler saksnummer")
             }
 
-            val navn = try {
-                pdlService.hentNavnForFnr(Fnr.fromString(søknad.fnr), correlationId)
-            } catch (e: Exception) {
-                log.error(e) { "Journalfør søknad jobb: Feil ved henting av navn fra PDL for søknadId ${søknad.id}" }
-                return@forEach
-            }
-            val (journalpostId, søknadDto) = try {
-                journalforingService.opprettDokumenterOgArkiverIDokarkiv(
-                    spørsmålsbesvarelser = søknad.søknadSpm,
-                    fnr = søknad.fnr,
-                    fornavn = navn.fornavn,
-                    etternavn = navn.etternavn,
-                    vedlegg = søknad.vedlegg,
-                    acr = søknad.acr,
-                    innsendingTidspunkt = søknad.opprettet,
-                    søknadId = søknad.id,
-                    saksnummer = søknad.saksnummer,
-                    callId = correlationId.toString(),
-                )
-            } catch (e: Exception) {
-                log.error(e) { "Journalfør søknad jobb: Feil under journalføring mot Dokarkiv for søknadId ${søknad.id}" }
-                return@forEach
-            }
+            // Feilene er allerede logget i PdlService og JournalforingService; jobben hopper bare over søknaden og forsøker igjen neste kjøring.
+            val navn = pdlService.hentNavnForFnr(Fnr.fromString(søknad.fnr), correlationId).getOrElse { return@forEach }
+            val (journalpostId, søknadDto) = journalforingService.opprettDokumenterOgArkiverIDokarkiv(
+                spørsmålsbesvarelser = søknad.søknadSpm,
+                fnr = søknad.fnr,
+                fornavn = navn.fornavn,
+                etternavn = navn.etternavn,
+                vedlegg = søknad.vedlegg,
+                acr = søknad.acr,
+                innsendingTidspunkt = søknad.opprettet,
+                søknadId = søknad.id,
+                saksnummer = søknad.saksnummer,
+                callId = correlationId.toString(),
+            ).getOrElse { return@forEach }
+
             søknadRepo.oppdater(
                 søknad.copy(
                     søknad = søknadDto,
@@ -86,22 +81,26 @@ class SøknadJobbService(
             checkNotNull(søknad.søknad) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler søknad" }
             checkNotNull(søknad.journalpostId) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler journalpostId" }
             checkNotNull(søknad.saksnummer) { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} mangler saksnummer" }
-            try {
-                val sendtTilSaksbehandlingApi = nå(clock)
-                saksbehandlingApiKlient.sendSøknad(
-                    søknadDTO = søknadMapper(
-                        søknad = søknad.søknad,
-                        jounalpostId = søknad.journalpostId,
-                        saksnummer = søknad.saksnummer,
-                    ),
-                    correlationId = correlationId,
+            val sendtTilSaksbehandlingApi = nå(clock)
+            saksbehandlingApiKlient.sendSøknad(
+                søknadDTO = søknadMapper(
+                    søknad = søknad.søknad,
+                    jounalpostId = søknad.journalpostId,
+                    saksnummer = søknad.saksnummer,
+                ),
+                correlationId = correlationId,
+            ).getOrElse { feil ->
+                feil.loggFeil(
+                    log,
+                    "sending av søknad til saksbehandling-api",
+                    "Send søknad til saksbehandling-api jobb: søknadId ${søknad.id}. Denne vil prøves på nytt.",
+                    sikkerlogg,
                 )
-                log.info { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} er sendt til saksbehandling-api - prøver lagre utsendingstidspuktet" }
-                søknadRepo.oppdater(søknad.copy(sendtTilVedtak = sendtTilSaksbehandlingApi))
-                log.info { "Send søknad til saksbehandling-api jobb: Oppdatert utsendingstidspunktet til $sendtTilSaksbehandlingApi for søknad ${søknad.id}" }
-            } catch (e: Exception) {
-                log.error(e) { "Send søknad til saksbehandling-api jobb: Feil ved sending av søknad ${søknad.id} til saksbehandling-api. Denne vil prøves på nytt." }
+                return@forEach
             }
+            log.info { "Send søknad til saksbehandling-api jobb: Søknad ${søknad.id} er sendt til saksbehandling-api - prøver å lagre utsendingstidspunktet" }
+            søknadRepo.oppdater(søknad.copy(sendtTilVedtak = sendtTilSaksbehandlingApi))
+            log.info { "Send søknad til saksbehandling-api jobb: Oppdatert utsendingstidspunktet til $sendtTilSaksbehandlingApi for søknad ${søknad.id}" }
         }
     }
 }

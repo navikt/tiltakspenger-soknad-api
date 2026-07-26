@@ -1,5 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
+import arrow.core.left
+import arrow.core.right
 import com.nimbusds.jwt.JWT
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
@@ -18,6 +20,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientMetadata
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientTidsstempler
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
@@ -25,8 +30,10 @@ import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.Person
+import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
+import no.nav.tiltakspenger.soknad.api.tiltak.TiltaksdeltakelseDto
 import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
 import no.nav.tiltakspenger.soknad.api.util.lagTestToken
 import org.junit.jupiter.api.BeforeEach
@@ -51,10 +58,24 @@ internal class PdlRoutesTest {
         geografiskTilknytning = "1122",
     )
 
+    /** [HttpKlientMetadata] har bevisst ingen defaults, så testene fyller alle feltene eksplisitt. */
+    private fun tomMetadata() = HttpKlientMetadata(
+        rawRequestString = "",
+        rawResponseString = null,
+        requestHeaders = emptyMap(),
+        responseHeaders = emptyMap(),
+        statusCode = 500,
+        attempts = 1,
+        attemptDurations = emptyList(),
+        totalDuration = kotlin.time.Duration.ZERO,
+        tidsstempler = HttpKlientTidsstempler.INGEN,
+    )
+
     @BeforeEach
     fun setupMocks() {
-        clearMocks(texasClient, pdlService)
-        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO(LocalDate.now(fixedClock))
+        clearMocks(texasClient, pdlService, tiltakservice)
+        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO(LocalDate.now(fixedClock)).right()
+        coEvery { tiltakservice.hentTiltak(any(), any(), any()) } returns emptyList<TiltaksdeltakelseDto>().right()
     }
 
     @Test
@@ -206,13 +227,38 @@ internal class PdlRoutesTest {
     }
 
     @Test
+    fun `get på personalia-endepunkt skal svare med 500 hvis noe uventet kastes`() {
+        val token = issueTestToken()
+        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
+            fnr = token.jwtClaimsSet.claims["pid"].toString(),
+            acr = token.jwtClaimsSet.claims["acr"].toString(),
+        )
+        coEvery { tiltakservice.hentTiltak(any(), any(), any()) } throws RuntimeException("noe uventet")
+
+        testApplication {
+            configureTestApplication(
+                texasClient = texasClient,
+                pdlService = pdlService,
+                tiltakService = tiltakservice,
+            )
+            runBlocking {
+                val response = client.get("/personalia") {
+                    header("Authorization", "Bearer ${token.serialize()}")
+                }
+                response.status shouldBe HttpStatusCode.InternalServerError
+            }
+        }
+    }
+
+    @Test
     fun `get på personalia-endepunkt skal svare med 500 hvis pdl-kallet feiler`() {
         val token = issueTestToken()
         coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
-        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any(), any()) } throws RuntimeException("pdl er nede")
+        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any(), any()) } returns
+            KanIkkeHentePerson.KallFeilet(HttpKlientError.UventetStatus(500, "pdl er nede", tomMetadata())).left()
 
         testApplication {
             configureTestApplication(

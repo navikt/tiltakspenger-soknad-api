@@ -11,7 +11,7 @@ val kotlinxCoroutinesVersion = "1.11.0"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
-val felleslibVersion = "0.0.20260723155827"
+val felleslibVersion = "0.0.20260726130057"
 val flywayVersjon = "12.10.0"
 val testContainersVersion = "2.0.5"
 
@@ -50,6 +50,7 @@ dependencies {
     implementation("com.github.navikt.tiltakspenger-libs:common:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:jobber:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:ktor-common:$felleslibVersion")
+    implementation("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:personklient-domene:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:personklient-infrastruktur:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:json:$felleslibVersion")
@@ -59,11 +60,7 @@ dependencies {
     implementation("com.github.navikt.tiltakspenger-libs:texas:$felleslibVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
 
-    // Ktor
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-client-logging:$ktorVersion")
+    // Ktor. Kun server-siden: utgående HTTP går via libs httpklient.
     implementation("io.ktor:ktor-http:$ktorVersion")
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson3:$ktorVersion")
@@ -102,18 +99,19 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    // Ktor-klienten brukes kun av testApplication sin innebygde klient i rute-testene; produksjonskoden går via libs httpklient.
+    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
     testImplementation(platform("org.junit:junit-bom:6.1.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    // Delte arkitekturregler; drar inn konsist transitivt (api-avhengighet). Egen versjon inntil felleslibVersion bumpes.
+    // Delte arkitekturregler; drar inn konsist transitivt (api-avhengighet).
     testImplementation("com.github.navikt.tiltakspenger-libs:konsist-regler:$felleslibVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
     // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.
     testImplementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
-    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json:$kotestVersion")
     testImplementation("io.kotest:kotest-extensions:$kotestVersion")
@@ -124,6 +122,8 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-postgresql:$testContainersVersion")
     testImplementation("com.github.navikt.tiltakspenger-libs:test-common:$felleslibVersion")
     testImplementation("com.github.navikt.tiltakspenger-libs:persistering-test-common:$felleslibVersion")
+    // FakeHttpTransport: ekte HttpKlient med byttet transport, så hele pipelinen kjører i test.
+    testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion"))
 }
 
 application {
@@ -148,13 +148,6 @@ kover {
                     classes(
                         // TODO jah: Bootstrap som starter selve serveren (main/start, inkl. wiring-lambdaene); vurder å teste start() ved å gjøre startApp-oppsettet verifiserbart uten å blokkere.
                         "no.nav.tiltakspenger.soknad.api.ApplicationKt*",
-                        // TODO jah: Ktor-klient-buildere og HTTP-klienter som skrives om ved migreringen til libs `httpklient` (tiltakspenger-soknad-api#840); Kover-dekning seedes der, jf. epic-konvensjonen «Kover 100 % for migrerte klienter».
-                        "no.nav.tiltakspenger.soknad.api.DefaultObjectsKt*",
-                        "no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient*",
-                        "no.nav.tiltakspenger.soknad.api.pdf.PdfClient*",
-                        "no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient*",
-                        "no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient*",
-                        "no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient*",
                         // TODO jah: Profil/miljøvariabler leses fra global system-env (System.getenv/getProperty); DEV/PROD-grenene kan ikke dekkes uten å mutere JVM-global tilstand delt mellom tester. Gjør profil/cluster-navn injiserbart.
                         "no.nav.tiltakspenger.soknad.api.Configuration*",
                     )

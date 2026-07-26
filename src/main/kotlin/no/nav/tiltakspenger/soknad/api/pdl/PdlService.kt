@@ -1,9 +1,15 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.toNonEmptyListOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
+import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
+import no.nav.tiltakspenger.soknad.api.pdl.client.logg
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import java.time.Clock
 import java.time.LocalDate
@@ -11,6 +17,7 @@ import java.time.LocalDate
 class PdlService(
     private val pdlClient: PdlClient,
     private val clock: Clock,
+    private val sikkerlogg: Sikkerlogg,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -23,49 +30,43 @@ class PdlService(
         subjectToken: String,
         callId: String,
         styrendeDato: LocalDate? = null,
-    ): PersonDTO {
+    ): Either<KanIkkeHentePerson, PersonDTO> = either {
         val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
-        log.debug { "Henter søkers personalia fra PDL. Kallid: $callId" }
-        val result =
-            pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
-        log.debug { "Henting av søkers personalia har gått OK. Kallid: $callId" }
-        val person = result.toPerson(Fnr.fromString(fødselsnummer))
-        val barnsIdenter = person.barnsIdenter()
-        log.debug { "Henter personalia søkers barn fra PDL. Kallid: $callId" }
-        val barn = if (barnsIdenter.isNotEmpty()) {
-            pdlClient.fetchBarn(barnsIdenter, callId).toPersoner()
-                .mapNotNull { it }
+        val person = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
+            .loggFeil("henting av søkers personalia fra PDL", callId)
+            .bind()
+            .toPerson(Fnr.fromString(fødselsnummer))
+        val barn = person.barnsIdenter().toNonEmptyListOrNull()?.let { identer ->
+            pdlClient.fetchBarn(identer)
+                .loggFeil("henting av personalia for søkers barn fra PDL", callId)
+                .bind()
+                .toPersoner()
+                .filterNotNull()
                 .filter { it.erUnder16ÅrPåDato(dato = filtreringsdato) }
-        } else {
-            emptyList()
-        }
-        log.debug { "Henting personalia søkers barn har gått OK. Kallid: $callId" }
-        return person.toPersonDTO(dagensDato = LocalDate.now(clock), barn = barn)
+        }.orEmpty()
+        person.toPersonDTO(dagensDato = LocalDate.now(clock), barn = barn)
     }
 
     suspend fun hentAdressebeskyttelse(
         fødselsnummer: String,
         subjectToken: String,
         callId: String,
-    ): AdressebeskyttelseGradering {
-        log.debug { "Henter informasjon om adressebeskyttelse for fødselsnummer, callId $callId" }
-        val personopplysninger = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken, callId = callId)
-        val adressebeskyttelse = personopplysninger.toPerson(Fnr.fromString(fødselsnummer)).adressebeskyttelseGradering
-        log.debug { "Hentet informasjon om adressebeskyttelse for fødselsnummer OK, callId $callId" }
-        return adressebeskyttelse
-    }
+    ): Either<KanIkkeHentePerson, AdressebeskyttelseGradering> =
+        pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
+            .loggFeil("henting av adressebeskyttelse fra PDL", callId)
+            .map { it.toPerson(Fnr.fromString(fødselsnummer)).adressebeskyttelseGradering }
 
     suspend fun hentNavnForFnr(
         fnr: Fnr,
         correlationId: CorrelationId,
-    ): Navn {
-        val callId = correlationId.toString()
-        log.debug { "Henter navn for fødselsnummer, callId $callId" }
-        val personopplysninger = pdlClient.fetchSøkerSystembruker(
-            fødselsnummer = fnr.verdi,
-            callId = callId,
-        )
-        log.debug { "Hentet navn for fødselsnummer, callId $callId" }
-        return personopplysninger.toPerson(fnr).getNavn()
-    }
+    ): Either<KanIkkeHentePerson, Navn> =
+        pdlClient.fetchSøkerSystembruker(fødselsnummer = fnr.verdi)
+            .loggFeil("henting av navn fra PDL", correlationId.toString())
+            .map { it.toPerson(fnr).getNavn() }
+
+    /** Én logghendelse per feilsituasjon, fra laget som har domenekonteksten. */
+    private fun <T> Either<KanIkkeHentePerson, T>.loggFeil(
+        operasjon: String,
+        callId: String,
+    ): Either<KanIkkeHentePerson, T> = onLeft { it.logg(log, operasjon, "callId $callId", sikkerlogg) }
 }

@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
+import arrow.core.right
 import com.nimbusds.jwt.JWT
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
@@ -19,6 +20,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.json.objectMapper
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
@@ -40,7 +42,7 @@ internal class TiltakRoutesTest {
     private val texasClient = mockk<TexasHttpClient>()
     private val pdlService = mockk<PdlService>()
     private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
-    private val tiltakservice = TiltakService(tiltakspengerTiltakClient, fixedClock)
+    private val tiltakservice = TiltakService(tiltakspengerTiltakClient, fixedClock, Sikkerlogg)
     private val gjennomforingId = UUID.randomUUID().toString()
 
     private val mockedTiltak =
@@ -60,8 +62,8 @@ internal class TiltakRoutesTest {
     @BeforeEach
     fun setupMocks() {
         clearMocks(texasClient, pdlService, tiltakspengerTiltakClient)
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT
-        coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns Result.success(mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS"))
+        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT.right()
+        coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS").right()
     }
 
     @Test
@@ -83,6 +85,7 @@ internal class TiltakRoutesTest {
                 pdlService = pdlService,
                 tiltakService = tiltakservice,
             )
+            // TODO jah: Vurder warning av runBlocking
             runBlocking {
                 val response = client.get(TILTAK_PATH) {
                     contentType(type = ContentType.Application.Json)
@@ -134,7 +137,7 @@ internal class TiltakRoutesTest {
             fnr = token.jwtClaimsSet.claims["pid"].toString(),
             acr = token.jwtClaimsSet.claims["acr"].toString(),
         )
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns FORTROLIG andThen STRENGT_FORTROLIG andThen STRENGT_FORTROLIG_UTLAND
+        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns FORTROLIG.right() andThen STRENGT_FORTROLIG.right() andThen STRENGT_FORTROLIG_UTLAND.right()
 
         testApplication {
             val client = createClient {

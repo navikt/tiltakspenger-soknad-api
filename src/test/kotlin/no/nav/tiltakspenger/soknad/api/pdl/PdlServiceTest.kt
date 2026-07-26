@@ -1,7 +1,11 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
+import arrow.core.left
+import arrow.core.nonEmptyListOf
+import arrow.core.right
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -10,7 +14,13 @@ import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.getOrFail
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientMetadata
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientTidsstempler
+import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
+import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Dødsfall
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.Endring
@@ -98,6 +108,9 @@ internal class PdlServiceTest {
         metadata = metadata,
         folkeregistermetadata = folkeregisterMetadata,
     )
+
+    fun mockSøkerResponsRight(forelderBarnRelasjon: List<ForelderBarnRelasjon> = emptyList()) =
+        mockSøkerRespons(forelderBarnRelasjon).right()
 
     fun mockSøkerRespons(forelderBarnRelasjon: List<ForelderBarnRelasjon> = emptyList()): SøkerRespons {
         return SøkerRespons(
@@ -211,6 +224,7 @@ internal class PdlServiceTest {
     private val pdlService = PdlService(
         pdlClient = mockedPdlClient,
         clock = fixedClock,
+        sikkerlogg = Sikkerlogg,
     )
 
     @Test
@@ -218,21 +232,21 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnDefaultMock
+                coEvery { mock.fetchBarn(any()) } returns søkersBarnDefaultMock.right()
             }
             pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            coVerify { mockedPdlClient.fetchSøker(testFødselsnummer, token, "test") }
-            coVerify { mockedPdlClient.fetchBarn(listOf(testBarnFødselsnummer), "test") }
+            coVerify { mockedPdlClient.fetchSøker(testFødselsnummer, token) }
+            coVerify { mockedPdlClient.fetchBarn(nonEmptyListOf(testBarnFødselsnummer)) }
         }
     }
 
@@ -241,54 +255,103 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns mockSøkerRespons()
+                coEvery { mock.fetchSøker(any(), any()) } returns mockSøkerRespons().right()
             }
             pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
             )
-            coVerify { mockedPdlClient.fetchSøker(testFødselsnummer, token, "test") }
-            coVerify(exactly = 0) { mockedPdlClient.fetchBarn(any(), any()) }
+            coVerify { mockedPdlClient.fetchSøker(testFødselsnummer, token) }
+            coVerify(exactly = 0) { mockedPdlClient.fetchBarn(any()) }
         }
     }
 
     @Test
-    fun `når fetchSøker med tokenx mot PDL feiler, kastes en IllegalStateExcepiton`() {
-        val token = "token"
-        val exception = shouldThrow<IllegalStateException> {
-            mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } throws IllegalStateException("verify in test")
-            }
-            runBlocking {
-                pdlService.hentPersonaliaMedBarn(
-                    fødselsnummer = testFødselsnummer,
-                    subjectToken = token,
-                    callId = "test",
-                )
-            }
+    fun `når fetchSøker mot PDL feiler, forplanter feilen seg ut til kalleren`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøker(any(), any()) } returns
+                KanIkkeHentePerson.KallFeilet(HttpKlientError.UventetStatus(503, "pdl er nede", tomMetadata())).left()
+
+            val feil = pdlService.hentPersonaliaMedBarn(
+                fødselsnummer = testFødselsnummer,
+                subjectToken = "token",
+                callId = "test",
+            ).leftOrNull()!!
+
+            feil.shouldBeInstanceOf<KanIkkeHentePerson.KallFeilet>()
+                .feil.shouldBeInstanceOf<HttpKlientError.UventetStatus>().statusCode shouldBe 503
         }
-        exception.message shouldBe "verify in test"
     }
+
+    @Test
+    fun `når bolkoppslaget av barna feiler, forplanter feilen seg ut til kalleren`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøker(any(), any()) } returns
+                mockSøkerResponsRight(forelderBarnRelasjon = listOf(mockForelderBarnRelasjon()))
+            coEvery { mockedPdlClient.fetchBarn(any()) } returns KanIkkeHentePerson.ResponsManglerData(tomMetadata()).left()
+
+            pdlService.hentPersonaliaMedBarn(
+                fødselsnummer = testFødselsnummer,
+                subjectToken = "token",
+                callId = "test",
+            ).leftOrNull()!!.shouldBeInstanceOf<KanIkkeHentePerson.ResponsManglerData>()
+        }
+    }
+
+    @Test
+    fun `når hentNavnForFnr feiler, forplanter feilen seg ut til jobben`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøkerSystembruker(any()) } returns
+                KanIkkeHentePerson.GraphQLFeil(nonEmptyListOf("Fant ikke person"), tomMetadata()).left()
+
+            pdlService.hentNavnForFnr(Fnr.fromString(testFødselsnummer), CorrelationId.generate())
+                .leftOrNull()!!.shouldBeInstanceOf<KanIkkeHentePerson.GraphQLFeil>()
+        }
+    }
+
+    @Test
+    fun `når hentAdressebeskyttelse feiler, forplanter feilen seg ut til ruta`() {
+        runBlocking {
+            coEvery { mockedPdlClient.fetchSøker(any(), any()) } returns
+                KanIkkeHentePerson.KallFeilet(HttpKlientError.UventetStatus(500, "nede", tomMetadata())).left()
+
+            pdlService.hentAdressebeskyttelse(testFødselsnummer, "token", "test")
+                .leftOrNull()!!.shouldBeInstanceOf<KanIkkeHentePerson.KallFeilet>()
+        }
+    }
+
+    /** [HttpKlientMetadata] har bevisst ingen defaults, så testene fyller alle feltene eksplisitt. */
+    private fun tomMetadata() = HttpKlientMetadata(
+        rawRequestString = "",
+        rawResponseString = null,
+        requestHeaders = emptyMap(),
+        responseHeaders = emptyMap(),
+        statusCode = null,
+        attempts = 1,
+        attemptDurations = emptyList(),
+        totalDuration = kotlin.time.Duration.ZERO,
+        tidsstempler = HttpKlientTidsstempler.INGEN,
+    )
 
     @Test
     fun `hentPersonaliaMedBarn skal ikke returnere barn fra forelderBarnRelasjon som er over 16 år`() {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnOver16År
+                coEvery { mock.fetchBarn(any()) } returns søkersBarnOver16År.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertTrue(person.barn.isEmpty())
         }
     }
@@ -298,19 +361,19 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns søkersBarnUnder16År
+                coEvery { mock.fetchBarn(any()) } returns søkersBarnUnder16År.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertEquals(person.barn.size, 1)
             assertEquals(
                 person.barn[0].fødselsdato,
@@ -324,19 +387,19 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns barnMedStrengtFortrolig
+                coEvery { mock.fetchBarn(any()) } returns barnMedStrengtFortrolig.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
@@ -352,19 +415,19 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns barnMedFortrolig
+                coEvery { mock.fetchBarn(any()) } returns barnMedFortrolig.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
@@ -380,19 +443,19 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns barnMedStrengtFortroligUtland
+                coEvery { mock.fetchBarn(any()) } returns barnMedStrengtFortroligUtland.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
@@ -408,19 +471,19 @@ internal class PdlServiceTest {
         val token = "token"
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(),
                         ),
                     )
-                coEvery { mock.fetchBarn(any(), any()) } returns barnMedUgradert
+                coEvery { mock.fetchBarn(any()) } returns barnMedUgradert.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
             assertEquals(person.barn.size, 1)
 
             val barn = person.barn[0]
@@ -486,8 +549,8 @@ internal class PdlServiceTest {
 
         runBlocking {
             mockedPdlClient.also { mock ->
-                coEvery { mock.fetchSøker(any(), any(), any()) } returns
-                    mockSøkerRespons(
+                coEvery { mock.fetchSøker(any(), any()) } returns
+                    mockSøkerResponsRight(
                         forelderBarnRelasjon = listOf(
                             mockForelderBarnRelasjon(ident = barnOver16ÅrPåTiltaksstartdatoIdent),
                             mockForelderBarnRelasjon(ident = barnSomFyller16ÅrPåTiltaksstartdatoIdent),
@@ -497,22 +560,21 @@ internal class PdlServiceTest {
                     )
                 coEvery {
                     mock.fetchBarn(
-                        listOf(
+                        nonEmptyListOf(
                             barnOver16ÅrPåTiltaksstartdatoIdent,
                             barnSomFyller16ÅrPåTiltaksstartdatoIdent,
                             barnUnder16ÅrPåTiltaksstartdatoIdent,
                             barn2Under16ÅrPåTiltaksstartdatoIdent,
                         ),
-                        any(),
                     )
-                } returns forventetResponse
+                } returns forventetResponse.right()
             }
             val person = pdlService.hentPersonaliaMedBarn(
                 fødselsnummer = testFødselsnummer,
                 styrendeDato = startdato,
                 subjectToken = token,
                 callId = "test",
-            )
+            ).getOrFail()
 
             person.barn.size shouldBe 2
             person.barn shouldBe listOf(
@@ -525,13 +587,13 @@ internal class PdlServiceTest {
     @Test
     fun `hentAdressebeskyttelse henter søker og returnerer graderingen`() {
         runBlocking {
-            coEvery { mockedPdlClient.fetchSøker(any(), any(), any()) } returns mockSøkerRespons()
+            coEvery { mockedPdlClient.fetchSøker(any(), any()) } returns mockSøkerRespons().right()
 
             val gradering = pdlService.hentAdressebeskyttelse(
                 fødselsnummer = testFødselsnummer,
                 subjectToken = "token",
                 callId = "test",
-            )
+            ).getOrFail()
 
             gradering shouldBe AdressebeskyttelseGradering.UGRADERT
         }
@@ -540,12 +602,12 @@ internal class PdlServiceTest {
     @Test
     fun `hentNavnForFnr henter søker som systembruker og returnerer navnet`() {
         runBlocking {
-            coEvery { mockedPdlClient.fetchSøkerSystembruker(any(), any()) } returns mockSøkerRespons()
+            coEvery { mockedPdlClient.fetchSøkerSystembruker(any()) } returns mockSøkerRespons().right()
 
             val navn = pdlService.hentNavnForFnr(
                 fnr = Fnr.fromString(testFødselsnummer),
                 correlationId = CorrelationId.generate(),
-            )
+            ).getOrFail()
 
             navn shouldBe no.nav.tiltakspenger.soknad.api.pdl.Navn(fornavn = "foo", mellomnavn = "baz", etternavn = "bar")
         }

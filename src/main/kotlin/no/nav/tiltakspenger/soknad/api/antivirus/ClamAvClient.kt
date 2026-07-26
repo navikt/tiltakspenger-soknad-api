@@ -1,13 +1,21 @@
 package no.nav.tiltakspenger.soknad.api.antivirus
 
+import arrow.core.Either
+import arrow.core.Nel
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlient
+import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlientConfig
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.KlientAuth
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.MultipartDel
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.tilMultipartDeler
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.JavaHttpTransport
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
+import java.net.URI
+import java.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Klient for å virusskanne vedlegg med ClamAV.
@@ -17,35 +25,45 @@ import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
  * API-spec: - (ingen spec; REST-API-et er beskrevet i nais-dokumentasjonen)
  * Slack: #nais
  * Teamkatalog: ikke aktuelt (plattformtjeneste)
+ *
+ * Vedleggene lastes opp som `multipart/form-data` med én del per fil, akkurat som før migreringen.
+ * Tar en [Nel] fordi en virusskanning uten filer er meningsløs; kallstedet har allerede tatt stilling til det tilfellet.
+ * ClamAV kjører i klusteret uten autentisering, derfor [KlientAuth.Ingen].
+ * Ingen retry, som før: en virusskanning av vedlegg på flere megabyte skal ikke gjentas automatisk.
+ *
+ * @param transport Det eneste stedet klienten rører nettverket; default er produksjonstransporten, tester sender inn `FakeHttpTransport`.
  */
 class ClamAvClient(
-    private val avEndpoint: String,
-    private val client: HttpClient,
+    avEndpoint: String,
+    clock: Clock,
+    connectTimeout: Duration = 30.seconds,
+    timeout: Duration = 30.seconds,
+    transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
 ) {
-    suspend fun scan(vedleggsListe: List<Vedlegg>): List<AvSjekkResultat> {
-        try {
-            return client.submitFormWithBinaryData(
-                url = avEndpoint,
-                formData = formData {
-                    vedleggsListe.forEachIndexed { index, vedlegg ->
-                        append(
-                            "file$index",
-                            vedlegg.dokument,
-                            Headers.build {
-                                append(HttpHeaders.ContentType, vedlegg.contentType)
-                                append(HttpHeaders.ContentDisposition, "filename=${vedlegg.filnavn}")
-                            },
-                        )
-                    }
-                },
-            ).body()
-        } catch (throwable: Throwable) {
-            throw RuntimeException(
-                "Kallet til antivirusinstans feilet. Message: ${throwable.message}",
-                throwable,
-            )
-        }
-    }
+    private val httpKlient: HttpKlient = HttpKlient(
+        clock = clock,
+        config = HttpKlientConfig(
+            timeout = timeout,
+            auth = KlientAuth.Ingen,
+        ),
+        transport = transport,
+    )
+
+    private val uri = URI.create(avEndpoint)
+
+    suspend fun scan(vedleggsListe: Nel<Vedlegg>): Either<HttpKlientError, List<AvSjekkResultat>> =
+        httpKlient.postMultipart<List<AvSjekkResultat>>(
+            uri = uri,
+            // Feltnavnene er indeksbaserte, som før migreringen; MultipartDeler håndhever at de er unike.
+            deler = vedleggsListe.mapIndexed { index, vedlegg ->
+                MultipartDel(
+                    feltnavn = "file$index",
+                    filnavn = vedlegg.filnavn,
+                    contentType = vedlegg.contentType,
+                    innhold = vedlegg.dokument,
+                )
+            }.tilMultipartDeler(),
+        ).map { it.body }
 }
 
 data class AvSjekkResultat(

@@ -1,9 +1,12 @@
 package no.nav.tiltakspenger.soknad.api.pdf
 
+import arrow.core.Either
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 interface PdfService {
-    suspend fun lagPdf(søknad: Søknad): Pair<ByteArray, ByteArray?>
-    suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): List<Vedlegg>
+    suspend fun lagPdf(søknad: Søknad): Either<HttpKlientError, Pair<ByteArray, ByteArray?>>
+
+    suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>>
 }

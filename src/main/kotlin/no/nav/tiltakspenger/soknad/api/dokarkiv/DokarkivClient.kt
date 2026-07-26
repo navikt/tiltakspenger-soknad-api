@@ -1,25 +1,27 @@
 package no.nav.tiltakspenger.soknad.api.dokarkiv
 
-import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.request.accept
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.header
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import no.nav.tiltakspenger.libs.common.AccessToken
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.recover
+import arrow.core.right
 import no.nav.tiltakspenger.libs.common.JournalpostId
-import no.nav.tiltakspenger.libs.common.SøknadId
-import no.nav.tiltakspenger.libs.json.objectMapper
-import no.nav.tiltakspenger.soknad.api.httpClientWithRetry
-
-const val INDIVIDSTONAD = "IND"
+import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
+import no.nav.tiltakspenger.libs.httpklient.harStatus
+import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlient
+import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlientConfig
+import no.nav.tiltakspenger.libs.httpklient.infra.feil.bodySomJson
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.AuthTokenProvider
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.KlientAuth
+import no.nav.tiltakspenger.libs.httpklient.infra.kall.NavHeadere
+import no.nav.tiltakspenger.libs.httpklient.infra.retry.Retry
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.JavaHttpTransport
+import java.net.URI
+import java.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 internal const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
 
@@ -31,55 +33,68 @@ internal const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
  * API-spec: https://dokarkiv.dev.intern.nav.no/swagger-ui/index.html
  * Slack: #team-dokumentløsninger (https://nav-it.slack.com/archives/C6W9E5GPJ)
  * Teamkatalog: https://teamkatalogen.nav.no/team/f3388fcd-898e-40da-8d02-0bf1e3a79120
+ *
+ * Dokarkiv dedupliserer på `eksternReferanseId` og svarer `409 Conflict` med journalpost-IDen fra det opprinnelige kallet.
+ * `409` er derfor et domeneutfall og ikke en suksess-status: den utledes fra feiltypen, slik at suksess-kanalen beholder én betydning.
+ * Retryen replikerer den gamle ktor-klienten: fire forsøk totalt med konstant 100 ms delay, og retryIkkeIdempotente er trygt nettopp på grunn av dedupliseringen.
+ *
+ * @param transport Det eneste stedet klienten rører nettverket; default er produksjonstransporten, tester sender inn `FakeHttpTransport`.
  */
 class DokarkivClient(
-    private val client: HttpClient = httpClientWithRetry(timeout = 30L),
-    private val baseUrl: String,
-    private val getToken: suspend () -> AccessToken,
+    baseUrl: String,
+    clock: Clock,
+    authTokenProvider: AuthTokenProvider,
+    connectTimeout: Duration = 30.seconds,
+    timeout: Duration = 30.seconds,
+    transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),
 ) {
-    private val log = KotlinLogging.logger {}
+    private val httpKlient: HttpKlient = HttpKlient(
+        clock = clock,
+        config = HttpKlientConfig(
+            timeout = timeout,
+            auth = KlientAuth.System(authTokenProvider),
+            retry = Retry.Fast(maksForsøk = 4, delay = 100.milliseconds, retryIkkeIdempotente = true),
+        ),
+        transport = transport,
+    )
+
+    private val journalpostUri = URI.create("$baseUrl/$DOKARKIV_PATH")
 
     suspend fun opprettJournalpost(
         request: JournalpostRequest,
-        søknadId: SøknadId,
         callId: String,
-    ): JournalpostId {
-        try {
-            log.info { "Henter credentials for å arkivere i dokarkiv" }
-            val token = getToken().token
-            log.info { "Hent credentials til arkiv OK. Starter journalføring av søknad" }
-            val res = client.post("$baseUrl/$DOKARKIV_PATH") {
-                accept(ContentType.Application.Json)
-                header("X-Correlation-ID", INDIVIDSTONAD)
-                header("Nav-Callid", callId)
-                parameter("forsoekFerdigstill", request.kanFerdigstilleAutomatisk())
-                bearerAuth(token)
-                contentType(ContentType.Application.Json)
-                setBody(objectMapper.writeValueAsString(request))
-            }
-            val response = res.call.body<DokarkivResponse>()
-            log.info { "Vi har opprettet journalpost med id: ${response.journalpostId} for søknad $søknadId" }
-
-            if (request.kanFerdigstilleAutomatisk() && !response.journalpostferdigstilt) {
-                throw IllegalStateException("DokarkivClient: Journalpost ${response.journalpostId} for søknad $søknadId ble opprettet, men ikke ferdigstilt")
-            }
-            return JournalpostId(response.journalpostId)
-        } catch (throwable: Throwable) {
-            if (throwable is ClientRequestException && throwable.response.status == HttpStatusCode.Conflict) {
-                val response = throwable.response.call.body<DokarkivResponse>()
-                log.info { "Søknad med id $søknadId har allerede blitt journalført (409 Conflict) med journalpostId ${response.journalpostId}" }
-                return JournalpostId(response.journalpostId)
-            }
-            if (throwable is IllegalStateException) {
-                throw RuntimeException("DokarkivClient: Fikk en IllegalStateException", throwable)
-            } else {
-                throw RuntimeException("DokarkivClient: Fikk en ukjent exception.", throwable)
-            }
-        }
+    ): Either<KunneIkkeJournalføre, JournalpostId> {
+        val skalFerdigstilles = request.kanFerdigstilleAutomatisk()
+        return httpKlient.postJson<DokarkivResponse>(
+            uri = URI.create("$journalpostUri?forsoekFerdigstill=$skalFerdigstilles"),
+            body = request,
+            headere = listOf(NavHeadere.xCorrelationId(callId), NavHeadere.navCallid(callId)),
+        ).map { it.body }
+            .recover { feil -> feil.tilDedupliseringsrespons().bind() }
+            .flatMap { it.tilJournalpostId(skalFerdigstilles) }
     }
 
-    data class DokarkivResponse(
-        val journalpostId: String,
-        val journalpostferdigstilt: Boolean,
-    )
+    /**
+     * `409 Conflict` betyr at journalposten allerede finnes; dokarkiv svarer da med den opprinnelige journalpost-IDen i samme format som ved `200`.
+     * Klarer vi ikke å lese den bodyen, er dedupliseringen ubrukelig for oss, og feilen forblir en feil.
+     */
+    private fun HttpKlientError.tilDedupliseringsrespons(): Either<KunneIkkeJournalføre, DokarkivResponse> =
+        if (harStatus(409)) {
+            (this as HttpKlientError.ResponsMottatt).bodySomJson<DokarkivResponse>()
+                .mapLeft { KunneIkkeJournalføre.KallFeilet(it) }
+        } else {
+            KunneIkkeJournalføre.KallFeilet(this).left()
+        }
+
+    private fun DokarkivResponse.tilJournalpostId(skalFerdigstilles: Boolean): Either<KunneIkkeJournalføre, JournalpostId> =
+        if (skalFerdigstilles && !journalpostferdigstilt) {
+            KunneIkkeJournalføre.IkkeFerdigstilt(JournalpostId(journalpostId)).left()
+        } else {
+            JournalpostId(journalpostId).right()
+        }
 }
+
+data class DokarkivResponse(
+    val journalpostId: String,
+    val journalpostferdigstilt: Boolean,
+)

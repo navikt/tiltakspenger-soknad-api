@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.util
 
+import arrow.core.nonEmptyListOf
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import no.nav.tiltakspenger.soknad.api.util.Detect.isPdf
@@ -26,7 +27,7 @@ class PdfToolsTest {
 
         bilder.size shouldBe 2
         bilder.forEach { bilde ->
-            bilde.type.contentSubtype shouldBe "png"
+            bilde.type shouldBe Detect.IMAGE_PNG
             bilde.data.isPng() shouldBe true
             bilde.data.size shouldBeGreaterThan 0
         }
@@ -34,7 +35,7 @@ class PdfToolsTest {
 
     @Test
     fun `slåSammenPdfer gir én pdf med alle sidene`() {
-        val sammenslått = PdfTools.slåSammenPdfer(listOf(enkelPdf(1), enkelPdf(2)))
+        val sammenslått = PdfTools.slåSammenPdfer(nonEmptyListOf(enkelPdf(1), enkelPdf(2)))
 
         sammenslått.isPdf() shouldBe true
         Loader.loadPDF(sammenslått).use { dokument ->

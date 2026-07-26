@@ -127,6 +127,11 @@ object Configuration {
 
     val identhendelseTopic: String by lazy { config()[Key("IDENTHENDELSE_TOPIC", stringType)] }
 
+    // Settes automatisk av nais; brukes til å bygge den klikkbare sikkerlogg-lenken i KotlinLoggingSikkerlogg.
+    // Nullable fordi de ikke finnes lokalt — da faller lenken tilbake til ren tekst.
+    val naisAppName: String? by lazy { System.getenv("NAIS_APP_NAME") }
+    val gcpTeamProjectId: String? by lazy { System.getenv("GCP_TEAM_PROJECT_ID") }
+
     data class DataBaseConf(
         val url: String,
     )
