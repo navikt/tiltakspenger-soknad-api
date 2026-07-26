@@ -1,343 +1,153 @@
 package no.nav.tiltakspenger.soknad.api.tiltak
 
-import arrow.core.right
-import com.nimbusds.jwt.JWT
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.jackson3.JacksonConverter
-import io.ktor.server.testing.testApplication
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import no.nav.tiltakspenger.libs.common.Fnr
-import no.nav.tiltakspenger.libs.common.fixedClock
-import no.nav.tiltakspenger.libs.json.objectMapper
-import no.nav.tiltakspenger.libs.logging.Sikkerlogg
-import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
-import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO
-import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
-import no.nav.tiltakspenger.soknad.api.configureTestApplication
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.FORTROLIG
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_FORTROLIG
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND
-import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.UGRADERT
-import no.nav.tiltakspenger.soknad.api.pdl.PdlService
-import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
-import no.nav.tiltakspenger.soknad.api.util.lagTestToken
-import org.junit.jupiter.api.BeforeEach
+import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
+import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
+import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
+import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikk
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.io.IOException
 
 internal class TiltakRoutesTest {
-    private val texasClient = mockk<TexasHttpClient>()
-    private val pdlService = mockk<PdlService>()
-    private val tiltakspengerTiltakClient = mockk<TiltakspengerTiltakClient>()
-    private val tiltakservice = TiltakService(tiltakspengerTiltakClient, fixedClock, Sikkerlogg)
-    private val gjennomforingId = UUID.randomUUID().toString()
-
-    private val mockedTiltak =
-        listOf(
-            TiltaksdeltakelseDto(
-                aktivitetId = "123456",
-                type = TiltakResponsDTO.TiltakTypeDTO.ABOPPF,
-                typeNavn = "typenavn",
-                arenaRegistrertPeriode = Deltakelsesperiode(null, null),
-                arrangør = "Testarrangør AS",
-                gjennomforingId = gjennomforingId,
-                visningsnavn = "Typenavn hos Testarrangør AS",
-            ),
-        )
     private val testFødselsnummer = "12345678910"
 
-    @BeforeEach
-    fun setupMocks() {
-        clearMocks(texasClient, pdlService, tiltakspengerTiltakClient)
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns UGRADERT.right()
-        coEvery { tiltakspengerTiltakClient.fetchTiltak(any(), any()) } returns mockTiltakspengerTiltakResponse(arrangør = "Testarrangør AS").right()
+    @Test
+    fun `get på tiltak-endepunkt svarer med tiltak når tokenet er gyldig`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk(arrangør = "Testarrangør AS")))
+
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val tiltak = response.body<TiltakDto>().tiltak.single()
+            tiltak.aktivitetId shouldBe "123456"
+            tiltak.type shouldBe TiltakResponsDTO.TiltakTypeDTO.ABOPPF
+            tiltak.arrangør shouldBe "Testarrangør AS"
+            tiltak.visningsnavn shouldBe "typenavn hos Testarrangør AS"
+        }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal svare med tiltak fra tiltakservice hvis tokenet er gyldig og validerer ok`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
+    fun `get på tiltak-endepunkt godtar token med gammelt acr-claim`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer, acr = "Level4")
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            // TODO jah: Vurder warning av runBlocking
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
+            jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }.status shouldBe HttpStatusCode.OK
+        }
+    }
+
+    @Test
+    fun `get på tiltak-endepunkt fjerner arrangørnavn for søker med adressebeskyttelse`() {
+        // Én kontekst per gradering: PdlClient cacher søkeroppslaget på fødselsnummer.
+        listOf(FORTROLIG, STRENGT_FORTROLIG, STRENGT_FORTROLIG_UTLAND).forEach { gradering ->
+            medTestApplikasjon { tac ->
+                val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+                tac.pdlTransport.leggIKøJson(søkerRespons(gradering = gradering))
+                tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk(arrangør = "Testarrangør AS")))
+
+                val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
                 response.status shouldBe HttpStatusCode.OK
-                val body: TiltakDto = response.body()
-                body.tiltak shouldBe mockedTiltak
+                val tiltak = response.body<TiltakDto>().tiltak.single()
+                tiltak.arrangør shouldBe ""
+                tiltak.visningsnavn shouldBe "typenavn"
             }
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal svare med tiltak fra tiltakservice hvis tokenet er gyldig, også for token med gammelt acr-claim`() {
-        val tokenAcrLevel4 = issueTestTokenOldAcr()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = tokenAcrLevel4.jwtClaimsSet.claims["pid"].toString(),
-            acr = tokenAcrLevel4.jwtClaimsSet.claims["acr"].toString(),
-        )
+    fun `get på tiltak-endepunkt henter tiltak for fødselsnummeret i pid-claimet`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+            jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${tokenAcrLevel4.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.OK
-                val body: TiltakDto = response.body()
-                body.tiltak shouldBe mockedTiltak
-            }
+            tac.pdlTransport.mottatteKall.single().bodyTekst shouldContain testFødselsnummer
+            val tiltakKall = tac.tiltakTransport.mottatteKall.single()
+            tiltakKall.uri.toString() shouldBe "http://tiltak.test/tokenx/tiltakshistorikk"
+            tiltakKall.request.headers().firstValue("Authorization").get() shouldBe "Bearer test-access-token"
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal fjerne arrangørnavn for en søker med adressebeskyttelse`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } returns FORTROLIG.right() andThen STRENGT_FORTROLIG.right() andThen STRENGT_FORTROLIG_UTLAND.right()
-
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                listOf(FORTROLIG, STRENGT_FORTROLIG, STRENGT_FORTROLIG_UTLAND).forEach { _ ->
-                    val response = client.get(TILTAK_PATH) {
-                        contentType(type = ContentType.Application.Json)
-                        header("Authorization", "Bearer ${token.serialize()}")
-                    }
-                    response.status shouldBe HttpStatusCode.OK
-                    val body: TiltakDto = response.body()
-
-                    body.tiltak.first().arrangør shouldBe ""
-                }
-            }
+    fun `get på tiltak-endepunkt svarer 401 når token mangler`() {
+        medTestApplikasjon {
+            jsonKlient().get(TILTAK_PATH).status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal kalle på TiltakService med fødselsnummeret som ligger bakt inn i pid claim i tokenet`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
+    fun `get på tiltak-endepunkt svarer 401 for token som ikke er utstedt til oss`() {
+        medTestApplikasjon {
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer ukjent-token") }
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                coVerify { tiltakspengerTiltakClient.fetchTiltak(token.serialize(), Fnr.fromString(testFødselsnummer)) }
-            }
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal returnere 401 dersom token mangler`() {
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                }
-                response.status shouldBe HttpStatusCode.Unauthorized
-            }
+    fun `get på tiltak-endepunkt svarer 401 når acr-claimet mangler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer, acr = "")
+
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal returnere 401 dersom token kommer fra ugyldig issuer`() {
-        val tokenMedUgyldigIssuer = issueTestToken(issuer = "ugyldigIssuer")
-        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
-            active = false,
-            error = "Ugyldig issuer",
-            groups = null,
-            roles = null,
-        )
+    fun `get på tiltak-endepunkt svarer 500 når pdl-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøKast(IOException("pdl er nede"))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${tokenMedUgyldigIssuer.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.Unauthorized
-            }
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
         }
     }
 
     @Test
-    fun `get på tiltak-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
-        val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = tokenMedManglendeClaim.jwtClaimsSet.claims["pid"].toString(),
-            acr = "",
-        )
+    fun `get på tiltak-endepunkt svarer 500 når tiltak-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.tiltakTransport.leggIKøStatusForAlleForsøk(500, "tiltak er nede")
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${tokenMedManglendeClaim.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.Unauthorized
-            }
+            response.status shouldBe HttpStatusCode.InternalServerError
         }
     }
-
-    private fun issueTestTokenOldAcr(
-        claims: Map<String, String> = mapOf(
-            "acr" to "Level4",
-            "pid" to testFødselsnummer,
-        ),
-    ): JWT = lagTestToken(claims)
 
     @Test
-    fun `get på tiltak-endepunkt skal svare med 500 hvis et av kallene feiler`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
-        coEvery { pdlService.hentAdressebeskyttelse(any(), any(), any()) } throws RuntimeException("pdl er nede")
+    fun `get på tiltak-endepunkt svarer 500 når søkeren er registrert som død i PDL`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            // Mappingen kaster på død søker; ruta skal ta det som en uventet feil og svare 500.
+            tac.pdlTransport.leggIKøJson(søkerRespons(død = true))
 
-        testApplication {
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get(TILTAK_PATH) {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.InternalServerError
-            }
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
         }
     }
-
-    private fun issueTestToken(
-        issuer: String = "tokendings",
-        claims: Map<String, String> = mapOf(
-            "acr" to "idporten-loa-high",
-            "pid" to testFødselsnummer,
-        ),
-    ): JWT {
-        // issuer beholdes for kallkompatibilitet; tokenets innhold valideres ikke (introspect er mocket).
-        return lagTestToken(claims)
-    }
-
-    private fun mockTiltakspengerTiltakResponse(arrangør: String = "Arrangør AS") =
-        listOf(
-            TiltakshistorikkDTO(
-                id = "123456",
-                gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
-                    id = gjennomforingId,
-                    arenaKode = TiltakResponsDTO.TiltakTypeDTO.ABOPPF,
-                    typeNavn = "typenavn",
-                    arrangornavn = arrangør,
-                    deltidsprosent = 100.0,
-                    visningsnavn = "Typenavn hos $arrangør",
-                ),
-                deltakelseFom = null,
-                deltakelseTom = null,
-                deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
-                antallDagerPerUke = null,
-                kilde = TiltakshistorikkDTO.Kilde.KOMET,
-                deltakelseProsent = null,
-            ),
-        )
 }

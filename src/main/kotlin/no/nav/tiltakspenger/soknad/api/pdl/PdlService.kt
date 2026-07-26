@@ -29,7 +29,7 @@ class PdlService(
         fødselsnummer: String,
         subjectToken: String,
         callId: String,
-        styrendeDato: LocalDate? = null,
+        styrendeDato: LocalDate?,
     ): Either<KanIkkeHentePerson, PersonDTO> = either {
         val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
         val person = pdlClient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)

@@ -12,7 +12,7 @@ import no.nav.tiltakspenger.libs.httpklient.infra.retry.Retry
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.JavaHttpTransport
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
-import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasClient
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import java.net.URI
 import java.time.Clock
@@ -38,7 +38,7 @@ class TiltakspengerTiltakClient(
     tiltakspengerTiltakEndpoint: String,
     clock: Clock,
     private val tiltakspengerTiltakScope: String,
-    private val texasClient: TexasHttpClient,
+    private val texasClient: TexasClient,
     connectTimeout: Duration = 10.seconds,
     timeout: Duration = 10.seconds,
     transport: HttpTransport = JavaHttpTransport(connectTimeout = connectTimeout),

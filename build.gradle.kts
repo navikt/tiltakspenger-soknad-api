@@ -145,12 +145,10 @@ kover {
         total {
             filters {
                 excludes {
-                    classes(
-                        // TODO jah: Bootstrap som starter selve serveren (main/start, inkl. wiring-lambdaene); vurder å teste start() ved å gjøre startApp-oppsettet verifiserbart uten å blokkere.
-                        "no.nav.tiltakspenger.soknad.api.ApplicationKt*",
-                        // TODO jah: Profil/miljøvariabler leses fra global system-env (System.getenv/getProperty); DEV/PROD-grenene kan ikke dekkes uten å mutere JVM-global tilstand delt mellom tester. Gjør profil/cluster-navn injiserbart.
-                        "no.nav.tiltakspenger.soknad.api.Configuration*",
-                    )
+                    // Det eneste som står igjen her er main/start, altså oppstarten av selve Netty-serveren.
+                    // Innholdet — jobbene, Kafka-consumerne og Ktor-oppsettet — ligger i Bakgrunnsprosesser.kt og KtorSetup.kt, som testene kjører direkte.
+                    // start() kan ikke dekkes uten å faktisk starte en blokkerende server; LokalMain kjører den samme rutinen manuelt.
+                    classes("no.nav.tiltakspenger.soknad.api.ApplicationKt*")
                 }
             }
             html {

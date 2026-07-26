@@ -20,64 +20,36 @@ import no.nav.tiltakspenger.libs.ktor.common.oppstart.Readiness
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.healthRoutes
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.TexasAuthenticationProvider
-import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
-import no.nav.tiltakspenger.soknad.api.antivirus.AvService
-import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
-import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.pdl.routes.pdlRoutes
-import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.routes.søknadRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.validateSøknad
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.tiltakRoutes
-import java.time.Clock
 import java.util.UUID.randomUUID
 
 internal fun Application.ktorSetup(
-    texasClient: TexasHttpClient,
-    pdlService: PdlService,
-    tiltakService: TiltakService,
-    avService: AvService,
-    metricsCollector: MetricsCollector,
-    nySøknadService: NySøknadService,
+    context: ApplicationContext,
     readiness: Readiness,
-    clock: Clock,
 ) {
     installCallLogging()
     installJacksonFeature()
     install(RequestValidation) {
-        validateSøknad(clock)
+        validateSøknad(context.clock)
     }
 
-    setupRouting(
-        texasClient = texasClient,
-        pdlService = pdlService,
-        tiltakService = tiltakService,
-        avService = avService,
-        metricsCollector = metricsCollector,
-        nySøknadService = nySøknadService,
-        readiness = readiness,
-        clock = clock,
-    )
+    setupRouting(context, readiness)
 }
 
 internal fun Application.setupRouting(
-    texasClient: TexasHttpClient,
-    pdlService: PdlService,
-    nySøknadService: NySøknadService,
-    tiltakService: TiltakService,
-    avService: AvService,
-    metricsCollector: MetricsCollector,
+    context: ApplicationContext,
     readiness: Readiness,
-    clock: Clock,
 ) {
     authentication {
         register(
             TexasAuthenticationProvider(
                 TexasAuthenticationProvider.Config(
                     name = IdentityProvider.TOKENX.value,
-                    texasClient = texasClient,
+                    texasClient = context.texasClient,
                     identityProvider = IdentityProvider.TOKENX,
                     requireIdportenLevelHigh = true,
                 ),
@@ -88,20 +60,20 @@ internal fun Application.setupRouting(
     routing {
         authenticate(IdentityProvider.TOKENX.value) {
             pdlRoutes(
-                pdlService = pdlService,
-                tiltakService = tiltakService,
-                metricsCollector = metricsCollector,
+                pdlService = context.pdlService,
+                tiltakService = context.tiltakService,
+                metricsCollector = context.metricsCollector,
             )
             søknadRoutes(
-                avService = avService,
-                metricsCollector = metricsCollector,
-                nySøknadService = nySøknadService,
-                clock = clock,
+                avService = context.avService,
+                metricsCollector = context.metricsCollector,
+                nySøknadService = context.nySøknadService,
+                clock = context.clock,
             )
             tiltakRoutes(
-                tiltakService = tiltakService,
-                metricsCollector = metricsCollector,
-                pdlService = pdlService,
+                tiltakService = context.tiltakService,
+                metricsCollector = context.metricsCollector,
+                pdlService = context.pdlService,
             )
         }
         healthRoutes { readiness.erKlar() }
@@ -120,7 +92,7 @@ internal fun Application.installCallLogging() {
         generate { randomUUID().toString() }
     }
     install(CallLogging) {
-        callIdMdc("call-id")
+        callIdMdc(CALL_ID_MDC_KEY)
         filter { call ->
             val path = call.request.path()
             path.startsWith(SØKNAD_PATH) ||

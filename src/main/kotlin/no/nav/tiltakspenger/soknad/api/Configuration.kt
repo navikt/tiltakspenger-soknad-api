@@ -47,6 +47,8 @@ object Configuration {
             mapOf(
                 "application.profile" to Profile.LOCAL.toString(),
                 "logback.configurationFile" to "logback.local.xml",
+                // Leader election kjører kun i Nais, men verdien må finnes for at oppslaget ikke skal feile lokalt.
+                "ELECTOR_PATH" to "http://localhost:4040",
                 "DB_JDBC_URL" to "jdbc:postgresql://host.docker.internal:5436/soknad?user=postgres&password=test",
                 "PDL_SCOPE" to "localhost",
                 "PDL_ENDPOINT_URL" to "http://localhost:8484/personalia",
@@ -77,26 +79,34 @@ object Configuration {
             ),
         )
 
-    private fun config(): Configuration {
-        return when (System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")) {
-            "dev-gcp" ->
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding devProperties overriding defaultProperties
+    /**
+     * Cluster-navnet er JVM-global tilstand.
+     * Det leses ett sted, slik at profil- og config-utledningen under kan testes uten å mutere systemmiljøet.
+     */
+    private fun naisClusterName(): String? = System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")
 
-            "prod-gcp" ->
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding prodProperties overriding defaultProperties
-
-            else -> {
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding localProperties overriding defaultProperties
-            }
-        }
-    }
-
-    fun applicationProfile() =
-        when (System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")) {
+    internal fun profilFor(clusterName: String?): Profile =
+        when (clusterName) {
             "dev-gcp" -> Profile.DEV
             "prod-gcp" -> Profile.PROD
             else -> Profile.LOCAL
         }
+
+    internal fun config(profile: Profile): Configuration =
+        when (profile) {
+            Profile.DEV ->
+                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding devProperties overriding defaultProperties
+
+            Profile.PROD ->
+                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding prodProperties overriding defaultProperties
+
+            Profile.LOCAL ->
+                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding localProperties overriding defaultProperties
+        }
+
+    private fun config(): Configuration = config(applicationProfile())
+
+    fun applicationProfile(): Profile = profilFor(naisClusterName())
 
     fun logbackConfigurationFile() = config()[Key("logback.configurationFile", stringType)]
 

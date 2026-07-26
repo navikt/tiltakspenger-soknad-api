@@ -21,7 +21,7 @@ import no.nav.tiltakspenger.libs.httpklient.infra.kall.Statusregel
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.JavaHttpTransport
 import no.nav.tiltakspenger.libs.texas.IdentityProvider
-import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.libs.texas.client.TexasClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkerRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.SøkersBarnRespons
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.hentBarnBolkQuery
@@ -53,7 +53,7 @@ class PdlClient(
     endepunkt: String,
     clock: Clock,
     private val pdlScope: String,
-    private val texasClient: TexasHttpClient,
+    private val texasClient: TexasClient,
     authTokenProvider: AuthTokenProvider,
     connectTimeout: Duration = 10.seconds,
     timeout: Duration = 10.seconds,

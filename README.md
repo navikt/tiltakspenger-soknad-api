@@ -15,8 +15,21 @@ For hvilke versjoner som brukes, [se byggefilen](build.gradle.kts)
 
 ## Kjøre opp lokalt
 
-Appen kan enten kjøres opp lokalt ved å kjøre opp `main()` i `Application.kt` fra f.eks. IntelliJ, eller ved å bruke docker-compose oppsettet som ligger i [meta-repoet](https://github.com/navikt/tiltakspenger) til team tiltakspenger.
-Compose-oppsettet til søknaden kjører også opp [tiltakspenger-soknad-mock-api](https://github.com/navikt/tiltakspenger-soknad-mock-api), som er skreddersydd for å mocke ut andre api-er som dette api-et er avhengig av for å fungere i utviklingsmiljø.
+Kjør `main()` i `LokalMain.kt` (i testkildene).
+Det eneste som må kjøre ved siden av, er postgres:
+
+```sh
+docker compose -f ../docker-compose-soknad.yml up postgresSoknad
+```
+
+`LokalMain` kjører nøyaktig samme `start()`-rutine som i drift, men med `LokalApplicationContext`.
+Den svarer på alle utgående kall — PDL, tiltak, virussjekk, PDF-generering, journalføring og oversending til saksbehandling-api — med faste, gyldige svar, og godtar hvilket som helst token.
+Klientene er de ekte; det er kun transporten som er byttet ut, så hele klient-pipelinen kjører også lokalt.
+Testbrukeren har to barn under 16 år og ett aktivt tiltak, slik at hele søknaden kan fylles ut.
+
+Sett `BRUK_MOCK_API=true` for å gå mot compose-oppsettet i stedet, altså [tiltakspenger-soknad-mock-api](https://github.com/navikt/tiltakspenger-soknad-mock-api), pdfgen og authserveren.
+
+`main()` i `Application.kt` er produksjonsinngangen, og krever at alle de eksterne tjenestene finnes.
 
 Eksempel på miljøvariabler som kan settes i en Run Configuration for å kjøre opp appen fra IntelliJ mot kjørende Compose-oppsett:
 

@@ -3,13 +3,15 @@ package no.nav.tiltakspenger.soknad.api.repository
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 import kotliquery.sessionOf
+import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.nå
+import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
-import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
@@ -20,16 +22,16 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
-internal class SøknadRepoTest {
-    private fun withCleanDb(test: (SøknadRepo) -> Unit) {
+internal class SøknadPostgresRepoTest {
+    private fun withCleanDb(test: (SøknadPostgresRepo) -> Unit) {
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
-            test(SøknadRepo(dataSource))
+            test(SøknadPostgresRepo(dataSource))
         }
     }
 
-    private fun withCleanDbAndDataSource(test: (SøknadRepo, DataSource) -> Unit) {
+    private fun withCleanDbAndDataSource(test: (SøknadPostgresRepo, DataSource) -> Unit) {
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
-            test(SøknadRepo(dataSource), dataSource)
+            test(SøknadPostgresRepo(dataSource), dataSource)
         }
     }
 
@@ -223,5 +225,21 @@ internal class SøknadRepoTest {
         }
 
         lagretJournalpostId shouldBe journalpostId.toString()
+    }
+
+    @Test
+    fun `oppdaterFnr bytter fødselsnummer på brukerens søknader og lar andre være i fred`() = withCleanDb { søknadRepo ->
+        val gammeltFnr = Fnr.random()
+        val nyttFnr = Fnr.random()
+        val urelatertFnr = Fnr.random()
+        val søknad = genererMottattSøknadForTest(fnr = gammeltFnr.verdi, eier = Applikasjonseier.Tiltakspenger)
+        val annenBrukersSøknad = genererMottattSøknadForTest(fnr = urelatertFnr.verdi, eier = Applikasjonseier.Tiltakspenger)
+        søknadRepo.lagre(søknad)
+        søknadRepo.lagre(annenBrukersSøknad)
+
+        søknadRepo.oppdaterFnr(gammeltFnr = gammeltFnr, nyttFnr = nyttFnr)
+
+        søknadRepo.hentSoknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
+        søknadRepo.hentSoknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
     }
 }

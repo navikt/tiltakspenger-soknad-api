@@ -1,289 +1,199 @@
 package no.nav.tiltakspenger.soknad.api.pdl.routes
 
-import arrow.core.left
-import arrow.core.right
-import com.nimbusds.jwt.JWT
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.jackson3.JacksonConverter
-import io.ktor.server.testing.testApplication
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import no.nav.tiltakspenger.libs.common.Fnr
-import no.nav.tiltakspenger.libs.common.fixedClock
-import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
-import no.nav.tiltakspenger.libs.httpklient.HttpKlientMetadata
-import no.nav.tiltakspenger.libs.httpklient.HttpKlientTidsstempler
-import no.nav.tiltakspenger.libs.json.objectMapper
-import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
-import no.nav.tiltakspenger.libs.texas.client.TexasIntrospectionResponse
-import no.nav.tiltakspenger.soknad.api.configureTestApplication
-import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering
-import no.nav.tiltakspenger.soknad.api.pdl.PdlService
-import no.nav.tiltakspenger.soknad.api.pdl.Person
-import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
+import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltaksdeltakelseDto
-import no.nav.tiltakspenger.soknad.api.util.getGyldigTexasIntrospectionResponse
-import no.nav.tiltakspenger.soknad.api.util.lagTestToken
-import org.junit.jupiter.api.BeforeEach
+import no.nav.tiltakspenger.soknad.api.testutils.barnRespons
+import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
+import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
+import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
+import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikk
 import org.junit.jupiter.api.Test
+import java.io.IOException
 import java.time.LocalDate
 
 internal class PdlRoutesTest {
-    private val texasClient = mockk<TexasHttpClient>()
-    private val pdlService = mockk<PdlService>()
-    private val tiltakservice = mockk<TiltakService>(relaxed = true)
-
     private val testFødselsnummer = "12345678910"
-
-    private val mockedPerson = Person(
-        fnr = Fnr.fromString(testFødselsnummer),
-        fornavn = "foo",
-        etternavn = "bar",
-        mellomnavn = "baz",
-        fødselsdato = LocalDate.MAX,
-        adressebeskyttelseGradering = AdressebeskyttelseGradering.UGRADERT,
-        erDød = false,
-        geografiskTilknytning = "1122",
-    )
-
-    /** [HttpKlientMetadata] har bevisst ingen defaults, så testene fyller alle feltene eksplisitt. */
-    private fun tomMetadata() = HttpKlientMetadata(
-        rawRequestString = "",
-        rawResponseString = null,
-        requestHeaders = emptyMap(),
-        responseHeaders = emptyMap(),
-        statusCode = 500,
-        attempts = 1,
-        attemptDurations = emptyList(),
-        totalDuration = kotlin.time.Duration.ZERO,
-        tidsstempler = HttpKlientTidsstempler.INGEN,
-    )
-
-    @BeforeEach
-    fun setupMocks() {
-        clearMocks(texasClient, pdlService, tiltakservice)
-        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any()) } returns mockedPerson.toPersonDTO(LocalDate.now(fixedClock)).right()
-        coEvery { tiltakservice.hentTiltak(any(), any(), any()) } returns emptyList<TiltaksdeltakelseDto>().right()
-    }
+    private val barnFødselsnummer = "02062012345"
 
     @Test
-    fun `get på personalia-endepunkt skal svare med personalia fra PDLService hvis tokenet er gyldig og validerer ok`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
+    fun `get på personalia-endepunkt svarer med personalia fra PDL når tokenet er gyldig`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson(søkerRespons(fornavn = "foo", mellomnavn = "baz", etternavn = "bar"))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.Companion.OK
-                val body: PersonDTO = response.body()
-                body.fornavn shouldBe mockedPerson.fornavn
-                body.etternavn shouldBe mockedPerson.etternavn
-                body.mellomnavn shouldBe mockedPerson.mellomnavn
-            }
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val body: PersonDTO = response.body()
+            body.fornavn shouldBe "foo"
+            body.mellomnavn shouldBe "baz"
+            body.etternavn shouldBe "bar"
+            body.harFylt18År shouldBe true
+            body.barn shouldBe emptyList()
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal kalle på PDLService med fødselsnummeret som ligger bakt inn i pid claim i tokenet`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
+    fun `get på personalia-endepunkt tar med barn under 16 år`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnFødselsnummer))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                coVerify { pdlService.hentPersonaliaMedBarn(testFødselsnummer, any(), any(), any()) }
-            }
+            response.status shouldBe HttpStatusCode.OK
+            val barn = response.body<PersonDTO>().barn.single()
+            barn.fornavn shouldBe "Barn"
+            barn.etternavn shouldBe "Barnesen"
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal returnere 401 dersom token mangler`() {
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+    fun `get på personalia-endepunkt filtrerer barn på tiltakets tidligste fra-dato, ikke dagens dato`() {
+        // Barnet fyller 16 mellom tiltakets fra-dato og dagens dato, og skal dermed regnes som under 16.
+        val barnSomFyller16 = "15120812345"
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk(deltakelseFom = LocalDate.of(2024, 12, 1))))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnSomFyller16)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnSomFyller16, fødselsdato = "2008-12-15"))
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                }
-                response.status shouldBe HttpStatusCode.Companion.Unauthorized
-            }
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            response.body<PersonDTO>().barn.single().fnr shouldBe barnSomFyller16
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal returnere 401 dersom token kommer fra ugyldig issuer`() {
-        val tokenMedUgyldigIssuer = issueTestToken(issuer = "ugyldigIssuer")
-        coEvery { texasClient.introspectToken(any(), any()) } returns TexasIntrospectionResponse(
-            active = false,
-            error = "Ugyldig issuer",
-            groups = null,
-            roles = null,
-        )
+    fun `get på personalia-endepunkt utelater barn som har fylt 16 på styrende dato`() {
+        val barnSomHarFylt16 = "15120812345"
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnSomHarFylt16)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnSomHarFylt16, fødselsdato = "2008-12-15"))
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${tokenMedUgyldigIssuer.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.Companion.Unauthorized
-            }
+            response.status shouldBe HttpStatusCode.OK
+            response.body<PersonDTO>().barn shouldBe emptyList()
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal returnere 401 dersom token mangler acr=Level4 claim`() {
-        val tokenMedManglendeClaim = issueTestToken(claims = mapOf("pid" to testFødselsnummer))
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = tokenMedManglendeClaim.jwtClaimsSet.claims["pid"].toString(),
-            acr = "",
-        )
+    fun `get på personalia-endepunkt slår opp fødselsnummeret i pid-claimet`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson(søkerRespons())
 
-        testApplication {
-            val client = createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
+            jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
 
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${tokenMedManglendeClaim.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.Companion.Unauthorized
-            }
+            val kall = tac.pdlTransport.mottatteKall.single()
+            kall.uri.toString() shouldBe "http://pdl.test/graphql"
+            kall.request.headers().firstValue("behandlingsnummer").get() shouldBe "B470"
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal svare med 500 hvis noe uventet kastes`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
-        coEvery { tiltakservice.hentTiltak(any(), any(), any()) } throws RuntimeException("noe uventet")
-
-        testApplication {
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.InternalServerError
-            }
+    fun `get på personalia-endepunkt svarer 401 når token mangler`() {
+        medTestApplikasjon {
+            jsonKlient().get(PERSONALIA_PATH).status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `get på personalia-endepunkt skal svare med 500 hvis pdl-kallet feiler`() {
-        val token = issueTestToken()
-        coEvery { texasClient.introspectToken(any(), any()) } returns getGyldigTexasIntrospectionResponse(
-            fnr = token.jwtClaimsSet.claims["pid"].toString(),
-            acr = token.jwtClaimsSet.claims["acr"].toString(),
-        )
-        coEvery { pdlService.hentPersonaliaMedBarn(any(), any(), any(), any()) } returns
-            KanIkkeHentePerson.KallFeilet(HttpKlientError.UventetStatus(500, "pdl er nede", tomMetadata())).left()
+    fun `get på personalia-endepunkt svarer 401 for token som ikke er utstedt til oss`() {
+        medTestApplikasjon {
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer ukjent-token") }
 
-        testApplication {
-            configureTestApplication(
-                texasClient = texasClient,
-                pdlService = pdlService,
-                tiltakService = tiltakservice,
-            )
-            runBlocking {
-                val response = client.get("/personalia") {
-                    contentType(type = ContentType.Application.Json)
-                    header("Authorization", "Bearer ${token.serialize()}")
-                }
-                response.status shouldBe HttpStatusCode.InternalServerError
-            }
+            response.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
-    private fun issueTestToken(
-        issuer: String = "tokendings",
-        claims: Map<String, String> = mapOf(
-            "acr" to "idporten-loa-high",
-            "pid" to testFødselsnummer,
-        ),
-    ): JWT {
-        // issuer beholdes for kallkompatibilitet; tokenets innhold valideres ikke (introspect er mocket).
-        return lagTestToken(claims)
+    @Test
+    fun `get på personalia-endepunkt svarer 401 når acr-claimet mangler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer, acr = "")
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.Unauthorized
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt svarer 500 når tiltak-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøStatusForAlleForsøk(500, "tiltak er nede")
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt svarer 500 når pdl-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøKast(IOException("pdl er nede"))
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt svarer 500 når PDL svarer 200 med feil i errors-lista`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson("""{"errors":[{"message":"Ikke tilgang"}]}""")
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt svarer 500 når PDL svarer 200 uten data`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson("""{}""")
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt svarer 500 når søkeren er registrert som død i PDL`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            // Mappingen kaster på død søker; ruta skal ta det som en uventet feil og svare 500.
+            tac.pdlTransport.leggIKøJson(søkerRespons(død = true))
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
     }
 }

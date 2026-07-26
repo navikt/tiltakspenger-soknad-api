@@ -2,41 +2,47 @@ package no.nav.tiltakspenger.soknad.api.identhendelse
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.justRun
-import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.libs.json.serialize
 import no.nav.tiltakspenger.libs.kafka.config.LocalKafkaConfig
+import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.testutils.FakeSøknadRepo
+import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
+/** Ende-til-ende for identhendelser: fra Kafka-meldingen, gjennom servicen og ned i repoet. */
 class IdenthendelseConsumerTest {
-    private val identhendelseService = mockk<IdenthendelseService>()
+    private val søknadRepo = FakeSøknadRepo()
+
+    private fun consumer(topic: String) = IdenthendelseConsumer(
+        identhendelseService = IdenthendelseService(søknadRepo),
+        topic = topic,
+        kafkaConfig = LocalKafkaConfig(),
+    )
 
     @Test
-    fun `consume deserialiserer hendelsen og sender den til servicen`() = runTest {
-        val consumer = IdenthendelseConsumer(
-            identhendelseService = identhendelseService,
-            topic = "test-topic",
-            kafkaConfig = LocalKafkaConfig(),
-        )
-        val id = UUID.randomUUID()
-        val identhendelse = IdenthendelseDto(gammeltFnr = "12345678910", nyttFnr = "10987654321")
-        justRun { identhendelseService.behandleIdenthendelse(id, identhendelse) }
+    fun `consume oppdaterer fødselsnummeret på brukerens søknader, og lar andre være i fred`() = runTest {
+        val gammeltFnr = Fnr.random()
+        val nyttFnr = Fnr.random()
+        val urelatertFnr = Fnr.random()
+        val søknad = genererMottattSøknadForTest(fnr = gammeltFnr.verdi, eier = Applikasjonseier.Tiltakspenger)
+        val annenBrukersSøknad = genererMottattSøknadForTest(fnr = urelatertFnr.verdi, eier = Applikasjonseier.Tiltakspenger)
+        søknadRepo.lagre(søknad)
+        søknadRepo.lagre(annenBrukersSøknad)
+        val identhendelse = IdenthendelseDto(gammeltFnr = gammeltFnr.verdi, nyttFnr = nyttFnr.verdi)
 
-        consumer.consume(id, serialize(identhendelse))
+        consumer("identhendelse-oppdater").consume(UUID.randomUUID(), serialize(identhendelse))
 
-        io.mockk.verify { identhendelseService.behandleIdenthendelse(id, identhendelse) }
+        søknadRepo.hentSoknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
+        søknadRepo.hentSoknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
     }
 
     @Test
-    fun `run starter og stop stopper consumeren uten kjorende broker`() {
-        val consumer = IdenthendelseConsumer(
-            identhendelseService = identhendelseService,
-            topic = "test-topic-run-stop",
-            kafkaConfig = LocalKafkaConfig(),
-        )
+    fun `run starter og stop stopper consumeren uten kjørende broker`() {
+        val consumer = consumer("identhendelse-run-stop")
 
         val job = consumer.run()
         consumer.stop()
@@ -49,8 +55,8 @@ class IdenthendelseConsumerTest {
         // Utelatt kafkaConfig-parameter evaluerer defaulten (LocalKafkaConfig utenfor Nais) ved konstruksjon.
         shouldNotThrowAny {
             IdenthendelseConsumer(
-                identhendelseService = identhendelseService,
-                topic = "test-topic-default-config",
+                identhendelseService = IdenthendelseService(søknadRepo),
+                topic = "identhendelse-default-config",
             )
         }
     }
