@@ -74,10 +74,10 @@ internal fun start(
         clock = clock,
     )
 
+    // Scope-verdiene våre er på formen `prod-fss:pdl:pdl-api`, så de må skrives om til `api://prod-fss.pdl.pdl-api/.default` før Azure AD godtar dem.
     fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
         texasClient = texasClient,
         audienceTarget = scope,
-        rewriteAudienceTarget = false,
     )
 
     val dokarkivClient = DokarkivClient(
