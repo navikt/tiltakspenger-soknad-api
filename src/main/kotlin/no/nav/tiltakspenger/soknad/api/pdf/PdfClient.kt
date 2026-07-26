@@ -34,6 +34,7 @@ internal const val SOKNAD_TEMPLATE = "soknad"
 
 /**
  * Klient for å generere søknads-PDF-er via tiltakspenger-pdfgen, med skygge-kall til tiltakspenger-pdfgenrs i local/dev.
+ * Konverteringen av vedlegg (bilde → PDF) går derimot alltid mot tiltakspenger-pdfgenrs, også i prod.
  *
  * Kildekode: https://github.com/navikt/tiltakspenger-pdfgen og https://github.com/navikt/tiltakspenger-pdfgenrs
  * Dokumentasjon: README-ene i kildekode-repoene
@@ -71,7 +72,7 @@ class PdfClient(
 
     private val søknadUri = URI.create("$pdfEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE")
     private val pdfgenrsSøknadUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE")
-    private val bildeUri = URI.create("$pdfEndpoint/$PDFGEN_IMAGE_PATH")
+    private val bildeUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_IMAGE_PATH")
 
     /*
         TODO - pdfgenrs: skift tilbake til ByteArray når det er verifisert at PDF fra pdfgenrs er ok.

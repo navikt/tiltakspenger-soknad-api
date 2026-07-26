@@ -124,7 +124,8 @@ internal class PdfClientTest {
         konvertert.dokument.toList() shouldBe pdf.toList()
 
         val kall = transport.mottatteKall.single()
-        kall.uri.toString() shouldBe "http://pdf/$PDFGEN_IMAGE_PATH"
+        // Bildekonverteringen går mot pdfgenrs, ikke pdfgen, også i prod.
+        kall.uri.toString() shouldBe "http://pdfgenrs/$PDFGEN_IMAGE_PATH"
         kall.request.headers().firstValue("Content-Type").get() shouldBe IMAGE_PNG
         kall.request.headers().firstValue("Accept").get() shouldBe "application/pdf"
         kall.bodyBytes.toList() shouldBe pngBytes().toList()

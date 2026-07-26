@@ -16,7 +16,19 @@ For hvilke versjoner som brukes, [se byggefilen](build.gradle.kts)
 ## Kjøre opp lokalt
 
 Kjør `main()` i `LokalMain.kt` (i testkildene).
-Det eneste som må kjøre ved siden av, er postgres:
+Det eneste som må kjøre ved siden av, er postgres — og den starter `LokalMain` for deg.
+
+Svarer ikke databasen på porten fra `Configuration` (5436), letes `docker-compose-soknad.yml` opp oppover fra repoet (den ligger i monorepo-rota), tjenesten `postgresSoknad` startes med `docker compose up -d`, og vi venter til den tar imot tilkoblinger.
+Kjører den allerede, gjøres ingenting.
+Porten og det navngitte volumet er de samme som før, så dataene dine overlever både omstart av appen og av containeren.
+Går noe galt — docker er ikke startet, compose-fila finnes ikke, porten er opptatt av noe annet — får du en feilmelding som sier hva som er galt og hva du gjør med det.
+
+Vil du heller kjøre uten compose-oppsettet, sett miljøvariabelen `LOKAL_DB_MODUS=testcontainers`.
+Da starter vi en egen postgres-container via Testcontainers, på en tilfeldig port som appen plukker opp selv.
+Databasen er da tom ved hver oppstart med mindre du også setter `TESTCONTAINERS_REUSE_ENABLE=true`.
+
+Oppstartslogikken er delt med de andre appene og ligger i `tiltakspenger-libs:lokal-oppstart` (`startLokalPostgres`).
+Vil du fortsatt starte databasen selv, er kommandoen:
 
 ```sh
 docker compose -f ../docker-compose-soknad.yml up postgresSoknad

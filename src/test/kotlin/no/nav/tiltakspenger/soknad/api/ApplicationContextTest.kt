@@ -1,9 +1,15 @@
 package no.nav.tiltakspenger.soknad.api
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.prometheus.client.CollectorRegistry
+import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
+import no.nav.tiltakspenger.libs.json.deserialize
+import no.nav.tiltakspenger.libs.texas.client.TexasClient
+import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.testutils.FakeSøknadRepo
 import org.junit.jupiter.api.Test
 
@@ -57,5 +63,35 @@ internal class ApplicationContextTest {
         context.pdlService shouldBeSameInstanceAs context.pdlService
         context.søknadJobbService shouldBeSameInstanceAs context.søknadJobbService
         context.metricsCollector shouldBeSameInstanceAs context.metricsCollector
+    }
+
+    /**
+     * Regresjonsvern: scopene våre kommer fra nais-manifestet som `cluster:namespace:app`, og Azure AD svarer `invalid_scope` (AADSTS1002012) på alt annet enn `api://…/.default`.
+     * Da omskrivingen ble skrudd av her, falt PDL-oppslag, journalføring og saksnummer-jobben i produksjon uten at noen test merket det.
+     */
+    @Test
+    fun `systemtokens ber Azure AD om target på api-formatet`() = runTest {
+        val transport = FakeHttpTransport().apply {
+            leggIKøJson(json = """{"access_token": "system-token", "expires_in": 3600}""")
+        }
+        val context = object : ApplicationContext(
+            clock = fixedClock,
+            søknadRepo = FakeSøknadRepo(),
+            collectorRegistry = CollectorRegistry(),
+        ) {
+            override val texasClient: TexasClient = TexasHttpClient(
+                introspectionUrl = "http://texas/api/v1/introspect",
+                tokenUrl = "http://texas/api/v1/token",
+                tokenExchangeUrl = "http://texas/api/v1/token/exchange",
+                clock = fixedClock,
+                transport = transport,
+            )
+        }
+
+        context.systemTokenProvider("prod-fss:pdl:pdl-api").hentToken(skipCache = false)
+
+        val requestBody = deserialize<Map<String, Any?>>(transport.mottatteKall.single().bodyTekst)
+        requestBody["target"] shouldBe "api://prod-fss.pdl.pdl-api/.default"
+        requestBody["identity_provider"] shouldBe "azuread"
     }
 }

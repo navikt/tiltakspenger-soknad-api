@@ -54,11 +54,25 @@ class FellesArkitekturKonsistTest {
 
     /**
      * Produksjonskoden er fri for andre HTTP-klienter etter httpklient-migreringen, så regelen trenger ingen unntak her.
-     * Testkoden holdes utenfor scopet: rute-testene bruker ktor sin `testApplication`-klient, som er eneste vei inn til test-serveren.
      */
     @Test
     fun `ingen andre http-klienter enn libs httpklient i produksjonskode`() {
-        IngenAndreHttpKlienter.assert(Konsist.scopeFromProduction())
+        IngenAndreHttpKlienter.assertIngenKlienterIProduksjonskode(Konsist.scopeFromProduction())
+    }
+
+    /**
+     * Testkoden får bruke `testApplication`-klienten, som kjører i minnet uten sokkel, men ikke lage ekte nettverksklienter.
+     * Eksterne kall testes med produksjonsklienten over `FakeHttpTransport`, ikke med en klientmotor eller et fremmed klientbibliotek.
+     */
+    @Test
+    fun `ingen ekte http-klienter i testkode`() {
+        IngenAndreHttpKlienter.assertIngenKlienterITestkode(Konsist.scopeFromTest())
+    }
+
+    /** Fanger en klientavhengighet som er deklarert i byggfila, også før noen har tatt den i bruk. */
+    @Test
+    fun `ingen andre http-klienter deklarert i byggfila`() {
+        IngenAndreHttpKlienter.assertIngenKlientavhengigheter(repoRot())
     }
 
     @Test

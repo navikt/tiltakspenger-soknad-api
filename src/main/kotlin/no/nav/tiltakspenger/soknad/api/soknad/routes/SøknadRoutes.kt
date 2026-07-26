@@ -22,6 +22,7 @@ import no.nav.tiltakspenger.soknad.api.antivirus.VirussjekkFeil
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
+import no.nav.tiltakspenger.soknad.api.vedlegg.validerVedlegg
 import java.time.Clock
 
 fun Route.søknadRoutes(
@@ -40,6 +41,8 @@ fun Route.søknadRoutes(
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = nå(clock)
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart(), clock)
+                // Sjekkes før virussjekken, slik at vi ikke sender for store eller for mange vedlegg videre til ClamAV.
+                vedlegg.validerVedlegg()
                 vedlegg.toNonEmptyListOrNull()?.let { vedleggSomSkalSkannes ->
                     log.info { "Utfører virussjekk" }
                     // Feilen er allerede logget i AvService; ruta velger bare status.

@@ -11,6 +11,8 @@ import no.nav.tiltakspenger.soknad.api.testutils.TestApplicationContext
 import no.nav.tiltakspenger.soknad.api.testutils.enkelPdf
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
 import no.nav.tiltakspenger.soknad.api.testutils.postSøknad
+import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_ANTALL_VEDLEGG
+import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_FILSTØRRELSE_BYTES
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -58,14 +60,55 @@ internal class SøknadRoutesTest {
     fun `post med vedlegg virussjekker vedlegget og lagrer det`() {
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
-            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg.pdf","Result":"OK"}]""")
+            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg-1.pdf","Result":"OK"}]""")
 
-            postSøknad(token, vedlegg = enkelPdf()).status shouldBe HttpStatusCode.Created
+            postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.Created
 
-            tac.clamAvTransport.mottatteKall.single().bodyTekst.contains("vedlegg.pdf") shouldBe true
+            tac.clamAvTransport.mottatteKall.single().bodyTekst.contains("vedlegg-1.pdf") shouldBe true
             val lagret = tac.søknadRepo.alle.single()
-            lagret.vedlegg.single().filnavn shouldBe "vedlegg.pdf"
+            lagret.vedlegg.single().filnavn shouldBe "vedlegg-1.pdf"
             lagret.vedlegg.single().contentType shouldBe "application/pdf"
+        }
+    }
+
+    @Test
+    fun `post med maks antall vedlegg går gjennom`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val filnavn = (1..MAKS_ANTALL_VEDLEGG).map { "vedlegg-$it.pdf" }
+            tac.clamAvTransport.leggIKøJson(filnavn.joinToString(",", "[", "]") { """{"Filename":"$it","Result":"OK"}""" })
+
+            postSøknad(token, vedlegg = List(MAKS_ANTALL_VEDLEGG) { enkelPdf() }).status shouldBe HttpStatusCode.Created
+
+            tac.søknadRepo.alle.single().vedlegg.map { it.filnavn } shouldBe filnavn
+        }
+    }
+
+    @Test
+    fun `post med flere vedlegg enn maksgrensen gir 400 og virussjekker ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+
+            postSøknad(token, vedlegg = List(MAKS_ANTALL_VEDLEGG + 1) { enkelPdf() }).status shouldBe HttpStatusCode.BadRequest
+
+            tac.clamAvTransport.mottatteKall shouldBe emptyList()
+            tac.søknadRepo.alle shouldBe emptyList()
+            tac.metricsCollector.antallUgyldigeSøknaderCounter.get() shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `post med vedlegg over maks filstørrelse gir 400 og virussjekker ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            // Tika kjenner igjen PDF på de første bytene, så vi padder en ekte pdf i stedet for å bygge en på over 10 MB.
+            val forStortVedlegg = enkelPdf() + ByteArray(MAKS_FILSTØRRELSE_BYTES)
+
+            postSøknad(token, vedlegg = listOf(forStortVedlegg)).status shouldBe HttpStatusCode.BadRequest
+
+            tac.clamAvTransport.mottatteKall shouldBe emptyList()
+            tac.søknadRepo.alle shouldBe emptyList()
+            tac.metricsCollector.antallUgyldigeSøknaderCounter.get() shouldBe 1.0
         }
     }
 
@@ -73,9 +116,9 @@ internal class SøknadRoutesTest {
     fun `post med vedlegg som inneholder skadevare gir 400 og lagrer ingenting`() {
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
-            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg.pdf","Result":"FOUND"}]""")
+            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg-1.pdf","Result":"FOUND"}]""")
 
-            postSøknad(token, vedlegg = enkelPdf()).status shouldBe HttpStatusCode.BadRequest
+            postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.BadRequest
 
             tac.søknadRepo.alle shouldBe emptyList()
         }
@@ -85,9 +128,9 @@ internal class SøknadRoutesTest {
     fun `post gir 500 når virusskanningen av en fil feiler`() {
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
-            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg.pdf","Result":"ERROR"}]""")
+            tac.clamAvTransport.leggIKøJson("""[{"Filename":"vedlegg-1.pdf","Result":"ERROR"}]""")
 
-            postSøknad(token, vedlegg = enkelPdf()).status shouldBe HttpStatusCode.InternalServerError
+            postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.InternalServerError
 
             tac.søknadRepo.alle shouldBe emptyList()
         }
@@ -99,7 +142,7 @@ internal class SøknadRoutesTest {
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
             tac.clamAvTransport.leggIKøStatus(503, "clamav er nede")
 
-            postSøknad(token, vedlegg = enkelPdf()).status shouldBe HttpStatusCode.InternalServerError
+            postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.InternalServerError
 
             tac.søknadRepo.alle shouldBe emptyList()
         }
@@ -161,7 +204,7 @@ internal class SøknadRoutesTest {
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
 
-            val response = postSøknad(token, vedlegg = "ikke en pdf".toByteArray())
+            val response = postSøknad(token, vedlegg = listOf("ikke en pdf".toByteArray()))
 
             response.status shouldBe HttpStatusCode.InternalServerError
             tac.søknadRepo.alle shouldBe emptyList()

@@ -17,11 +17,12 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 /**
  * Sender en ekte multipart-body inn på søknadsruta, slik at både multipart-parsingen og valideringen kjører.
  * [søknadJson] `null` utelater `søknad`-parten, og [ukjentFormItem] legger på en form-item med et annet navn.
+ * Vedleggene får filnavnene `vedlegg-1.pdf`, `vedlegg-2.pdf`, … i den rekkefølgen de sendes inn.
  */
 suspend fun ApplicationTestBuilder.postSøknad(
     token: String?,
     søknadJson: String? = spørsmålsbesvarelser().toJsonString(),
-    vedlegg: ByteArray? = null,
+    vedlegg: List<ByteArray> = emptyList(),
     ukjentFormItem: Boolean = false,
 ): HttpResponse = client.post(SØKNAD_PATH) {
     token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
@@ -38,13 +39,13 @@ suspend fun ApplicationTestBuilder.postSøknad(
                 if (ukjentFormItem) {
                     append("ukjent", "verdi")
                 }
-                vedlegg?.let {
+                vedlegg.forEachIndexed { indeks, fil ->
                     append(
                         "vedlegg",
-                        it,
+                        fil,
                         Headers.build {
                             append(HttpHeaders.ContentType, "application/pdf")
-                            append(HttpHeaders.ContentDisposition, """filename="vedlegg.pdf"""")
+                            append(HttpHeaders.ContentDisposition, """filename="vedlegg-${indeks + 1}.pdf"""")
                         },
                     )
                 }

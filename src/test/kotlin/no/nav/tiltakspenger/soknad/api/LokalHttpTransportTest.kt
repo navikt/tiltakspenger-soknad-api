@@ -53,12 +53,12 @@ internal class LokalHttpTransportTest {
             tiltak.body<TiltakDto>().tiltak.single().arrangør shouldBe "Lokal arrangør AS"
 
             // Vedlegget virussjekkes mot den samme transporten før søknaden lagres.
-            postSøknad(token, vedlegg = enkelPdf()).status shouldBe HttpStatusCode.Created
+            postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.Created
         }
 
         val søknad = tac.søknadRepo.alle.single()
         søknad.fnr shouldBe fnr
-        søknad.vedlegg.single().filnavn shouldBe "vedlegg.pdf"
+        søknad.vedlegg.single().filnavn shouldBe "vedlegg-1.pdf"
 
         // Jobbene tar søknaden hele veien til «sendt til saksbehandling».
         runBlocking {

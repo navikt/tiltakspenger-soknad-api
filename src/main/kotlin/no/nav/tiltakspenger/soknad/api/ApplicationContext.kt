@@ -58,10 +58,14 @@ open class ApplicationContext(
         )
     }
 
-    private fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
+    /**
+     * Scope-verdiene våre kommer fra nais-manifestet på formen `prod-fss:pdl:pdl-api`, mens Azure AD krever `api://prod-fss.pdl.pdl-api/.default`.
+     * Omskrivingen må derfor stå på (default i [TexasSystemTokenProvider]) — skrur man den av, svarer Azure AD `invalid_scope` (AADSTS1002012) på alle systemtokens.
+     * Appene som sender inn ferdige `api://…/.default`-scopes gjør det motsatte valget; her er det den korte formen som gjelder.
+     */
+    internal fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
         texasClient = texasClient,
         audienceTarget = scope,
-        rewriteAudienceTarget = false,
     )
 
     open val pdlClient: PdlClient by lazy {
