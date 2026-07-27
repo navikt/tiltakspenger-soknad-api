@@ -54,17 +54,32 @@ class ClamAvClient(
     override suspend fun scan(vedleggsListe: Nel<Vedlegg>): Either<HttpKlientError, List<AvSjekkResultat>> =
         httpKlient.postMultipart<List<AvSjekkResultat>>(
             uri = uri,
-            // Feltnavnene er indeksbaserte, som før migreringen; MultipartDeler håndhever at de er unike.
+            // Feltnavnene er indeksbaserte, som før migreringen; MultipartDeler håndhever at både de og filnavnene er unike.
             deler = vedleggsListe.mapIndexed { index, vedlegg ->
                 MultipartDel(
                     feltnavn = "file$index",
-                    filnavn = vedlegg.filnavn,
+                    filnavn = vedlegg.filnavn.medIndeksprefiks(index),
                     contentType = vedlegg.contentType,
                     innhold = vedlegg.dokument,
                 )
             }.tilMultipartDeler(),
         ).map { it.body }
 }
+
+/**
+ * Gjør filnavnet unikt innenfor én skanning ved å sette delens indeks foran.
+ *
+ * ClamAV nøkler skanneresultatene på filnavn (`files[header.Filename] = buf`), så to vedlegg som heter det samme ville kollapset til én oppføring og latt den ene gå uskannet gjennom.
+ * Brukeren velger filnavnene selv, og to like er fullt lovlig i en søknad — derfor må vi gjøre dem unike her.
+ * `MultipartDeler` avviser duplikater, så uten dette ville en slik søknad i stedet velta med en `IllegalArgumentException`.
+ *
+ * Prefiks framfor suffiks fordi filendelsen da blir stående sist, der den hører hjemme: `0-cv.pdf` i stedet for `cv.pdf-0`.
+ * Navnene blir garantert unike uansett hva brukeren har kalt filene: indeksen er rene siffer avsluttet med bindestrek, så to ulike indekser skiller lag allerede før filnavnet begynner.
+ * Et filnavn som selv ser ut som et prefiks endrer ikke på det — `1-cv.pdf` med indeks 1 blir `1-1-cv.pdf`, som ingen annen indeks kan produsere.
+ *
+ * Navnet kommer prefikset tilbake i skanneresultatet, og det er verdiene [AvService] logger til sikkerlogg — indeksen gjør det da lettere å se hvilket vedlegg i rekkefølgen det gjaldt.
+ */
+internal fun String.medIndeksprefiks(indeks: Int): String = "$indeks-$this"
 
 data class AvSjekkResultat(
     @JsonProperty("Filename") val filnavn: String,

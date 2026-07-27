@@ -27,7 +27,7 @@ internal class ClamAvClientTest {
             wiremock.stubFor(
                 post(urlEqualTo("/scan")).willReturn(
                     aResponse().withStatus(200).withHeader("Content-Type", "application/json")
-                        .withBody("""[{"Filename":"søknad.pdf","Result":"OK"}]"""),
+                        .withBody("""[{"Filename":"0-søknad.pdf","Result":"OK"}]"""),
                 ),
             )
 
@@ -36,7 +36,8 @@ internal class ClamAvClientTest {
                     .scan(nonEmptyListOf(pdfVedlegg))
                     .getOrFail()
 
-                resultat shouldBe listOf(AvSjekkResultat(filnavn = "søknad.pdf", resultat = Status.OK))
+                // Filnavnet kommer prefikset tilbake fordi det er prefikset vi sendte — ClamAV ekkoer nøkkelen sin.
+                resultat shouldBe listOf(AvSjekkResultat(filnavn = "0-søknad.pdf", resultat = Status.OK))
                 // At WireMock klarer å parse delen, beviser at multipart-framingen er gyldig for en ekte server.
                 val mottattDel = wiremock.findAll(postRequestedFor(urlEqualTo("/scan"))).single().parts!!.single()
                 mottattDel.name shouldBe "file0"
@@ -49,7 +50,7 @@ internal class ClamAvClientTest {
     fun `hvert vedlegg blir sin egen multipart-del med filnavn og content-type`() = runTest {
         val transport = FakeHttpTransport()
         transport.leggIKøJson(
-            """[{"Filename":"søknad.pdf","Result":"OK"},{"Filename":"bilde.png","Result":"FOUND"}]""",
+            """[{"Filename":"0-søknad.pdf","Result":"OK"},{"Filename":"1-bilde.png","Result":"FOUND"}]""",
         )
 
         val resultat = ClamAvClient(avEndpoint = "http://clamav/scan", clock = fixedClock, transport = transport)
@@ -57,8 +58,8 @@ internal class ClamAvClientTest {
             .getOrFail()
 
         resultat shouldBe listOf(
-            AvSjekkResultat(filnavn = "søknad.pdf", resultat = Status.OK),
-            AvSjekkResultat(filnavn = "bilde.png", resultat = Status.FOUND),
+            AvSjekkResultat(filnavn = "0-søknad.pdf", resultat = Status.OK),
+            AvSjekkResultat(filnavn = "1-bilde.png", resultat = Status.FOUND),
         )
 
         val kall = transport.mottatteKall.single()
@@ -70,10 +71,49 @@ internal class ClamAvClientTest {
 
         // Delenes headere skrives som UTF-8, så norske tegn i filnavn må dekodes som UTF-8 for å kunne assertes.
         val body = String(kall.bodyBytes, Charsets.UTF_8)
-        body shouldContain """name="file0"; filename="søknad.pdf""""
+        body shouldContain """name="file0"; filename="0-søknad.pdf""""
         body shouldContain "Content-Type: application/pdf"
-        body shouldContain """name="file1"; filename="bilde.png""""
+        body shouldContain """name="file1"; filename="1-bilde.png""""
         body shouldContain "Content-Type: image/png"
+    }
+
+    @Test
+    fun `to vedlegg med samme filnavn får ulike filnavn på wire, slik at begge blir skannet`() = runTest {
+        // Uten indeksprefikset ville ClamAV nøklet begge delene på "cv.pdf", returnert ett resultat, og latt det ene vedlegget gå uskannet.
+        // MultipartDeler avviser dessuten duplikate filnavn, så kallet ville aldri kommet ut i det hele tatt.
+        val transport = FakeHttpTransport()
+        transport.leggIKøJson("""[{"Filename":"0-cv.pdf","Result":"OK"},{"Filename":"1-cv.pdf","Result":"FOUND"}]""")
+
+        val førsteCv = Vedlegg(filnavn = "cv.pdf", contentType = "application/pdf", dokument = byteArrayOf(1))
+        val andreCv = Vedlegg(filnavn = "cv.pdf", contentType = "application/pdf", dokument = byteArrayOf(2))
+
+        val resultat = ClamAvClient(avEndpoint = "http://clamav/scan", clock = fixedClock, transport = transport)
+            .scan(nonEmptyListOf(førsteCv, andreCv))
+            .getOrFail()
+
+        resultat shouldBe listOf(
+            AvSjekkResultat(filnavn = "0-cv.pdf", resultat = Status.OK),
+            AvSjekkResultat(filnavn = "1-cv.pdf", resultat = Status.FOUND),
+        )
+
+        val body = String(transport.mottatteKall.single().bodyBytes, Charsets.UTF_8)
+        body shouldContain """name="file0"; filename="0-cv.pdf""""
+        body shouldContain """name="file1"; filename="1-cv.pdf""""
+    }
+
+    @Test
+    fun `indeksprefikset gir unike navn uansett hva brukeren har kalt filene`() {
+        // Indeksen er rene siffer avsluttet med bindestrek, så to ulike indekser skiller lag før filnavnet begynner
+        // — heller ikke et filnavn som selv ser ut som et prefiks kan kollidere.
+        listOf("cv.pdf" to 1, "cv" to 11, "1-cv.pdf" to 0, "1-cv.pdf" to 1, "1-cv.pdf" to 11)
+            .map { (navn, indeks) -> navn.medIndeksprefiks(indeks) }
+            .let { it shouldBe it.distinct() }
+    }
+
+    @Test
+    fun `prefikset lar filendelsen stå sist`() {
+        // Hele poenget med prefiks framfor suffiks: "0-cv.pdf" er fortsatt gjenkjennelig som en PDF, "cv.pdf-0" er ikke.
+        "cv.pdf".medIndeksprefiks(0) shouldBe "0-cv.pdf"
     }
 
     @Test

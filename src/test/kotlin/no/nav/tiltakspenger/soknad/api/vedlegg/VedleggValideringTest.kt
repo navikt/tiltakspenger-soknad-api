@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.vedlegg
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
@@ -37,6 +38,32 @@ internal class VedleggValideringTest {
         }
 
         feil.reasons.single() shouldBe "Søknaden har ${MAKS_ANTALL_VEDLEGG + 1} vedlegg, men kan ha maks $MAKS_ANTALL_VEDLEGG."
+    }
+
+    @Test
+    fun `vedlegg som til sammen treffer totalgrensen nøyaktig er gyldig`() {
+        // Fem vedlegg på maks filstørrelse er nøyaktig totalgrensen.
+        List(5) { vedlegg(MAKS_FILSTØRRELSE_BYTES) }.validerVedlegg()
+    }
+
+    @Test
+    fun `vedlegg som til sammen er ett byte over totalgrensen avvises, selv om hvert enkelt er innenfor`() {
+        // Alle seks er lovlige hver for seg og antallet er under grensen; det er kun summen som sprekker.
+        val vedlegg = List(5) { vedlegg(MAKS_FILSTØRRELSE_BYTES) } + vedlegg(størrelse = 1)
+
+        val feil = shouldThrow<RequestValidationException> { vedlegg.validerVedlegg() }
+
+        feil.reasons.single() shouldBe
+            "Vedleggene er til sammen ${MAKS_TOTAL_FILSTØRRELSE_BYTES + 1} bytes, men kan til sammen være maks $MAKS_TOTAL_FILSTØRRELSE_BYTES bytes."
+    }
+
+    @Test
+    fun `alle bruddene rapporteres samtidig, ikke bare det første`() {
+        val vedlegg = List(MAKS_ANTALL_VEDLEGG + 1) { vedlegg(MAKS_FILSTØRRELSE_BYTES + 1) }
+
+        val feil = shouldThrow<RequestValidationException> { vedlegg.validerVedlegg() }
+
+        feil.reasons shouldHaveSize 3
     }
 
     @Test
