@@ -3,7 +3,6 @@ package no.nav.tiltakspenger.soknad.api.util
 import no.nav.tiltakspenger.soknad.api.util.Detect.detect
 import no.nav.tiltakspenger.soknad.api.util.Detect.godkjenteFiltyper
 import org.apache.tika.Tika
-import java.io.InputStream
 
 object Detect {
     const val IMAGE_PNG = "image/png"
@@ -14,27 +13,11 @@ object Detect {
 
     private val tika: Tika = Tika()
 
-    fun InputStream.detect(): String {
-        return tika.detect(this.buffered())
-    }
-
+    /**
+     * Bestemmer innholdstypen fra innholdet selv, ikke fra filnavn eller oppgitt Content-Type.
+     * Vedlegg kommer fra brukeren, så det er kun signaturen i bytene vi kan stole på.
+     */
     fun ByteArray.detect(): String = tika.detect(this)
-
-    fun InputStream.isPng(): Boolean = this.detect() == IMAGE_PNG
-    fun InputStream.isJpeg(): Boolean = this.detect() == IMAGE_JPEG
-    fun InputStream.isPdf(): Boolean {
-        return this.detect() == APPLICATON_PDF
-    }
-
-    fun ByteArray.isPng(): Boolean = this.detect() == IMAGE_PNG
-    fun ByteArray.isJpeg(): Boolean = this.detect() == IMAGE_JPEG
-    fun ByteArray.isPdf(): Boolean = this.detect() == APPLICATON_PDF
-
-    fun InputStream.isImage(): Boolean = this.isJpeg() || this.isPng()
-    fun ByteArray.isImage(): Boolean = this.isJpeg() || this.isPng()
-    fun List<ByteArray>.isPdf(): Boolean {
-        return this.isNotEmpty() && this.all { it.isPdf() }
-    }
 }
 
 fun sjekkContentType(filInnholdBa: ByteArray) = filInnholdBa.detect().takeIf { godkjenteFiltyper.contains(it) } ?: throw UnsupportedContentException("Vedleggstype ikke støttet!")

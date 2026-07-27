@@ -47,7 +47,7 @@ internal class BakgrunnsprosesserTest {
         val resultat = jobber(tac).single { it.navn == "soknad-jobb-hent-saksnummer" }.utfør(correlationId)
 
         resultat shouldBe TaskResultat.Ferdig
-        tac.søknadRepo.hentSoknad(søknad.id)?.saksnummer shouldBe "1234"
+        tac.søknadRepo.hentSøknad(søknad.id)?.saksnummer shouldBe "1234"
     }
 
     @Test
@@ -66,7 +66,7 @@ internal class BakgrunnsprosesserTest {
         val resultat = jobber(tac).single { it.navn == "soknad-jobb-journalfør" }.utfør(correlationId)
 
         resultat shouldBe TaskResultat.Ferdig
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldNotBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldNotBe null
     }
 
     @Test
@@ -89,7 +89,7 @@ internal class BakgrunnsprosesserTest {
         val resultat = jobber(tac).single { it.navn == "soknad-jobb-send-til-saksbehandling" }.utfør(correlationId)
 
         resultat shouldBe TaskResultat.Ferdig
-        tac.søknadRepo.hentSoknad(søknad.id)?.sendtTilVedtak shouldNotBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.sendtTilVedtak shouldNotBe null
     }
 
     @Test

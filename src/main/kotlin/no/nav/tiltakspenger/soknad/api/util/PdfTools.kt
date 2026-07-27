@@ -11,8 +11,11 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-// WIP
-
+/**
+ * Verktøyene bak konverteringen av PDF-vedlegg: hver side rastreres til et bilde, bildene sendes gjennom pdfgen og settes sammen igjen.
+ * Rastreringen er tilsiktet — den flater ut redigerbare skjemafelter før arkivering — men den koster tekstlaget og låser oppløsningen til 72 dpi.
+ * Om det er riktig avveining er ikke avgjort; alternativene er beskrevet i navikt/tiltakspenger-soknad-api#865, og dagens oppførsel er låst i `PdfToolsTest`.
+ */
 object PdfTools {
     /** En PDF har alltid minst én side, så resultatet er en [Nel] — det lar [slåSammenPdfer] slippe å håndtere det tomme tilfellet. */
     fun konverterPdfTilBilder(pdfByteArray: ByteArray): Nel<Bilde> {
@@ -37,7 +40,10 @@ object PdfTools {
             val inputStream = ByteArrayInputStream(it)
             pdfMerger.addSource(RandomAccessReadBuffer(inputStream))
         }
-        pdfMerger.mergeDocuments(IOUtils.createMemoryOnlyStreamCache()); // TODO: Sjekk ut memory settings
+        // Alt holdes i minnet under sammenslåingen.
+        // Det tåler dagens vedleggsgrenser, men skalerer med sidetallet, som ikke er begrenset — se #865 og navikt/tiltakspenger#46.
+        // En temp-fil-cache er alternativet hvis rastreringen består; velges utflating i stedet, faller hele sammenslåingen bort.
+        pdfMerger.mergeDocuments(IOUtils.createMemoryOnlyStreamCache())
         return baosUt.toByteArray()
     }
 }

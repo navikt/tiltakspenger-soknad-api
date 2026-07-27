@@ -3,10 +3,6 @@ package no.nav.tiltakspenger.soknad.api.util
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.tiltakspenger.soknad.api.util.Detect.detect
-import no.nav.tiltakspenger.soknad.api.util.Detect.isImage
-import no.nav.tiltakspenger.soknad.api.util.Detect.isJpeg
-import no.nav.tiltakspenger.soknad.api.util.Detect.isPdf
-import no.nav.tiltakspenger.soknad.api.util.Detect.isPng
 import org.junit.jupiter.api.Test
 
 class DetectTest {
@@ -33,45 +29,22 @@ class DetectTest {
     private val tekstBytes = "bare tekst".toByteArray()
 
     @Test
-    fun `detect gjenkjenner png, jpeg og pdf fra bytearray og inputstream`() {
+    fun `detect gjenkjenner png, jpeg og pdf`() {
         pngBytes.detect() shouldBe Detect.IMAGE_PNG
         jpegBytes.detect() shouldBe Detect.IMAGE_JPEG
         pdfBytes.detect() shouldBe Detect.APPLICATON_PDF
-        pngBytes.inputStream().detect() shouldBe Detect.IMAGE_PNG
     }
 
     @Test
-    fun `isPng, isJpeg og isPdf treffer riktig filtype`() {
-        pngBytes.isPng() shouldBe true
-        jpegBytes.isJpeg() shouldBe true
-        pdfBytes.isPdf() shouldBe true
-        pdfBytes.isPng() shouldBe false
-
-        pngBytes.inputStream().isPng() shouldBe true
-        jpegBytes.inputStream().isJpeg() shouldBe true
-        pdfBytes.inputStream().isPdf() shouldBe true
-    }
-
-    @Test
-    fun `isImage er sann for png og jpeg, usann for pdf`() {
-        pngBytes.isImage() shouldBe true
-        jpegBytes.isImage() shouldBe true
-        pdfBytes.isImage() shouldBe false
-        // For InputStream konsumerer isJpeg-sjekken strømmen, så kun jpeg (første sjekk) kan bli sann.
-        jpegBytes.inputStream().isImage() shouldBe true
-        pdfBytes.inputStream().isImage() shouldBe false
-    }
-
-    @Test
-    fun `liste av bytearrays er pdf kun når alle er pdf og lista ikke er tom`() {
-        listOf(pdfBytes, pdfBytes).isPdf() shouldBe true
-        listOf(pdfBytes, pngBytes).isPdf() shouldBe false
-        emptyList<ByteArray>().isPdf() shouldBe false
+    fun `detect gjenkjenner innhold som ikke er en godkjent filtype`() {
+        tekstBytes.detect() shouldBe "text/plain"
     }
 
     @Test
     fun `sjekkContentType godtar godkjente filtyper og kaster på andre`() {
         sjekkContentType(pngBytes) shouldBe Detect.IMAGE_PNG
+        sjekkContentType(jpegBytes) shouldBe Detect.IMAGE_JPEG
+        sjekkContentType(pdfBytes) shouldBe Detect.APPLICATON_PDF
         shouldThrow<UnsupportedContentException> { sjekkContentType(tekstBytes) }
     }
 }

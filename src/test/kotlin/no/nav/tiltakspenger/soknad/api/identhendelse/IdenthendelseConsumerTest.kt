@@ -36,8 +36,8 @@ class IdenthendelseConsumerTest {
 
         consumer("identhendelse-oppdater").consume(UUID.randomUUID(), serialize(identhendelse))
 
-        søknadRepo.hentSoknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
-        søknadRepo.hentSoknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
+        søknadRepo.hentSøknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
+        søknadRepo.hentSøknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
     }
 
     @Test

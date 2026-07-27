@@ -45,7 +45,7 @@ internal class SøknadPostgresRepoTest {
                 eier = Applikasjonseier.Tiltakspenger,
             )
             søknadRepo.lagre(mottattSøknad)
-            val actual = søknadRepo.hentSoknad(mottattSøknad.id)
+            val actual = søknadRepo.hentSøknad(mottattSøknad.id)
             actual shouldBe mottattSøknad
         }
 
@@ -71,7 +71,7 @@ internal class SøknadPostgresRepoTest {
                 ),
             )
             søknadRepo.lagre(mottattSøknad)
-            val actual = søknadRepo.hentSoknad(mottattSøknad.id)
+            val actual = søknadRepo.hentSøknad(mottattSøknad.id)
             actual shouldBe mottattSøknad
         }
 
@@ -97,7 +97,7 @@ internal class SøknadPostgresRepoTest {
                 ),
             )
             søknadRepo.lagre(mottattSøknad)
-            val actual = søknadRepo.hentSoknad(mottattSøknad.id)
+            val actual = søknadRepo.hentSøknad(mottattSøknad.id)
             actual shouldBe mottattSøknad
         }
     }
@@ -112,9 +112,9 @@ internal class SøknadPostgresRepoTest {
         )
         søknadRepo.lagre(mottattSøknad)
 
-        søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().size shouldBe 0
+        søknadRepo.hentSøknaderKlareForJournalføring().size shouldBe 0
 
-        val soknaderUtenSaksnummer = søknadRepo.hentSoknaderUtenSaksnummer()
+        val soknaderUtenSaksnummer = søknadRepo.hentSøknaderUtenSaksnummer()
         soknaderUtenSaksnummer.size shouldBe 1
 
         // Oppdaterer med saksnummer
@@ -123,9 +123,9 @@ internal class SøknadPostgresRepoTest {
         )
         søknadRepo.oppdater(soknadMedSaksnummer)
 
-        søknadRepo.hentSoknaderUtenSaksnummer().size shouldBe 0
+        søknadRepo.hentSøknaderUtenSaksnummer().size shouldBe 0
 
-        val søknaderSomIkkeErJounalført = søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført()
+        val søknaderSomIkkeErJounalført = søknadRepo.hentSøknaderKlareForJournalføring()
         søknaderSomIkkeErJounalført.size shouldBe 1
 
         // Journalfører søknaden
@@ -137,7 +137,7 @@ internal class SøknadPostgresRepoTest {
             journalpostId = JournalpostId("123"),
         )
         søknadRepo.oppdater(journalførtSøknad)
-        søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().size shouldBe 0
+        søknadRepo.hentSøknaderKlareForJournalføring().size shouldBe 0
 
         // sender søknaden til saksbehandling-api
         val søknaderSomIkkeErSendtTilSaksbehandlingApi = søknadRepo.hentSøknaderSomSkalSendesTilSaksbehandlingApi()
@@ -159,9 +159,9 @@ internal class SøknadPostgresRepoTest {
         )
         søknadRepo.lagre(mottattSøknad)
 
-        søknadRepo.hentSoknaderUtenSaksnummer().size shouldBe 0
+        søknadRepo.hentSøknaderUtenSaksnummer().size shouldBe 0
 
-        val søknaderSomIkkeErJounalført = søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført()
+        val søknaderSomIkkeErJounalført = søknadRepo.hentSøknaderKlareForJournalføring()
         søknaderSomIkkeErJounalført.size shouldBe 1
 
         // Journalfører søknaden
@@ -173,7 +173,7 @@ internal class SøknadPostgresRepoTest {
             journalpostId = JournalpostId("123"),
         )
         søknadRepo.oppdater(journalførtSøknad)
-        søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().size shouldBe 0
+        søknadRepo.hentSøknaderKlareForJournalføring().size shouldBe 0
 
         // sender søknaden til saksbehandling-api
         val søknaderSomIkkeErSendtTilSaksbehandlingApi = søknadRepo.hentSøknaderSomSkalSendesTilSaksbehandlingApi()
@@ -239,7 +239,7 @@ internal class SøknadPostgresRepoTest {
 
         søknadRepo.oppdaterFnr(gammeltFnr = gammeltFnr, nyttFnr = nyttFnr)
 
-        søknadRepo.hentSoknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
-        søknadRepo.hentSoknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
+        søknadRepo.hentSøknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
+        søknadRepo.hentSøknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
     }
 }

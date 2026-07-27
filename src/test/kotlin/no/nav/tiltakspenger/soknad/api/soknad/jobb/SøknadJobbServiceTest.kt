@@ -66,7 +66,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.saksnummer shouldBe saksnummer
+        tac.søknadRepo.hentSøknad(søknad.id)?.saksnummer shouldBe saksnummer
         tac.saksbehandlingApiTransport.mottatteKall.single().uri.toString() shouldBe "http://saksbehandling.test/saksnummer"
     }
 
@@ -77,7 +77,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.saksnummer shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.saksnummer shouldBe null
         tac.saksbehandlingApiTransport.mottatteKall shouldBe emptyList()
     }
 
@@ -89,7 +89,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.hentEllerOpprettSaksnummer(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.saksnummer shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.saksnummer shouldBe null
     }
 
     @Test
@@ -100,7 +100,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        val oppdatert = tac.søknadRepo.hentSoknad(søknad.id)!!
+        val oppdatert = tac.søknadRepo.hentSøknad(søknad.id)!!
         oppdatert.fornavn shouldBe "Fornavn"
         oppdatert.etternavn shouldBe "Etternavn"
         oppdatert.journalpostId shouldBe JournalpostId("15")
@@ -120,7 +120,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalpostId shouldBe JournalpostId("15")
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalpostId shouldBe JournalpostId("15")
 
         val journalpostKall = tac.dokarkivTransport.mottatteKall.single()
         journalpostKall.uri.toString() shouldContain "forsoekFerdigstill=false"
@@ -139,7 +139,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldNotBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldNotBe null
         tac.pdfTransport.mottatteKall.map { it.uri.path } shouldBe listOf(
             "/api/v1/genpdf/tpts/soknad",
             "/api/v1/genpdf/image/tpts",
@@ -159,7 +159,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalpostId shouldBe JournalpostId("15")
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalpostId shouldBe JournalpostId("15")
         tac.dokarkivTransport.mottatteKall.size shouldBe 2
     }
 
@@ -182,7 +182,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
     }
 
     @Test
@@ -194,7 +194,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
         tac.dokarkivTransport.mottatteKall shouldBe emptyList()
     }
 
@@ -209,7 +209,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
     }
 
     @Test
@@ -222,7 +222,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
         tac.dokarkivTransport.mottatteKall shouldBe emptyList()
     }
 
@@ -236,7 +236,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
     }
 
     @Test
@@ -247,7 +247,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.journalført shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.journalført shouldBe null
     }
 
     @Test
@@ -258,7 +258,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.sendtTilVedtak shouldNotBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.sendtTilVedtak shouldNotBe null
         val kall = tac.saksbehandlingApiTransport.mottatteKall.single()
         kall.uri.toString() shouldBe "http://saksbehandling.test/soknad"
         kall.bodyTekst shouldContain saksnummer
@@ -273,7 +273,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.sendtTilVedtak shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.sendtTilVedtak shouldBe null
     }
 
     @Test
@@ -290,7 +290,7 @@ internal class SøknadJobbServiceTest {
 
         tac.søknadJobbService.sendJournalførteSøknaderTilSaksbehandlingApi(correlationId)
 
-        tac.søknadRepo.hentSoknad(søknad.id)?.sendtTilVedtak shouldBe null
+        tac.søknadRepo.hentSøknad(søknad.id)?.sendtTilVedtak shouldBe null
         tac.saksbehandlingApiTransport.mottatteKall shouldBe emptyList()
     }
 

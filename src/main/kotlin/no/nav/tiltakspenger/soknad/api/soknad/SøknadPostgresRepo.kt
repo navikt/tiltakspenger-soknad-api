@@ -16,28 +16,28 @@ import javax.sql.DataSource
 class SøknadPostgresRepo(
     private val dataSource: DataSource,
 ) : SøknadRepo {
-    override fun lagre(dto: MottattSøknad) {
+    override fun lagre(mottattSøknad: MottattSøknad) {
         sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
                         sqlLagre,
                         mapOf(
-                            "id" to dto.id.toString(),
-                            "versjon" to dto.versjon,
-                            "soknad" to dto.søknad?.toDbJson(),
-                            "soknadSpm" to dto.søknadSpm.toDbJson(),
-                            "vedlegg" to dto.vedlegg.toDbJson(),
-                            "acr" to dto.acr,
-                            "fnr" to dto.fnr,
-                            "fornavn" to dto.fornavn,
-                            "etternavn" to dto.etternavn,
-                            "sendtTilVedtak" to dto.sendtTilVedtak,
-                            "journalfort" to dto.journalført,
-                            "journalpostId" to dto.journalpostId?.toString(),
-                            "opprettet" to dto.opprettet,
-                            "eier" to dto.eier.toDb(),
-                            "saksnummer" to dto.saksnummer,
+                            "id" to mottattSøknad.id.toString(),
+                            "versjon" to mottattSøknad.versjon,
+                            "soknad" to mottattSøknad.søknad?.toDbJson(),
+                            "soknadSpm" to mottattSøknad.søknadSpm.toDbJson(),
+                            "vedlegg" to mottattSøknad.vedlegg.toDbJson(),
+                            "acr" to mottattSøknad.acr,
+                            "fnr" to mottattSøknad.fnr,
+                            "fornavn" to mottattSøknad.fornavn,
+                            "etternavn" to mottattSøknad.etternavn,
+                            "sendtTilVedtak" to mottattSøknad.sendtTilVedtak,
+                            "journalfort" to mottattSøknad.journalført,
+                            "journalpostId" to mottattSøknad.journalpostId?.toString(),
+                            "opprettet" to mottattSøknad.opprettet,
+                            "eier" to mottattSøknad.eier.toDb(),
+                            "saksnummer" to mottattSøknad.saksnummer,
                         ),
                     ).asUpdate,
                 )
@@ -45,21 +45,21 @@ class SøknadPostgresRepo(
         }
     }
 
-    override fun oppdater(dto: MottattSøknad) {
+    override fun oppdater(mottattSøknad: MottattSøknad) {
         sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
                     queryOf(
                         sqlOppdater,
                         mapOf(
-                            "id" to dto.id.toString(),
-                            "soknad" to dto.søknad?.toDbJson(),
-                            "fornavn" to dto.fornavn,
-                            "etternavn" to dto.etternavn,
-                            "sendtTilVedtak" to dto.sendtTilVedtak,
-                            "journalfort" to dto.journalført,
-                            "journalpostId" to dto.journalpostId?.toString(),
-                            "saksnummer" to dto.saksnummer,
+                            "id" to mottattSøknad.id.toString(),
+                            "soknad" to mottattSøknad.søknad?.toDbJson(),
+                            "fornavn" to mottattSøknad.fornavn,
+                            "etternavn" to mottattSøknad.etternavn,
+                            "sendtTilVedtak" to mottattSøknad.sendtTilVedtak,
+                            "journalfort" to mottattSøknad.journalført,
+                            "journalpostId" to mottattSøknad.journalpostId?.toString(),
+                            "saksnummer" to mottattSøknad.saksnummer,
                         ),
                     ).asUpdate,
                 )
@@ -67,7 +67,7 @@ class SøknadPostgresRepo(
         }
     }
 
-    override fun hentSoknaderUtenSaksnummer(): List<MottattSøknad> {
+    override fun hentSøknaderUtenSaksnummer(): List<MottattSøknad> {
         return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
@@ -82,14 +82,14 @@ class SøknadPostgresRepo(
                             "tp" to Applikasjonseier.Tiltakspenger.toDb(),
                         ),
                     ).map { row ->
-                        row.toSøknadDbDto()
+                        row.toMottattSøknad()
                     }.asList,
                 )
             }
         }
     }
 
-    override fun hentAlleSøknadDbDtoSomIkkeErJournalført(): List<MottattSøknad> {
+    override fun hentSøknaderKlareForJournalføring(): List<MottattSøknad> {
         return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
@@ -104,7 +104,7 @@ class SøknadPostgresRepo(
                             "arena" to Applikasjonseier.Arena.toDb(),
                         ),
                     ).map { row ->
-                        row.toSøknadDbDto()
+                        row.toMottattSøknad()
                     }.asList,
                 )
             }
@@ -127,7 +127,7 @@ class SøknadPostgresRepo(
                             "tp" to Applikasjonseier.Tiltakspenger.toDb(),
                         ),
                     ).map { row ->
-                        row.toSøknadDbDto()
+                        row.toMottattSøknad()
                     }.asList,
                 )
             }
@@ -150,14 +150,14 @@ class SøknadPostgresRepo(
                             "eier" to eier.toDb(),
                         ),
                     ).map { row ->
-                        row.toSøknadDbDto()
+                        row.toMottattSøknad()
                     }.asList,
                 )
             }
         }
     }
 
-    override fun hentSoknad(soknadId: SøknadId): MottattSøknad? {
+    override fun hentSøknad(søknadId: SøknadId): MottattSøknad? {
         return sessionOf(dataSource).use {
             it.transaction { transaction ->
                 transaction.run(
@@ -166,10 +166,10 @@ class SøknadPostgresRepo(
                            select * from søknad where id = :id
                         """.trimIndent(),
                         mapOf(
-                            "id" to soknadId.toString(),
+                            "id" to søknadId.toString(),
                         ),
                     ).map { row ->
-                        row.toSøknadDbDto()
+                        row.toMottattSøknad()
                     }.asSingle,
                 )
             }
@@ -192,7 +192,7 @@ class SøknadPostgresRepo(
         }
     }
 
-    private fun Row.toSøknadDbDto(): MottattSøknad {
+    private fun Row.toMottattSøknad(): MottattSøknad {
         return MottattSøknad(
             id = SøknadId.fromString(string("id")),
             versjon = string("versjon"),

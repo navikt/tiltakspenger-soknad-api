@@ -19,19 +19,19 @@ class FakeSøknadRepo : SøknadRepo {
 
     val alle: List<MottattSøknad> get() = søknader.values.toList()
 
-    override fun lagre(dto: MottattSøknad) {
+    override fun lagre(mottattSøknad: MottattSøknad) {
         kastVedLagring?.let { throw it }
-        søknader[dto.id] = dto
+        søknader[mottattSøknad.id] = mottattSøknad
     }
 
-    override fun oppdater(dto: MottattSøknad) {
-        søknader[dto.id] = dto
+    override fun oppdater(mottattSøknad: MottattSøknad) {
+        søknader[mottattSøknad.id] = mottattSøknad
     }
 
-    override fun hentSoknaderUtenSaksnummer(): List<MottattSøknad> =
+    override fun hentSøknaderUtenSaksnummer(): List<MottattSøknad> =
         alle.filter { it.saksnummer == null && it.eier == Applikasjonseier.Tiltakspenger }
 
-    override fun hentAlleSøknadDbDtoSomIkkeErJournalført(): List<MottattSøknad> =
+    override fun hentSøknaderKlareForJournalføring(): List<MottattSøknad> =
         alle.filter { it.journalført == null && (it.saksnummer != null || it.eier == Applikasjonseier.Arena) }
 
     override fun hentSøknaderSomSkalSendesTilSaksbehandlingApi(): List<MottattSøknad> =
@@ -40,7 +40,7 @@ class FakeSøknadRepo : SøknadRepo {
     override fun hentBrukersSøknader(fnr: String, eier: Applikasjonseier): List<MottattSøknad> =
         alle.filter { it.fnr == fnr && it.eier == eier }
 
-    override fun hentSoknad(soknadId: SøknadId): MottattSøknad? = søknader[soknadId]
+    override fun hentSøknad(søknadId: SøknadId): MottattSøknad? = søknader[søknadId]
 
     override fun oppdaterFnr(gammeltFnr: Fnr, nyttFnr: Fnr) {
         alle.filter { it.fnr == gammeltFnr.verdi }.forEach { søknad ->

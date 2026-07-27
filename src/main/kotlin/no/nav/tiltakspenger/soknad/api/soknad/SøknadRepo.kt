@@ -8,22 +8,22 @@ import no.nav.tiltakspenger.libs.common.SøknadId
  * Implementasjonen mot Postgres er [SøknadPostgresRepo]; tester bruker en in-memory fake.
  */
 interface SøknadRepo {
-    fun lagre(dto: MottattSøknad)
+    fun lagre(mottattSøknad: MottattSøknad)
 
-    fun oppdater(dto: MottattSøknad)
+    fun oppdater(mottattSøknad: MottattSøknad)
 
     /** Tiltakspenger-søknader som ennå ikke har fått tildelt saksnummer fra saksbehandling-api. */
-    fun hentSoknaderUtenSaksnummer(): List<MottattSøknad>
+    fun hentSøknaderUtenSaksnummer(): List<MottattSøknad>
 
-    /** Søknader som er klare for journalføring, altså tiltakspenger-søknader med saksnummer og alle arena-søknader. */
-    fun hentAlleSøknadDbDtoSomIkkeErJournalført(): List<MottattSøknad>
+    /** Tiltakspenger-søknader med saksnummer, og alle arena-søknader. */
+    fun hentSøknaderKlareForJournalføring(): List<MottattSøknad>
 
     /** Journalførte tiltakspenger-søknader som ennå ikke er sendt videre til saksbehandling-api. */
     fun hentSøknaderSomSkalSendesTilSaksbehandlingApi(): List<MottattSøknad>
 
     fun hentBrukersSøknader(fnr: String, eier: Applikasjonseier): List<MottattSøknad>
 
-    fun hentSoknad(soknadId: SøknadId): MottattSøknad?
+    fun hentSøknad(søknadId: SøknadId): MottattSøknad?
 
     fun oppdaterFnr(gammeltFnr: Fnr, nyttFnr: Fnr)
 }

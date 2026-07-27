@@ -26,7 +26,7 @@ class SøknadJobbService(
     private val log = KotlinLogging.logger {}
 
     suspend fun hentEllerOpprettSaksnummer(correlationId: CorrelationId) {
-        søknadRepo.hentSoknaderUtenSaksnummer().forEach { soknad ->
+        søknadRepo.hentSøknaderUtenSaksnummer().forEach { soknad ->
             log.info { "Henter eller oppretter saksnummer for søknad med id ${soknad.id}" }
             val saksnummer = saksbehandlingKlient.hentEllerOpprettSaksnummer(
                 Fnr.fromString(soknad.fnr),
@@ -41,7 +41,7 @@ class SøknadJobbService(
     }
 
     suspend fun journalførLagredeSøknader(correlationId: CorrelationId) {
-        søknadRepo.hentAlleSøknadDbDtoSomIkkeErJournalført().forEach { søknad ->
+        søknadRepo.hentSøknaderKlareForJournalføring().forEach { søknad ->
             log.info { "Journalfør søknad jobb: Prøver å journalføre søknad med søknadId ${søknad.id}" }
             if (søknad.eier == Applikasjonseier.Tiltakspenger && søknad.saksnummer.isNullOrEmpty()) {
                 log.error { "Søknad med id ${søknad.id} mangler saksnummer, kan ikke journalføre" }

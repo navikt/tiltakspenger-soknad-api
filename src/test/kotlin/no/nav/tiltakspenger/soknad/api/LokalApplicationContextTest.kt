@@ -75,7 +75,7 @@ internal class LokalApplicationContextTest {
             jobber(context).forEach { it.utfør(correlationId) }
         }
 
-        val behandlet = søknadRepo.hentSoknad(søknad.id)!!
+        val behandlet = søknadRepo.hentSøknad(søknad.id)!!
         behandlet.saksnummer shouldNotBe null
         behandlet.journalpostId shouldNotBe null
         behandlet.journalført shouldNotBe null
