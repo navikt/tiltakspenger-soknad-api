@@ -119,7 +119,8 @@ internal class PdfClientTest {
 
         val konvertert = klient(transport).konverterVedlegg(listOf(vedlegg(pngBytes(), IMAGE_PNG))).getOrFail().single()
 
-        konvertert.filnavn shouldBe "$" + "bilde.png-konvertert.pdf"
+        // Filnavnet blir tittelen på dokumentet i journalposten, og er det saksbehandleren ser i Gosys.
+        konvertert.filnavn shouldBe "bilde.png-konvertert.pdf"
         konvertert.contentType shouldBe "application/pdf"
         konvertert.dokument.toList() shouldBe pdf.toList()
 

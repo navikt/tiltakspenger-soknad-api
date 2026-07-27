@@ -122,7 +122,7 @@ class PdfClient(
                 val pdfFraBilde = genererPdfFraBilde(Bilde(contentType, vedlegg.dokument))
                     .mapLeft { KunneIkkeKonvertereVedlegg.KallFeilet(it) }
                     .bind()
-                Vedlegg("$${vedlegg.filnavn}-konvertert.pdf", APPLICATON_PDF, pdfFraBilde)
+                Vedlegg("${vedlegg.filnavn}-konvertert.pdf", APPLICATON_PDF, pdfFraBilde)
             }
 
             else -> raise(KunneIkkeKonvertereVedlegg.UgyldigFilformat(contentType))
