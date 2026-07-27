@@ -3,7 +3,7 @@ package no.nav.tiltakspenger.soknad.api.soknad.routes
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
-import io.ktor.http.content.streamProvider
+import io.ktor.utils.io.toByteArray
 import no.nav.tiltakspenger.libs.json.deserialize
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.validerRequest
@@ -32,9 +32,13 @@ suspend fun taInnSøknadSomMultipart(søknadSomMultipart: MultiPartData, clock: 
     return Pair(spørsmålsbesvarelserDTO, vedleggListe)
 }
 
-fun PartData.FileItem.toVedlegg(): Vedlegg {
+/**
+ * Leser vedlegget med den suspenderende [PartData.FileItem.provider], ikke den utgåtte `streamProvider`.
+ * Den siste gir en blokkerende `InputStream` som venter på bytes fra Nettys event loop — og siden det er den samme tråden som skal levere dem, står kallet i vranglås til klienten gir opp.
+ */
+suspend fun PartData.FileItem.toVedlegg(): Vedlegg {
     val filnavn = this.originalFileName ?: "untitled-${this.hashCode()}"
-    val fileBytes = this.streamProvider().readBytes()
+    val fileBytes = this.provider().toByteArray()
     return Vedlegg(filnavn = filnavn, contentType = sjekkContentType(fileBytes), dokument = fileBytes)
 }
 

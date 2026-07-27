@@ -54,7 +54,11 @@ internal class LokalApplicationContextTest {
 
             val tiltak = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
             tiltak.status shouldBe HttpStatusCode.OK
-            tiltak.body<TiltakDto>().tiltak.single().arrangør shouldBe "Lokal arrangør AS"
+            val tiltaksdeltakelse = tiltak.body<TiltakDto>().tiltak.single()
+            tiltaksdeltakelse.arrangør shouldBe "Lokal arrangør AS"
+            // Søknaden lar deg ikke velge et tiltak som mangler en av datoene, og da stopper utfyllingen på tiltakssteget.
+            tiltaksdeltakelse.arenaRegistrertPeriode.fra shouldNotBe null
+            tiltaksdeltakelse.arenaRegistrertPeriode.til shouldNotBe null
 
             // Vedlegget virussjekkes mot den samme fake-en før søknaden lagres.
             postSøknad(token, vedlegg = listOf(enkelPdf())).status shouldBe HttpStatusCode.Created

@@ -13,7 +13,10 @@ import java.time.LocalDate
 
 /**
  * Fake for [TiltakKlient], med ett tiltak søkeren kan velge.
- * Tiltaket starter innenfor vinduet ruta filtrerer på, slik at det faktisk vises.
+ * Tiltaket er pågående og ligger innenfor vinduet ruta filtrerer på, slik at det faktisk vises.
+ *
+ * Perioden må ha både fom og tom.
+ * Søknaden lar deg ikke velge et tiltak som mangler en av dem, men viser det i stedet under «tiltak som mangler start- eller sluttdato», og der stopper utfyllingen.
  */
 class TiltakKlientFake(
     private val clock: Clock,
@@ -35,5 +38,6 @@ class TiltakKlientFake(
     private fun standardTiltak() = tiltakshistorikk(
         arrangør = arrangør,
         deltakelseFom = LocalDate.now(clock).minusMonths(1),
+        deltakelseTom = LocalDate.now(clock).plusMonths(3),
     )
 }

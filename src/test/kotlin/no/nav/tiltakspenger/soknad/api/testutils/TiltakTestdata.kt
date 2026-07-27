@@ -14,6 +14,7 @@ fun tiltakshistorikk(
     arrangør: String = "Testarrangør AS",
     typeNavn: String = "typenavn",
     deltakelseFom: LocalDate? = null,
+    deltakelseTom: LocalDate? = null,
 ): TiltakshistorikkDTO = TiltakshistorikkDTO(
     id = id,
     gjennomforing = TiltakshistorikkDTO.GjennomforingDTO(
@@ -25,7 +26,7 @@ fun tiltakshistorikk(
         visningsnavn = "$typeNavn hos $arrangør",
     ),
     deltakelseFom = deltakelseFom,
-    deltakelseTom = null,
+    deltakelseTom = deltakelseTom,
     deltakelseStatus = TiltakResponsDTO.DeltakerStatusDTO.DELTAR,
     antallDagerPerUke = null,
     kilde = TiltakshistorikkDTO.Kilde.KOMET,
