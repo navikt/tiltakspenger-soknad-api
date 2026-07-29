@@ -46,7 +46,7 @@ internal class ApplicationContextTest {
             context.avService
             context.nySøknadService
             context.identhendelseService
-            // Konstruerer en ekte KafkaConsumer mot LocalKafkaConfig; den kobler ikke til før run() kalles.
+            // Konstruerer en ekte KafkaConsumer mot lokal KafkaConfig; den kobler ikke til før run() kalles.
             context.identhendelseConsumer
             context.søknadJobbService
         }

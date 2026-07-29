@@ -6,7 +6,7 @@ import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.libs.json.serialize
-import no.nav.tiltakspenger.libs.kafka.config.LocalKafkaConfig
+import no.nav.tiltakspenger.libs.kafka.infra.KafkaConfig
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.testutils.FakeSøknadRepo
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
@@ -20,7 +20,7 @@ class IdenthendelseConsumerTest {
     private fun consumer(topic: String) = IdenthendelseConsumer(
         identhendelseService = IdenthendelseService(søknadRepo),
         topic = topic,
-        kafkaConfig = LocalKafkaConfig(),
+        kafkaConfig = KafkaConfig(kafkaBrokers = "localhost:9092"),
     )
 
     @Test
@@ -51,8 +51,8 @@ class IdenthendelseConsumerTest {
     }
 
     @Test
-    fun `default kafka-config utenfor Nais er LocalKafkaConfig`() {
-        // Utelatt kafkaConfig-parameter evaluerer defaulten (LocalKafkaConfig utenfor Nais) ved konstruksjon.
+    fun `default kafka-config utenfor Nais konstrueres uten miljølesing`() {
+        // Utelatt kafkaConfig-parameter evaluerer defaulten (lokal KafkaConfig utenfor Nais) ved konstruksjon.
         shouldNotThrowAny {
             IdenthendelseConsumer(
                 identhendelseService = IdenthendelseService(søknadRepo),
