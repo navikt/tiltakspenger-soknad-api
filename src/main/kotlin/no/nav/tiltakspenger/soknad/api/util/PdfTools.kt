@@ -17,6 +17,21 @@ import javax.imageio.ImageIO
  * Om det er riktig avveining er ikke avgjort; alternativene er beskrevet i navikt/tiltakspenger-soknad-api#865, og dagens oppførsel er låst i `PdfToolsTest`.
  */
 object PdfTools {
+    /**
+     * Antall piksler hver side vil bli rendret til, uten å rendre noe.
+     *
+     * Målt på `cropBox` og ikke `mediaBox`, fordi det er cropBox [PDFRenderer] dimensjonerer bildet etter.
+     * Brukes til å avvise sider som er for store til å rendres trygt, før de når [konverterPdfTilBilder].
+     * Kaster hvis pdfbox ikke klarer å lese fila; kallstedet tar det som en valideringsfeil.
+     */
+    fun pikslerPerSide(pdfByteArray: ByteArray): List<Long> =
+        Loader.loadPDF(pdfByteArray).use { dokument ->
+            dokument.pages.map { side ->
+                val boks = side.cropBox
+                boks.width.toLong() * boks.height.toLong()
+            }
+        }
+
     /** En PDF har alltid minst én side, så resultatet er en [Nel] — det lar [slåSammenPdfer] slippe å håndtere det tomme tilfellet. */
     fun konverterPdfTilBilder(pdfByteArray: ByteArray): Nel<Bilde> {
         val pdfDokument = Loader.loadPDF(pdfByteArray)

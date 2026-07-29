@@ -41,8 +41,19 @@ fun Route.søknadRoutes(
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
                 val innsendingTidspunkt = nå(clock)
                 val (brukersBesvarelser, vedlegg) = taInnSøknadSomMultipart(call.receiveMultipart(), clock)
-                // Sjekkes før virussjekken, slik at vi ikke sender for store eller for mange vedlegg videre til ClamAV.
-                vedlegg.validerVedlegg()
+                // Sjekkes før virussjekken, slik at vi ikke sender vedlegg vi uansett avviser videre til ClamAV.
+                // Dette er brukerfeil, ikke driftsfeil: vi teller kun ugyldige søknader og logger på warn, så «Mottak av søknad har feilet» ikke fyrer på en helt normal 400.
+                val vedleggsfeil = vedlegg.validerVedlegg().leftOrNull()
+                if (vedleggsfeil != null) {
+                    log.warn { "Avviste søknad med ugyldige vedlegg: ${vedleggsfeil.joinToString(" ") { it.melding }}" }
+                    metricsCollector.antallUgyldigeSøknaderCounter.inc()
+                    requestTimer.observeDuration()
+                    return@post call.respondText(
+                        text = vedleggsfeil.joinToString("\n") { it.melding },
+                        contentType = ContentType.Text.Plain,
+                        status = HttpStatusCode.BadRequest,
+                    )
+                }
                 vedlegg.toNonEmptyListOrNull()?.let { vedleggSomSkalSkannes ->
                     log.info { "Utfører virussjekk" }
                     // Feilen er allerede logget i AvService; ruta velger bare status.
