@@ -5,6 +5,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 val mockkVersion = "1.14.11"
 val ktorVersion = "3.4.3"
 val kotestVersion = "6.2.3"
+val lz4Version = "1.11.1"
 val jacksonVersion = "3.2.1"
 val jacksonAnnotationsVersion = "2.22"
 val kotlinxCoroutinesVersion = "1.11.0"
@@ -39,6 +40,14 @@ dependencies {
     // ktor-server-netty drar inn netty 4.2.x; en BOM hindrer at en transitiv avhengighet
     // senere blander inn 4.1.x og legger duplikate baseklasser på classpath (jf. `-cp lib/*`).
     implementation(platform("io.netty:netty-bom:4.2.16.Final"))
+
+    constraints {
+        // kafka-clients (via libs:kafka) drar inn lz4-java 1.10.2, der de native XXHash-
+        // implementasjonene kan krasje JVM-en på ugyldige byte-intervaller (GHSA-xx22-p4ch-683r).
+        // Transitiv-only, derfor constraint og ikke en deklarert avhengighet.
+        implementation("at.yawk.lz4:lz4-java:$lz4Version")
+    }
+
     implementation("ch.qos.logback:logback-classic:1.5.38")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
