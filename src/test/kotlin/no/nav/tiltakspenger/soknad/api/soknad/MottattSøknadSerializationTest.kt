@@ -7,7 +7,6 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 internal class MottattSøknadSerializationTest {
     @Test

@@ -19,7 +19,6 @@ import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class SøknadPostgresRepoTest {

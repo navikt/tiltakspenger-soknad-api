@@ -6,7 +6,6 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.domain.Personopplysninger
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
-import java.time.LocalDateTime
 
 fun søknad(
     spørsmålsbesvarelser: SpørsmålsbesvarelserDTO = spørsmålsbesvarelser(),
