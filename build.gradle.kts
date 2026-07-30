@@ -140,7 +140,8 @@ apply(plugin = "com.diffplug.spotless")
 
 // --- Kover --------------------------------------------------------------------
 // Holder 100 % linjedekning for all produksjonskode utenom eksplisitte unntak.
-// Dekningen rapporteres som HTML/XML på `check`, og bygget feiler hvis terskelen ikke holdes.
+// Dekningen verifiseres på `check`, og bygget feiler hvis terskelen ikke holdes.
+// Rapporter genereres ved å kjøre koverHtmlReport eller koverXmlReport.
 kover {
     reports {
         total {
@@ -151,12 +152,6 @@ kover {
                     // start() kan ikke dekkes uten å faktisk starte en blokkerende server; LokalMain kjører den samme rutinen manuelt.
                     classes("no.nav.tiltakspenger.soknad.api.ApplicationKt*")
                 }
-            }
-            html {
-                onCheck = true
-            }
-            xml {
-                onCheck = true
             }
             verify {
                 onCheck = true
