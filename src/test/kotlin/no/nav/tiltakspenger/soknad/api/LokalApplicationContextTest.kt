@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
  * Eneste forskjell fra det [LokalMain] starter, er at søknadene lagres i en fake i stedet for postgres.
  * Klientene fakene erstatter, dekkes av sine egne tester over `FakeHttpTransport`.
  */
-internal class LokalApplicationContextTest {
+class LokalApplicationContextTest {
     private val fnr = "12345678910"
 
     private fun lokalKontekst() = LokalApplicationContext(

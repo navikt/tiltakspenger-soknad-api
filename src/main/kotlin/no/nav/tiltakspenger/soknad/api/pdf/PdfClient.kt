@@ -28,9 +28,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
-internal const val PDFGEN_PATH = "api/v1/genpdf/tpts"
-internal const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
-internal const val SOKNAD_TEMPLATE = "soknad"
+const val PDFGEN_PATH = "api/v1/genpdf/tpts"
+const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
+const val SOKNAD_TEMPLATE = "soknad"
 
 /**
  * Klient for å generere søknads-PDF-er via tiltakspenger-pdfgen, med skygge-kall til tiltakspenger-pdfgenrs i local/dev.

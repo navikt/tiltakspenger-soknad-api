@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import org.junit.jupiter.api.Test
 
-internal class HarBekreftetAlleOpplysningerTest {
+class HarBekreftetAlleOpplysningerTest {
 
     @Test
     fun `hvis bruker ikke har bekreftet alle opplysninger, skal vi ikke godta søknaden`() {

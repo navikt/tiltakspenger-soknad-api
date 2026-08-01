@@ -15,7 +15,7 @@ import java.io.ByteArrayOutputStream
  * Selve avvisningen er verifisert ende-til-ende i `SøknadRoutesTest`.
  * Her dekkes kantene rundt grenseverdiene, som er dyre å sende gjennom en ekte multipart-request.
  */
-internal class VedleggValideringTest {
+class VedleggValideringTest {
 
     // ---- Størrelse og antall ----
 

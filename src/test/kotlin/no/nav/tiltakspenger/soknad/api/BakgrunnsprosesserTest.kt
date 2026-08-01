@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
  * Bakgrunnsprosessene settes opp likt i drift, lokalt og i test.
  * Testen kjører selve task-lambdaene, slik at et navn ikke kan peke på feil jobb uten at det oppdages.
  */
-internal class BakgrunnsprosesserTest {
+class BakgrunnsprosesserTest {
     private val correlationId = CorrelationId.generate()
 
     @Test

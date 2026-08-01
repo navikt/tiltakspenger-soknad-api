@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
  * Wiringen er ikke lenger gjemt i det Kover-ekskluderte oppstartsskriptet, så den kan bygges og sjekkes her.
  * Konteksten gjør ingen I/O ved konstruksjon: datasourcen bygges i `start()` og sendes inn ferdig, og resten leses fra [Configuration], som utenfor Nais faller tilbake på lokale verdier.
  */
-internal class ApplicationContextTest {
+class ApplicationContextTest {
     private fun context() = ApplicationContext(
         clock = fixedClock,
         søknadRepo = FakeSøknadRepo(),

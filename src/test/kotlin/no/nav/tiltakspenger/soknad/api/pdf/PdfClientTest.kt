@@ -19,7 +19,7 @@ import org.apache.pdfbox.pdmodel.PDPage
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 
-internal class PdfClientTest {
+class PdfClientTest {
     private val pdf = "dette er innholdet i pdf vi får tilbake fra pdfGen".toByteArray()
 
     private fun klient(

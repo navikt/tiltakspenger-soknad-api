@@ -17,7 +17,7 @@ import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import org.junit.jupiter.api.Test
 
-internal class ClamAvClientTest {
+class ClamAvClientTest {
     private val pdfVedlegg = Vedlegg(filnavn = "søknad.pdf", contentType = "application/pdf", dokument = byteArrayOf(0x25, 0x50, 0x44, 0x46))
     private val pngVedlegg = Vedlegg(filnavn = "bilde.png", contentType = "image/png", dokument = byteArrayOf(0x89.toByte(), 0x50, 0xFF.toByte()))
 

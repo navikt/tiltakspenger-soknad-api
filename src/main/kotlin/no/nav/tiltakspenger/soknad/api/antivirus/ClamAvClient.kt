@@ -79,7 +79,7 @@ class ClamAvClient(
  *
  * Navnet kommer prefikset tilbake i skanneresultatet, og det er verdiene [AvService] logger til sikkerlogg — indeksen gjør det da lettere å se hvilket vedlegg i rekkefølgen det gjaldt.
  */
-internal fun String.medIndeksprefiks(indeks: Int): String = "$indeks-$this"
+fun String.medIndeksprefiks(indeks: Int): String = "$indeks-$this"
 
 data class AvSjekkResultat(
     @JsonProperty("Filename") val filnavn: String,

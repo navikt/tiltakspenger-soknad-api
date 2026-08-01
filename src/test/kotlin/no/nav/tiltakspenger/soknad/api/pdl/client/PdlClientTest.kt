@@ -21,7 +21,7 @@ import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.soknad.api.testutils.testTokenProvider
 import org.junit.jupiter.api.Test
 
-internal class PdlClientTest {
+class PdlClientTest {
     private val fødselsnummer = "02058938710"
     private val barnFødselsnummer = "21062002856"
 

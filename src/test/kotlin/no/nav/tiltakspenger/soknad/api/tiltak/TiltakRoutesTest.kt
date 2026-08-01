@@ -19,7 +19,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikk
 import org.junit.jupiter.api.Test
 import java.io.IOException
 
-internal class TiltakRoutesTest {
+class TiltakRoutesTest {
     private val testFødselsnummer = "12345678910"
 
     @Test

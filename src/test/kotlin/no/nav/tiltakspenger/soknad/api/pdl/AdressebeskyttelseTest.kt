@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 
 const val FREG = "FREG"
 
-internal class AdressebeskyttelseTest {
+class AdressebeskyttelseTest {
 
     fun mockFolkeregistermetadata(
         ajourholdstidspunkt: LocalDateTime = nå(fixedClock),

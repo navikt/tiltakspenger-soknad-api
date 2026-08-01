@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import javax.sql.DataSource
 
-internal class SøknadPostgresRepoTest {
+class SøknadPostgresRepoTest {
     private fun withCleanDb(test: (SøknadPostgresRepo) -> Unit) {
         testDatabaseManager.withMigratedDb(runIsolated = true) { dataSource ->
             test(SøknadPostgresRepo(dataSource))

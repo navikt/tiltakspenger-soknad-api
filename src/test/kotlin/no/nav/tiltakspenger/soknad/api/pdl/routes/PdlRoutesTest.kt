@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.time.LocalDate
 
-internal class PdlRoutesTest {
+class PdlRoutesTest {
     private val testFødselsnummer = "12345678910"
     private val barnFødselsnummer = "02062012345"
 

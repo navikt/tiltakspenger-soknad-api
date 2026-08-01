@@ -8,7 +8,7 @@ import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class BarnetilleggTest {
+class BarnetilleggTest {
     @Test
     fun `fornavn på manuelt registrerte barn, skal ikke overskride maksgrense på 25 tegn`() {
         mockSpørsmålsbesvarelser(

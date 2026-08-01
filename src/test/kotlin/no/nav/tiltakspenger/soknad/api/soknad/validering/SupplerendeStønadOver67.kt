@@ -10,7 +10,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class SupplerendeStønadOver67 {
+class SupplerendeStønadOver67 {
     @Test
     fun `SupplerendeStønadOver67 med gyldig periode skal validere ok`() {
         mockSpørsmålsbesvarelser(

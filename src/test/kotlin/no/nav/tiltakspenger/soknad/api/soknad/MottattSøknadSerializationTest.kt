@@ -8,7 +8,7 @@ import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Test
 
-internal class MottattSøknadSerializationTest {
+class MottattSøknadSerializationTest {
     @Test
     fun `serialiserer journalpostId som streng`() {
         val mottattSøknad = genererMottattSøknadForTest(

@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Feiler den med timeout, er lesingen blokkerende igjen.
  */
-internal class SøknadMultipartOverEkteServerTest {
+class SøknadMultipartOverEkteServerTest {
     private val grense = "GrenseForTest"
 
     /**

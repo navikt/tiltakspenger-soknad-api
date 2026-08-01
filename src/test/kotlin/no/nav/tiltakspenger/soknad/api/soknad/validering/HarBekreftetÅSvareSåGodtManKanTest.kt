@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.soknad.api.mockSpørsmålsbesvarelser
 import org.junit.jupiter.api.Test
 
-internal class HarBekreftetÅSvareSåGodtManKanTest {
+class HarBekreftetÅSvareSåGodtManKanTest {
 
     @Test
     fun `hvis bruker ikke har bekreftet at man vil svare så godt man kan, skal vi ikke godta søknaden`() {

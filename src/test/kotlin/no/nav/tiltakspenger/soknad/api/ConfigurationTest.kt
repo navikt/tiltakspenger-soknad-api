@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
  * Cluster-navnet er det eneste som skiller miljøene, og det tas inn som parameter.
  * Dermed kan DEV- og PROD-grenene testes uten å mutere JVM-global systemtilstand som deles med andre tester.
  */
-internal class ConfigurationTest {
+class ConfigurationTest {
     @Test
     fun `cluster-navnet bestemmer profilen`() {
         Configuration.profilFor("dev-gcp") shouldBe Profile.DEV

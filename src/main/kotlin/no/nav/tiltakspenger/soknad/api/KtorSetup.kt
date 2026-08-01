@@ -27,7 +27,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.validateSøknad
 import no.nav.tiltakspenger.soknad.api.tiltak.tiltakRoutes
 import java.util.UUID.randomUUID
 
-internal fun Application.ktorSetup(
+fun Application.ktorSetup(
     context: ApplicationContext,
     readiness: Readiness,
 ) {
@@ -40,7 +40,7 @@ internal fun Application.ktorSetup(
     setupRouting(context, readiness)
 }
 
-internal fun Application.setupRouting(
+fun Application.setupRouting(
     context: ApplicationContext,
     readiness: Readiness,
 ) {
@@ -81,13 +81,13 @@ internal fun Application.setupRouting(
     }
 }
 
-internal fun Application.installJacksonFeature() {
+fun Application.installJacksonFeature() {
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
 }
 
-internal fun Application.installCallLogging() {
+fun Application.installCallLogging() {
     install(CallId) {
         generate { randomUUID().toString() }
     }

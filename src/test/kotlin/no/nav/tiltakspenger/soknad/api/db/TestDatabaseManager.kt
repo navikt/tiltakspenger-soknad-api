@@ -4,7 +4,7 @@ import no.nav.tiltakspenger.libs.persistering.test.common.TestDatabaseConfig
 import javax.sql.DataSource
 import no.nav.tiltakspenger.libs.persistering.test.common.TestDatabaseManager as LibsTestDatabaseManager
 
-internal class TestDatabaseManager(
+class TestDatabaseManager(
     config: TestDatabaseConfig = TestDatabaseConfig(),
 ) {
     private val delegate = LibsTestDatabaseManager(
@@ -22,4 +22,4 @@ internal class TestDatabaseManager(
     }
 }
 
-internal val testDatabaseManager = TestDatabaseManager()
+val testDatabaseManager = TestDatabaseManager()

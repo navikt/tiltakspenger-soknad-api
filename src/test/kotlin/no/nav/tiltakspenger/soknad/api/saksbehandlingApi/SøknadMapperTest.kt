@@ -9,7 +9,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import org.junit.jupiter.api.Test
 
-internal class SøknadMapperTest {
+class SøknadMapperTest {
     @Test
     fun `mapper og serialiserer journalpostId som streng`() {
         val dto = søknadMapper(

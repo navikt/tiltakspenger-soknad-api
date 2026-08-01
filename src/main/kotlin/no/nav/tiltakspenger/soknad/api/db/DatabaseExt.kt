@@ -4,7 +4,7 @@ import kotliquery.Row
 import kotliquery.Session
 import kotliquery.queryOf
 // TODO jah: Dette er ikke unikt for dette repoet og bør flyttes til libs med tester.
-internal fun <T> String.hent(
+fun <T> String.hent(
     params: Map<String, Any> = emptyMap(),
     session: Session,
     rowMapping: (Row) -> T,
@@ -12,7 +12,7 @@ internal fun <T> String.hent(
     return session.run(queryOf(this, params).map { row -> rowMapping(row) }.asSingle)
 }
 
-internal fun <T> String.hentListe(
+fun <T> String.hentListe(
     params: Map<String, Any> = emptyMap(),
     session: Session,
     rowMapping: (Row) -> T,
@@ -20,4 +20,4 @@ internal fun <T> String.hentListe(
     return session.run(queryOf(this, params).map { row -> rowMapping(row) }.asList)
 }
 
-internal fun Row.booleanOrNull(name: String): Boolean? = this.anyOrNull(name)?.let { this.boolean(name) }
+fun Row.booleanOrNull(name: String): Boolean? = this.anyOrNull(name)?.let { this.boolean(name) }

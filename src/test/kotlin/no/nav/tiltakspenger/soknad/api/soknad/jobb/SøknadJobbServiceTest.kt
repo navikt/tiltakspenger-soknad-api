@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test
  * Ende-til-ende for bakgrunnsjobbene: fra det som ligger i repoet, gjennom servicene og de ekte klientene, og ut på transporten.
  * Jobbene har ingen route, så dette er inngangen som tilsvarer en rute-test.
  */
-internal class SøknadJobbServiceTest {
+class SøknadJobbServiceTest {
     private val correlationId = CorrelationId.generate()
     private val saksnummer = "232323"
 

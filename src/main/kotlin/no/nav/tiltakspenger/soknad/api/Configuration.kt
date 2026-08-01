@@ -85,14 +85,14 @@ object Configuration {
      */
     private fun naisClusterName(): String? = System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")
 
-    internal fun profilFor(clusterName: String?): Profile =
+    fun profilFor(clusterName: String?): Profile =
         when (clusterName) {
             "dev-gcp" -> Profile.DEV
             "prod-gcp" -> Profile.PROD
             else -> Profile.LOCAL
         }
 
-    internal fun config(profile: Profile): Configuration =
+    fun config(profile: Profile): Configuration =
         when (profile) {
             Profile.DEV ->
                 ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding devProperties overriding defaultProperties

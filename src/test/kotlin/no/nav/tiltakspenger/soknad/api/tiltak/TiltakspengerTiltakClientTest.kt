@@ -20,7 +20,7 @@ import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import org.junit.jupiter.api.Test
 
-internal class TiltakspengerTiltakClientTest {
+class TiltakspengerTiltakClientTest {
     // TexasHttpClient er en final klasse som ikke kan byttes ut i libs, så OBO-vekslingen mockes; selve HTTP-kallet går gjennom den ekte pipelinen.
     private fun texasClient() = mockk<TexasHttpClient>().also {
         coEvery { it.exchangeToken(any(), any(), any()) } returns AccessToken("obo-token", fixedClock.instant().plusSeconds(3600))

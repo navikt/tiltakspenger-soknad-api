@@ -12,7 +12,7 @@ import java.time.LocalDateTime
  * Kanttilfeller i mappingen fra PDL-svaret til domenet, som ikke lar seg framprovosere gjennom rutene.
  * Selve happy-pathen dekkes ende-til-ende av rute- og jobb-testene.
  */
-internal class SøkerResponsTest {
+class SøkerResponsTest {
     private val fødselsnummer = "02058938710"
     private val barnFødselsnummer = "21062002856"
 

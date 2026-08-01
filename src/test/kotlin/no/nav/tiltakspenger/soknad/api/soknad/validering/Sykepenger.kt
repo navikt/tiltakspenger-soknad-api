@@ -10,7 +10,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class Sykepenger {
+class Sykepenger {
     @Test
     fun `Sykepenger med gyldig periode skal validere ok`() {
         mockSpørsmålsbesvarelser(

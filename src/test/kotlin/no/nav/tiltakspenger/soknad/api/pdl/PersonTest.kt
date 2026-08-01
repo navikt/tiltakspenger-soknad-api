@@ -16,7 +16,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-internal class PersonTest {
+class PersonTest {
     private val dagensDato = LocalDate.now(fixedClock)
 
     private fun mockForelderBarnRelasjon(id: String?, rolle: ForelderBarnRelasjonRolle): ForelderBarnRelasjon {

@@ -19,7 +19,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.testTokenProvider
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import org.junit.jupiter.api.Test
 
-internal class DokarkivClientTest {
+class DokarkivClientTest {
     private val journalpostId = JournalpostId("1")
 
     private fun klient(baseUrl: String, transport: HttpTransport? = null) = if (transport == null) {

@@ -21,7 +21,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.testutils.testTokenProvider
 import org.junit.jupiter.api.Test
 
-internal class SaksbehandlingApiKlientTest {
+class SaksbehandlingApiKlientTest {
     private val fnr = Fnr.fromString("12345678910")
     private val correlationId = CorrelationId("correlation-id")
 

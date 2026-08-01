@@ -69,7 +69,7 @@ open class ApplicationContext(
      * Omskrivingen må derfor stå på (default i [TexasSystemTokenProvider]) — skrur man den av, svarer Azure AD `invalid_scope` (AADSTS1002012) på alle systemtokens.
      * Appene som sender inn ferdige `api://…/.default`-scopes gjør det motsatte valget; her er det den korte formen som gjelder.
      */
-    internal fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
+    fun systemTokenProvider(scope: String) = TexasSystemTokenProvider(
         texasClient = texasClient,
         audienceTarget = scope,
     )

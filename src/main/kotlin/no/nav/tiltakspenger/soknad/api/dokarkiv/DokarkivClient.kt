@@ -23,7 +23,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-internal const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
+const val DOKARKIV_PATH = "rest/journalpostapi/v1/journalpost"
 
 /**
  * Klient for å opprette journalposter i dokarkiv (Joark).

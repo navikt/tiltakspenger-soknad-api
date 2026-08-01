@@ -10,7 +10,7 @@ import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class TitakTest {
+class TitakTest {
     @Test
     fun `hvis tiltaksperioden er gyldig og innenfor arenaRegistrertPeriode, skal tiltaket i søknaden validere ok`() {
         mockSpørsmålsbesvarelser(

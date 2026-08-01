@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import kotliquery.sessionOf
 import org.junit.jupiter.api.Test
 
-internal class DatabaseExtTest {
+class DatabaseExtTest {
     @Test
     fun `hent, hentListe og booleanOrNull mapper rader fra databasen`() {
         testDatabaseManager.withMigratedDb { dataSource ->

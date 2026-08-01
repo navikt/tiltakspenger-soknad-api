@@ -16,7 +16,7 @@ import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_FILSTØRRELSE_BYTES
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class SøknadRoutesTest {
+class SøknadRoutesTest {
     private val testFødselsnummer = "12345678910"
 
     @Test

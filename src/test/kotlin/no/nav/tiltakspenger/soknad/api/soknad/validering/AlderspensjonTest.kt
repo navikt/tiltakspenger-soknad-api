@@ -10,7 +10,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-internal class AlderspensjonTest {
+class AlderspensjonTest {
     @Test
     fun `alderspensjon med gyldig fraDato skal validere ok`() {
         mockSpørsmålsbesvarelser(
