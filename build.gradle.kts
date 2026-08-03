@@ -12,7 +12,7 @@ val kotlinxCoroutinesVersion = "1.11.0"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
-val felleslibVersion = "0.0.20260801065408"
+val felleslibVersion = "0.0.20260803141304"
 val flywayVersjon = "12.10.0"
 val testContainersVersion = "2.0.5"
 
@@ -55,6 +55,9 @@ dependencies {
     implementation("com.natpryce:konfig:1.6.10.0")
     implementation("com.github.navikt.tiltakspenger-libs:soknad-dtos:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:tiltak-dtos:$felleslibVersion")
+    // TODO: Modulene er ikke tatt i bruk ennå — direktekall mot tiltakshistorikk er blokkert til tilgangs-PR-en i navikt/mulighetsrommet er merget.
+    implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-domene:$felleslibVersion")
+    implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-infrastruktur:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:common:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:jobber:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:ktor-common:$felleslibVersion")
@@ -134,6 +137,7 @@ dependencies {
     testImplementation("com.github.navikt.tiltakspenger-libs:persistering-test-common:$felleslibVersion")
     // FakeHttpTransport: ekte HttpKlient med byttet transport, så hele pipelinen kjører i test.
     testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion"))
+    testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-domene:$felleslibVersion"))
 }
 
 application {
