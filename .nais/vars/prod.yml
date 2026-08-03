@@ -7,6 +7,7 @@ endpoints:
   pdfgenrs: http://tiltakspenger-pdfgenrs
   dokarkiv: https://dokarkiv.prod-fss-pub.nais.io
   tiltakspengertiltak: http://tiltakspenger-tiltak
+  tiltakshistorikk: http://tiltakshistorikk.team-mulighetsrommet
   tiltakspengervedtak: http://tiltakspenger-saksbehandling-api
   av: http://clamav.nais-system/scan
 outboundExternalUrls:
@@ -17,6 +18,7 @@ scope:
   dokarkiv: prod-fss:teamdokumenthandtering:dokarkiv
   vedtak: prod-gcp:tpts:tiltakspenger-saksbehandling-api
   tiltakspengertiltak: prod-gcp:tpts:tiltakspenger-tiltak
+  tiltakshistorikk: prod-gcp:team-mulighetsrommet:tiltakshistorikk
 sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: true

@@ -70,6 +70,8 @@ spec:
     outbound:
       rules:
         - application: tiltakspenger-tiltak
+        - application: tiltakshistorikk
+          namespace: team-mulighetsrommet
         - application: tiltakspenger-pdfgen
         - application: tiltakspenger-pdfgenrs
         - application: tiltakspenger-saksbehandling-api
@@ -103,6 +105,10 @@ spec:
       value: {{ endpoints.tiltakspengertiltak }}
     - name: TILTAKSPENGER_TILTAK_SCOPE
       value: {{ scope.tiltakspengertiltak }}
+    - name: TILTAKSHISTORIKK_ENDPOINT_URL
+      value: {{ endpoints.tiltakshistorikk }}
+    - name: TILTAKSHISTORIKK_SCOPE
+      value: {{ scope.tiltakshistorikk }}
   resources:
     limits:
       memory: 2048Mi
