@@ -11,6 +11,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
@@ -40,6 +41,7 @@ fun Route.pdlRoutes(
                     subjectToken = subjectToken,
                     fnr = fødselsnummer,
                     maskerArrangørnavn = true,
+                    correlationId = CorrelationId(call.callId!!),
                 ).getOrElse { return@get call.serverFeil(metricsCollector) }
                 val tiltakMedTidligsteFradato = tiltak
                     .filter { it.arenaRegistrertPeriode.fra != null }

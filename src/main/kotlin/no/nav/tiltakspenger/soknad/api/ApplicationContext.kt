@@ -1,11 +1,17 @@
 package no.nav.tiltakspenger.soknad.api
 
 import io.prometheus.client.CollectorRegistry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.libs.logging.infra.KotlinLoggingSikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
 import no.nav.tiltakspenger.libs.texas.client.TexasSystemTokenProvider
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.pdl.PdlIdentklient
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkHenter
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkKlient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvKlient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.ClamAvClient
@@ -31,6 +37,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingSe
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
+import no.nav.tiltakspenger.soknad.api.tiltak.skygge.TiltaksdeltakelseSkygge
 import java.time.Clock
 
 /**
@@ -93,6 +100,60 @@ open class ApplicationContext(
         )
     }
 
+    /**
+     * De tre neste hører til skyggekjøringen av tiltaksdeltakelse-modulen, som skal overta for tiltakspenger-tiltak, og dør med den.
+     * Begge klientene går med systemtoken, slik dagens kjede om tiltakspenger-tiltak også gjør — brukertokenet autentiserer bare inn til oss.
+     */
+    open val pdlIdentklient: PdlIdentklient by lazy {
+        PdlIdentklient(
+            baseUrl = Configuration.pdlBaseUrl,
+            clock = clock,
+            authTokenProvider = systemTokenProvider(Configuration.pdlScope),
+        )
+    }
+
+    open val tiltakshistorikkKlient: TiltakshistorikkKlient by lazy {
+        TiltakshistorikkKlient(
+            baseUrl = Configuration.tiltakshistorikkUrl,
+            clock = clock,
+            authTokenProvider = systemTokenProvider(Configuration.tiltakshistorikkScope),
+        )
+    }
+
+    open val tiltakshistorikkHenter: TiltakshistorikkHenter by lazy {
+        TiltakshistorikkHenter(
+            tiltakshistorikkKlient = tiltakshistorikkKlient,
+            pdlIdentklient = pdlIdentklient,
+            clock = clock,
+        )
+    }
+
+    /**
+     * Scopet skyggekjøringen lever i, utenfor request-pathen.
+     * [SupervisorJob] gjør at én mislykket sammenligning ikke river med seg de andre, og IO-dispatcheren brukes fordi arbeidet er to nettverkskall.
+     */
+    open val skyggescope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+
+    /**
+     * Skyggen kjører i dev, som er der vi henter empirien fra: hvilke avviksklasser som faktisk opptrer, og hvor ofte.
+     *
+     * Den står av i prod til avvikene fra dev er forklart, rettet eller godkjent som tilsiktede — å skygge i prod før det gir dobbel last på PDL og Team Valp uten at vi vet hva vi ser etter.
+     * Den står av lokalt fordi lokalmiljøet ikke har noen tiltakshistorikk å svare med, og en skygge som bare feiler er støy.
+     * Begge deler er én linje som endres og deployes; en bryter utenfor koden kjøper ingenting når vi uansett må deploye.
+     *
+     * Hele kjeden fra ruta og ut til begge kildene kjøres i test uavhengig av dette — se `TiltaksdeltakelseSkyggeRouteTest`, som slår den på i test-konteksten.
+     */
+    open val tiltaksdeltakelseSkygge: TiltaksdeltakelseSkygge by lazy {
+        TiltaksdeltakelseSkygge(
+            tiltakshistorikkHenter = tiltakshistorikkHenter,
+            metricsCollector = metricsCollector,
+            skyggescope = skyggescope,
+            clock = clock,
+            sikkerlogg = sikkerlogg,
+            påslag = Configuration.isDev(),
+        )
+    }
+
     open val avKlient: AvKlient by lazy {
         ClamAvClient(
             avEndpoint = Configuration.avUrl,
@@ -136,7 +197,7 @@ open class ApplicationContext(
     }
 
     open val pdlService: PdlService by lazy { PdlService(personKlient, clock, sikkerlogg) }
-    open val tiltakService: TiltakService by lazy { TiltakService(tiltakKlient, clock, sikkerlogg) }
+    open val tiltakService: TiltakService by lazy { TiltakService(tiltakKlient, clock, sikkerlogg, tiltaksdeltakelseSkygge) }
     open val avService: AvService by lazy { AvService(avKlient, sikkerlogg) }
     open val nySøknadService: NySøknadService by lazy { NySøknadService(søknadRepo) }
     open val identhendelseService: IdenthendelseService by lazy { IdenthendelseService(søknadRepo) }

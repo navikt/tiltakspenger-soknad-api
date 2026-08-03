@@ -19,17 +19,31 @@ data class TiltaksdeltakelseDto(
     val gjennomforingId: String,
     val visningsnavn: String?,
 ) {
-    fun erInnenforRelevantTidsrom(clock: Clock): Boolean {
-        val datoFor6MånederSiden = LocalDate.now(clock).minusMonths(6)
-        val dato2MånederFrem = LocalDate.now(clock).plusMonths(2)
+    fun erInnenforRelevantTidsrom(clock: Clock): Boolean =
+        erInnenforRelevantTidsrom(
+            fra = arenaRegistrertPeriode.fra,
+            til = arenaRegistrertPeriode.til,
+            iDag = LocalDate.now(clock),
+        )
+}
 
-        return if (arenaRegistrertPeriode.fra == null) {
-            true
-        } else if (arenaRegistrertPeriode.til == null) {
-            arenaRegistrertPeriode.fra.isBefore(dato2MånederFrem) && arenaRegistrertPeriode.fra.isAfter(datoFor6MånederSiden)
-        } else {
-            arenaRegistrertPeriode.fra.isBefore(dato2MånederFrem) && arenaRegistrertPeriode.til.isAfter(datoFor6MånederSiden)
-        }
+/**
+ * Tidsrommet søknaden viser tiltaksdeltakelser fra: seks måneder tilbake til to måneder fram.
+ * En deltakelse uten startdato slipper alltid gjennom — vi vet ikke når den hører hjemme, og skjuler den derfor ikke.
+ *
+ * Regelen ligger som fri funksjon fordi skyggekjøringen må sile både gammel og ny vei gjennom nøyaktig det samme predikatet.
+ * Filtrerte vi bare den ene siden, ville hele forskjellen mellom dem vært dette filteret.
+ */
+fun erInnenforRelevantTidsrom(fra: LocalDate?, til: LocalDate?, iDag: LocalDate): Boolean {
+    val datoFor6MånederSiden = iDag.minusMonths(6)
+    val dato2MånederFrem = iDag.plusMonths(2)
+
+    return if (fra == null) {
+        true
+    } else if (til == null) {
+        fra.isBefore(dato2MånederFrem) && fra.isAfter(datoFor6MånederSiden)
+    } else {
+        fra.isBefore(dato2MånederFrem) && til.isAfter(datoFor6MånederSiden)
     }
 }
 

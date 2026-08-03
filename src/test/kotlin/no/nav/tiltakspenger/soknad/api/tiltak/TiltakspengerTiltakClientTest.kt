@@ -53,9 +53,9 @@ class TiltakspengerTiltakClientTest {
             )
 
             runTest {
-                val tiltak = klient(wiremock.baseUrl()).fetchTiltak("subject-token", Fnr.random()).getOrFail()
+                val svar = klient(wiremock.baseUrl()).fetchTiltak("subject-token", Fnr.random()).getOrFail()
 
-                tiltak.single().id shouldBe "123456"
+                svar.deltakelser.single().id shouldBe "123456"
             }
         }
     }
@@ -74,6 +74,9 @@ class TiltakspengerTiltakClientTest {
         kall.request.headers().firstValue("Accept").get() shouldBe "application/json"
     }
 
+    /**
+     * Cache-treffet er også merket som det: skyggekjøringen sammenligner kun ferske svar, siden et cachet svar kan være opptil en time gammelt.
+     */
     @Test
     fun `treff caches, så påfølgende kall for samme fnr ikke treffer nettverket`() = runTest {
         val transport = FakeHttpTransport()
@@ -81,8 +84,8 @@ class TiltakspengerTiltakClientTest {
         val klient = klient("http://tiltak", transport)
         val fnr = Fnr.random()
 
-        klient.fetchTiltak("subject-token", fnr).getOrFail()
-        klient.fetchTiltak("subject-token", fnr).getOrFail()
+        klient.fetchTiltak("subject-token", fnr).getOrFail().fraCache shouldBe false
+        klient.fetchTiltak("subject-token", fnr).getOrFail().fraCache shouldBe true
 
         transport.mottatteKall.size shouldBe 1
     }
@@ -95,8 +98,8 @@ class TiltakspengerTiltakClientTest {
         val klient = klient("http://tiltak", transport)
         val fnr = Fnr.random()
 
-        klient.fetchTiltak("subject-token", fnr).getOrFail() shouldBe emptyList()
-        klient.fetchTiltak("subject-token", fnr).getOrFail().size shouldBe 1
+        klient.fetchTiltak("subject-token", fnr).getOrFail().deltakelser shouldBe emptyList()
+        klient.fetchTiltak("subject-token", fnr).getOrFail().deltakelser.size shouldBe 1
 
         transport.mottatteKall.size shouldBe 2
     }

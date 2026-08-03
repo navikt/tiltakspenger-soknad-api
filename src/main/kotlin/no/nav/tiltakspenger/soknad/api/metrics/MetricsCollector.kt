@@ -49,4 +49,56 @@ class MetricsCollector(
         .namespace(namespace)
         .help("Hvor lang tid det tar å prosessere en søknad (i sekunder)")
         .register(registry)
+
+    // Tellerne under hører til skyggekjøringen av tiltaksdeltakelse-modulen og dør med den.
+    // De er de eneste tellerne her med labels, fordi et avvik uten klassifisering ikke er til å handle på.
+
+    val tiltaksdeltakelseSkyggeKjøringer: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_kjoeringer")
+        .namespace(namespace)
+        .labelNames("utfall")
+        .help("Antall skyggekjøringer av tiltaksdeltakelse-modulen, fordelt på utfall")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeFeltavvik: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_feltavvik")
+        .namespace(namespace)
+        .labelNames("felt")
+        .help("Felter som er ulike på deltakelser begge veier fant")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeKunIGammel: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_kun_i_gammel")
+        .namespace(namespace)
+        .labelNames("grunn")
+        .help("Deltakelser søknaden viser i dag som uttrekket i ny vei ikke tar med")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeKunINy: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_kun_i_ny")
+        .namespace(namespace)
+        .labelNames("kildestatus")
+        .help("Deltakelser uttrekket i ny vei tar med som søknaden ikke viser i dag")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeIdentfallback: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_identfallback")
+        .namespace(namespace)
+        .labelNames("grunn")
+        .help("Oppslag der PDL ikke ga brukbare identer, så historikken ble hentet på innsendt fnr alene")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeUkjentKildeverdi: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_ukjent_kildeverdi")
+        .namespace(namespace)
+        .labelNames("hva")
+        .help("Kildeverdier ny vei ikke kjente igjen — statuser, tiltakskoder, Komet-årsaker, meldinger og deltakelsesformer")
+        .register(registry)
+
+    val tiltaksdeltakelseSkyggeManglendeKilde: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_manglende_kilde")
+        .namespace(namespace)
+        .labelNames("kilde")
+        .help("Kilder tiltakshistorikk meldte at svaret er ufullstendig for")
+        .register(registry)
 }
