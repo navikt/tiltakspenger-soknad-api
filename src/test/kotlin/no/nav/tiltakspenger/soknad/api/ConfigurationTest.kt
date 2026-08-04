@@ -68,7 +68,7 @@ class ConfigurationTest {
     @Test
     fun `PDL-basen ender aldri på graphql-suffikset`() {
         Configuration.pdlBaseUrl shouldNotEndWith "/graphql"
-        // I dev og prod peker miljøvariabelen på GraphQL-endepunktet og strippes; lokalt peker den på mock-api-et og står som den er.
+        // I dev og prod peker miljøvariabelen på GraphQL-endepunktet og strippes; LOCAL-defaulten har ikke suffikset, så den står urørt.
         Configuration.pdlBaseUrl shouldBe Configuration.pdlUrl
     }
 

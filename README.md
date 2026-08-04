@@ -42,8 +42,6 @@ Testbrukeren har to barn under 16 år og ett aktivt tiltak, slik at hele søknad
 
 `LokalApplicationContextTest` kjører hele søknadsflyten mot den samme konteksten, slik at oppsettet ikke kan råtne i det stille.
 
-Sett `BRUK_MOCK_API=true` for å gå mot compose-oppsettet i stedet, altså [tiltakspenger-soknad-mock-api](https://github.com/navikt/tiltakspenger-soknad-mock-api), pdfgen og authserveren.
-
 `main()` i `Application.kt` er produksjonsinngangen, og krever at alle de eksterne tjenestene finnes.
 
 Eksempel på miljøvariabler som kan settes i en Run Configuration for å kjøre opp appen fra IntelliJ mot kjørende Compose-oppsett:
