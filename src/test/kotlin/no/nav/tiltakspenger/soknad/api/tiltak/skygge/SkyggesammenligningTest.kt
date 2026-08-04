@@ -133,14 +133,14 @@ class SkyggesammenligningTest {
     }
 
     /**
-     * Arenas `IKKE_MOTT` gir søknadsrett i dag (den normaliseres til «Avbrutt»), men ikke i ny modell.
-     * Avviket er kjent og venter på fag; skyggen skal telle det, ikke skjule det.
+     * En status som verken er deltakelse eller tildelt plass gir ikke søknadsrett, og raden faller ut av uttrekket.
+     * Merk at Arenas `IKKE_MOTT` *ikke* hører hjemme her: den er søkbar ved unntak, se testen under.
      */
     @Test
-    fun `en status som ikke lenger gir søknadsrett forklares med statusaksen`() {
+    fun `en status uten søknadsrett forklares med statusaksen`() {
         val utfall = sammenlign(
             gammel = listOf(gammelRad()),
-            ny = listOf(testdeltakelse(kildestatus = Arenastatus.Kjent(Arenastatus.Type.IKKE_MOTT))),
+            ny = listOf(testdeltakelse(kildestatus = Arenastatus.Kjent(Arenastatus.Type.TAKKET_NEI_TIL_TILBUD))),
         )
 
         utfall.kunIGammel shouldContainExactly listOf(KunIGammel(id = "TA1234567", grunn = Fraværsgrunn.STATUS_UTEN_RETT))
@@ -154,10 +154,27 @@ class SkyggesammenligningTest {
     fun `en deltakelse uten sluttdato klassifiseres på samme måte`() {
         val utfall = sammenlign(
             gammel = listOf(gammelRad(deltakelseTom = null)),
-            ny = listOf(testdeltakelse(kildestatus = Arenastatus.Kjent(Arenastatus.Type.IKKE_MOTT), tilOgMed = null)),
+            ny = listOf(testdeltakelse(kildestatus = Arenastatus.Kjent(Arenastatus.Type.TAKKET_NEI_TIL_TILBUD), tilOgMed = null)),
         )
 
         utfall.kunIGammel shouldContainExactly listOf(KunIGammel(id = "TA1234567", grunn = Fraværsgrunn.STATUS_UTEN_RETT))
+    }
+
+    /**
+     * Arenas «ikke møtt» ga søknadsrett i dagens kjede, og gjør det igjen i ny vei — men via unntaksvarianten i `Søkbarhet`, ikke via `Deltakerstatus`.
+     * Den skal derfor ikke havne i noen avviksbøtte i det hele tatt: dette er paritet, ikke en forskjell vi skal telle.
+     */
+    @Test
+    fun `en Arena-deltakelse med ikke møtt er søkbar ved unntak og blir felles`() {
+        val utfall = sammenlign(
+            gammel = listOf(gammelRad()),
+            ny = listOf(testdeltakelse(kildestatus = Arenastatus.Kjent(Arenastatus.Type.IKKE_MOTT))),
+        )
+
+        utfall.harAvvik shouldBe false
+        utfall.antallFelles shouldBe 1
+        utfall.kunIGammel.shouldBeEmpty()
+        utfall.kunINy.shouldBeEmpty()
     }
 
     @Test

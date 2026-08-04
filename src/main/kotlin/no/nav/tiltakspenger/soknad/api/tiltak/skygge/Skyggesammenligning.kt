@@ -3,11 +3,13 @@ package no.nav.tiltakspenger.soknad.api.tiltak.skygge
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.libs.tiltak.toTiltakstypeSomGirRett
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Kildestatus
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Søkbarhet
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelse
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakshistorikk
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakskilde
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.UkjentKildeverdi
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.somKildenTilsierManKanSøkePå
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.søkbarhet
 import no.nav.tiltakspenger.soknad.api.tiltak.erInnenforRelevantTidsrom
 import java.time.LocalDate
 
@@ -162,10 +164,16 @@ private fun MutableList<Feltavvik>.leggTil(id: String, felt: String, gammel: Str
 
 /**
  * Klassifiserer hvorfor en rad gammel vei viser ikke er med i uttrekket.
- * Kaskaden speiler `søkbarhet` i libs: datakvalitet slår ut først, så tiltakstypeaksen, så statusaksen — og til slutt står bare tidsrommet igjen.
+ *
+ * `søkbarhet` i libs er autoriteten på *om* raden skulle vært med; her forklarer vi bare *hvorfor* den ikke er det.
+ * Gjentar vi regelen i stedet for å spørre, driver klassifiseringen fra reglene uten at noen merker det — som den gjorde da unntaket for Arenas «ikke møtt» kom, og en rad som nå er søkbar ville blitt forklart som «status uten rett».
  */
 private fun fraværsgrunn(ny: Tiltaksdeltakelse?, iDato: LocalDate): String {
     if (ny == null) return Fraværsgrunn.MANGLER_I_NY
+
+    // Passerer raden søknadsguarden, står bare tidsrommet igjen som forklaring — og da har de to veiene ulike datoer.
+    if (ny.søkbarhet(iDato) !is Søkbarhet.KanIkkeSøkesPå) return Fraværsgrunn.UTENFOR_TIDSROM
+
     return when (ny) {
         is Tiltaksdeltakelse.Ugyldig -> Fraværsgrunn.UGYLDIGE_DATOER
 
@@ -175,13 +183,6 @@ private fun fraværsgrunn(ny: Tiltaksdeltakelse?, iDato: LocalDate): String {
 
         is Tiltaksdeltakelse.GirRett.MedPeriode,
         is Tiltaksdeltakelse.GirRett.UtenPeriode,
-        -> fraværsgrunnForRadSomGirRett(ny, iDato)
+        -> if (ny.kildestatus is Kildestatus.Kjent) Fraværsgrunn.STATUS_UTEN_RETT else Fraværsgrunn.UKJENT_KILDESTATUS
     }
-}
-
-private fun fraværsgrunnForRadSomGirRett(ny: Tiltaksdeltakelse, iDato: LocalDate): String {
-    val status = ny.kildestatus
-    if (status !is Kildestatus.Kjent) return Fraværsgrunn.UKJENT_KILDESTATUS
-    if (!status.deltakerstatus(fraOgMed = ny.fraOgMed, påDato = iDato).girRettTilÅSøke) return Fraværsgrunn.STATUS_UTEN_RETT
-    return Fraværsgrunn.UTENFOR_TIDSROM
 }
