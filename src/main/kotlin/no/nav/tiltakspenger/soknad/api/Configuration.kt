@@ -36,6 +36,8 @@ object Configuration {
                 "AV_ENDPOINT_URL" to System.getenv("AV_ENDPOINT_URL"),
                 "TILTAKSPENGER_TILTAK_SCOPE" to System.getenv("TILTAKSPENGER_TILTAK_SCOPE"),
                 "TILTAKSPENGER_TILTAK_ENDPOINT_URL" to System.getenv("TILTAKSPENGER_TILTAK_ENDPOINT_URL"),
+                "TILTAKSHISTORIKK_SCOPE" to System.getenv("TILTAKSHISTORIKK_SCOPE"),
+                "TILTAKSHISTORIKK_ENDPOINT_URL" to System.getenv("TILTAKSHISTORIKK_ENDPOINT_URL"),
                 "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to System.getenv("NAIS_TOKEN_INTROSPECTION_ENDPOINT"),
                 "NAIS_TOKEN_ENDPOINT" to System.getenv("NAIS_TOKEN_ENDPOINT"),
                 "NAIS_TOKEN_EXCHANGE_ENDPOINT" to System.getenv("NAIS_TOKEN_EXCHANGE_ENDPOINT"),
@@ -61,6 +63,8 @@ object Configuration {
                 "AV_ENDPOINT_URL" to "http://localhost:8484/av",
                 "TILTAKSPENGER_TILTAK_SCOPE" to "localhost",
                 "TILTAKSPENGER_TILTAK_ENDPOINT_URL" to "http://localhost:8484",
+                "TILTAKSHISTORIKK_SCOPE" to "localhost",
+                "TILTAKSHISTORIKK_ENDPOINT_URL" to "http://localhost:8484",
                 "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to "http://localhost:7164/api/v1/introspect",
                 "NAIS_TOKEN_ENDPOINT" to "http://localhost:7164/api/v1/token",
                 "NAIS_TOKEN_EXCHANGE_ENDPOINT" to "http://localhost:7164/api/v1/token",
@@ -113,6 +117,7 @@ object Configuration {
     fun httpPort() = config()[Key("application.httpPort", intType)]
 
     fun isNais() = applicationProfile() != Profile.LOCAL
+    fun isDev() = applicationProfile() == Profile.DEV
     fun isProd() = applicationProfile() == Profile.PROD
     fun isLocalOrDev() = !isProd()
 
@@ -122,14 +127,22 @@ object Configuration {
     val dokarkivScope: String by lazy { config()[Key("DOKARKIV_SCOPE", stringType)] }
     val saksbehandlingApiScope: String by lazy { config()[Key("VEDTAK_SCOPE", stringType)] }
     val tiltakspengerTiltakScope: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_SCOPE", stringType)] }
+    val tiltakshistorikkScope: String by lazy { config()[Key("TILTAKSHISTORIKK_SCOPE", stringType)] }
 
     val pdlUrl by lazy { config()[Key("PDL_ENDPOINT_URL", stringType)] }
+
+    /**
+     * PDL-verdien i nais-manifestet peker rett på GraphQL-endepunktet, mens `PdlIdentklient` fra libs legger på `/graphql` selv.
+     * Suffikset strippes her framfor å legge inn en egen miljøvariabel, slik at de to PDL-klientene våre fortsatt har én kilde til sannhet for hvor PDL står.
+     */
+    val pdlBaseUrl: String by lazy { pdlUrl.removeSuffix("/graphql") }
     val dokarkivUrl: String by lazy { config()[Key("DOKARKIV_ENDPOINT_URL", stringType)] }
     val saksbehandlingApiUrl: String by lazy { config()[Key("TILTAKSPENGER_VEDTAK_ENDPOINT_URL", stringType)] }
     val pdfUrl: String by lazy { config()[Key("PDF_ENDPOINT_URL", stringType)] }
     val pdfgenrsUrl: String by lazy { config()[Key("PDFGENRS_ENDPOINT_URL", stringType)] }
     val avUrl: String by lazy { config()[Key("AV_ENDPOINT_URL", stringType)] }
     val tiltakspengerTiltakUrl: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_ENDPOINT_URL", stringType)] }
+    val tiltakshistorikkUrl: String by lazy { config()[Key("TILTAKSHISTORIKK_ENDPOINT_URL", stringType)] }
 
     val naisTokenIntrospectionEndpoint: String by lazy { config()[Key("NAIS_TOKEN_INTROSPECTION_ENDPOINT", stringType)] }
     val naisTokenEndpoint: String by lazy { config()[Key("NAIS_TOKEN_ENDPOINT", stringType)] }

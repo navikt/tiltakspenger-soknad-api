@@ -34,6 +34,11 @@ class ApplicationContextTest {
             context.metricsCollector
             context.personKlient
             context.tiltakKlient
+            context.pdlIdentklient
+            context.tiltakshistorikkKlient
+            context.tiltakshistorikkHenter
+            context.skyggescope
+            context.tiltaksdeltakelseSkygge
             context.avKlient
             context.pdfGenerator
             context.journalpostKlient
@@ -60,6 +65,9 @@ class ApplicationContextTest {
         context.texasClient shouldBeSameInstanceAs context.texasClient
         context.personKlient shouldBeSameInstanceAs context.personKlient
         context.tiltakKlient shouldBeSameInstanceAs context.tiltakKlient
+        // Skyggen deler scope mellom kjøringene; et nytt scope per oppslag ville lekket en trådpool per request.
+        context.skyggescope shouldBeSameInstanceAs context.skyggescope
+        context.tiltaksdeltakelseSkygge shouldBeSameInstanceAs context.tiltaksdeltakelseSkygge
         context.pdlService shouldBeSameInstanceAs context.pdlService
         context.søknadJobbService shouldBeSameInstanceAs context.søknadJobbService
         context.metricsCollector shouldBeSameInstanceAs context.metricsCollector

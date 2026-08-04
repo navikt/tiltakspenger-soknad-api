@@ -8,6 +8,7 @@ import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.tiltak.TiltakshistorikkDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
+import no.nav.tiltakspenger.soknad.api.tiltak.TiltakshistorikkSvar
 import java.time.Clock
 import java.time.LocalDate
 
@@ -27,8 +28,12 @@ class TiltakKlientFake(
     override suspend fun fetchTiltak(
         subjectToken: String,
         fnr: Fnr,
-    ): Either<HttpKlientError, List<TiltakshistorikkDTO>> =
-        (tiltak.get()[fnr] ?: listOf(standardTiltak())).right()
+    ): Either<HttpKlientError, TiltakshistorikkSvar> =
+        TiltakshistorikkSvar(
+            deltakelser = tiltak.get()[fnr] ?: listOf(standardTiltak()),
+            // Faken cacher ikke, så hvert svar er ferskt.
+            fraCache = false,
+        ).right()
 
     /** Overstyrer tiltakene for én person; kall den før testen ber om tiltak. */
     fun leggTilTiltak(fnr: Fnr, tiltakshistorikk: List<TiltakshistorikkDTO>) {

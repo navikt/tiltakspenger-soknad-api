@@ -59,8 +59,8 @@ class TiltakspengerTiltakClient(
         .expireAfterWrite(java.time.Duration.ofMinutes(60))
         .build()
 
-    override suspend fun fetchTiltak(subjectToken: String, fnr: Fnr): Either<HttpKlientError, List<TiltakshistorikkDTO>> {
-        cache.getIfPresent(fnr.verdi)?.let { return Either.Right(it) }
+    override suspend fun fetchTiltak(subjectToken: String, fnr: Fnr): Either<HttpKlientError, TiltakshistorikkSvar> {
+        cache.getIfPresent(fnr.verdi)?.let { return Either.Right(TiltakshistorikkSvar(deltakelser = it, fraCache = true)) }
         val token = texasClient.exchangeToken(
             userToken = subjectToken,
             audienceTarget = tiltakspengerTiltakScope,
@@ -72,6 +72,6 @@ class TiltakspengerTiltakClient(
         ).map { it.body }.onRight { tiltak ->
             // Bare treff caches; et tomt svar skal kunne bli et treff senere uten å vente til cache-tiden løper ut.
             if (tiltak.isNotEmpty()) cache.put(fnr.verdi, tiltak)
-        }
+        }.map { TiltakshistorikkSvar(deltakelser = it, fraCache = false) }
     }
 }
