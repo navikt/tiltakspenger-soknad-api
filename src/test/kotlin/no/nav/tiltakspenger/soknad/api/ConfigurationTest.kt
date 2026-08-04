@@ -31,7 +31,6 @@ class ConfigurationTest {
     fun `utenfor Nais kjører vi på den lokale profilen`() {
         Configuration.applicationProfile() shouldBe Profile.LOCAL
         Configuration.isNais() shouldBe false
-        Configuration.isDev() shouldBe false
         Configuration.isProd() shouldBe false
         Configuration.isLocalOrDev() shouldBe true
     }

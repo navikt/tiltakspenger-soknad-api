@@ -117,7 +117,6 @@ object Configuration {
     fun httpPort() = config()[Key("application.httpPort", intType)]
 
     fun isNais() = applicationProfile() != Profile.LOCAL
-    fun isDev() = applicationProfile() == Profile.DEV
     fun isProd() = applicationProfile() == Profile.PROD
     fun isLocalOrDev() = !isProd()
 

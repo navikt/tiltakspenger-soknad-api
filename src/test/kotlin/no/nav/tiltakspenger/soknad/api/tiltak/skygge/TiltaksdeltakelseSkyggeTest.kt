@@ -101,6 +101,7 @@ class TiltaksdeltakelseSkyggeTest {
         advanceUntilIdle()
 
         oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_LIKT).get() shouldBe 1.0
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeSammenlignedeDeltakelser.get() shouldBe 1.0
         oppsett.pdlTransport.mottatteKall.size shouldBe 1
         oppsett.historikkTransport.mottatteKall.size shouldBe 1
     }
@@ -141,6 +142,23 @@ class TiltaksdeltakelseSkyggeTest {
         oppsett.skygge.sammenlign(fnr, listOf(gammelRad()), correlationId)
 
         oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_NY_VEI_FEILET).get() shouldBe 1.0
+    }
+
+    /**
+     * To tomme lister er trivielt like, og ville tidligere blitt talt som enighet.
+     * Da kunne skyggen meldt «alt stemmer» uten å ha sammenlignet en eneste rad — derfor har det tilfellet sin egen merkelapp.
+     */
+    @Test
+    fun `et oppslag uten deltakelser telles som tomt, ikke som enighet`() = runTest {
+        val oppsett = Oppsett(påslag = true, scope = this)
+        oppsett.pdlTransport.leggIKøJson(pdlJson)
+        oppsett.historikkTransport.leggIKøJson("""{"historikk": [], "meldinger": []}""")
+
+        oppsett.skygge.sammenlign(fnr, gammel = emptyList(), correlationId = correlationId)
+
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_TOMT).get() shouldBe 1.0
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_LIKT).get() shouldBe 0.0
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeSammenlignedeDeltakelser.get() shouldBe 0.0
     }
 
     /**

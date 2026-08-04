@@ -81,6 +81,12 @@ class MetricsCollector(
         .help("Deltakelser uttrekket i ny vei tar med som søknaden ikke viser i dag")
         .register(registry)
 
+    val tiltaksdeltakelseSkyggeSammenlignedeDeltakelser: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_sammenlignede_deltakelser")
+        .namespace(namespace)
+        .help("Deltakelser begge veier fant og faktisk sammenlignet — hvor mye vi har verifisert, ikke bare hvor mange oppslag som er gjort")
+        .register(registry)
+
     val tiltaksdeltakelseSkyggeIdentfallback: Counter = Counter.build()
         .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_identfallback")
         .namespace(namespace)

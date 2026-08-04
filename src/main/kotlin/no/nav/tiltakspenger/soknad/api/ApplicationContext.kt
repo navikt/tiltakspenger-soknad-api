@@ -135,11 +135,14 @@ open class ApplicationContext(
     open val skyggescope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
     /**
-     * Skyggen kjører i dev, som er der vi henter empirien fra: hvilke avviksklasser som faktisk opptrer, og hvor ofte.
+     * Skyggen kjører i både dev og prod.
      *
-     * Den står av i prod til avvikene fra dev er forklart, rettet eller godkjent som tilsiktede — å skygge i prod før det gir dobbel last på PDL og Team Valp uten at vi vet hva vi ser etter.
+     * Prod ble tatt med fordi dev ikke har trafikk: `/tiltak` ble ikke kalt én gang der på et døgn, så empirien vi er ute etter — hvilke avviksklasser som faktisk opptrer, og hvor ofte — finnes bare i prod.
+     * Prisen er ett ekstra oppslag mot PDL og tiltakshistorikk per ferske henting, som er den dobbeltlasten Team Valp ble varslet om da vi ba om tilgang.
+     * Den er tidsbegrenset: skyggen slås av ved cutover, og fram til da kalles ny vei aldri på cachede svar.
+     *
      * Den står av lokalt fordi lokalmiljøet ikke har noen tiltakshistorikk å svare med, og en skygge som bare feiler er støy.
-     * Begge deler er én linje som endres og deployes; en bryter utenfor koden kjøper ingenting når vi uansett må deploye.
+     * Dette er én linje som endres og deployes; en bryter utenfor koden kjøper ingenting når vi uansett må deploye.
      *
      * Hele kjeden fra ruta og ut til begge kildene kjøres i test uavhengig av dette — se `TiltaksdeltakelseSkyggeRouteTest`, som slår den på i test-konteksten.
      */
@@ -150,7 +153,7 @@ open class ApplicationContext(
             skyggescope = skyggescope,
             clock = clock,
             sikkerlogg = sikkerlogg,
-            påslag = Configuration.isDev(),
+            påslag = Configuration.isNais(),
         )
     }
 

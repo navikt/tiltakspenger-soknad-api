@@ -127,7 +127,10 @@ class TiltaksdeltakelseSkygge(
         utfall.kunINy.forEach { metricsCollector.tiltaksdeltakelseSkyggeKunINy.labels(it.kildestatus).inc() }
         utfall.ukjenteKildeverdier.forEach { metricsCollector.tiltaksdeltakelseSkyggeUkjentKildeverdi.labels(it.hva).inc() }
         utfall.manglendeKilder.forEach { metricsCollector.tiltaksdeltakelseSkyggeManglendeKilde.labels(it.name).inc() }
-        metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(if (utfall.harAvvik) UTFALL_AVVIK else UTFALL_LIKT).inc()
+
+        // Hvor mange rader vi faktisk har sammenlignet er svaret på «hvor mye har vi egentlig verifisert» — og dermed på når vi tør bytte vei.
+        metricsCollector.tiltaksdeltakelseSkyggeSammenlignedeDeltakelser.inc(utfall.antallFelles.toDouble())
+        metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(utfall.utfallsmerkelapp()).inc()
 
         if (!utfall.harAvvik) return
 
@@ -144,8 +147,22 @@ class TiltaksdeltakelseSkygge(
     }
 }
 
-/** De to veiene ga samme utvalg, med samme verdier på feltene søknaden bærer. */
+/**
+ * Skiller de tre utfallene fra hverandre.
+ *
+ * [UTFALL_TOMT] finnes fordi et oppslag uten deltakelser ellers ville telt som enighet: to tomme lister er trivielt like, og en skygge som kan melde «alt stemmer» uten å ha sammenlignet noe er ikke et avslutningskriterium å stole på.
+ */
+private fun Skyggeutfall.utfallsmerkelapp(): String = when {
+    harAvvik -> UTFALL_AVVIK
+    antallFelles > 0 -> UTFALL_LIKT
+    else -> UTFALL_TOMT
+}
+
+/** De to veiene ga samme utvalg, med samme verdier på feltene søknaden bærer — og utvalget var ikke tomt. */
 const val UTFALL_LIKT = "likt"
+
+/** Ingen av veiene ga noe å sammenligne, så kjøringen sier ingenting om hvorvidt de er enige. */
+const val UTFALL_TOMT = "tomt"
 
 /** De to veiene var uenige om minst én rad eller ett felt. */
 const val UTFALL_AVVIK = "avvik"
