@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 interface PdfService {
-    suspend fun lagPdf(søknad: Søknad): Either<HttpKlientError, Pair<ByteArray, ByteArray?>>
+    suspend fun lagPdf(søknad: Søknad): Either<HttpKlientError, ByteArray>
 
     suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>>
 }

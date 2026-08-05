@@ -81,9 +81,7 @@ open class TestApplicationContext(
     )
 
     override val pdfGenerator = PdfClient(
-        pdfEndpoint = "http://pdfgen.test",
         pdfgenrsEndpoint = "http://pdfgenrs.test",
-        isLocalOrDev = isLocalOrDev,
         clock = clock,
         transport = pdfTransport,
     )

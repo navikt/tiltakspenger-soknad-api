@@ -166,9 +166,7 @@ open class ApplicationContext(
 
     open val pdfGenerator: PdfGenerator by lazy {
         PdfClient(
-            pdfEndpoint = Configuration.pdfUrl,
             pdfgenrsEndpoint = Configuration.pdfgenrsUrl,
-            isLocalOrDev = Configuration.isLocalOrDev(),
             clock = clock,
         )
     }

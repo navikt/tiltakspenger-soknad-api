@@ -24,12 +24,8 @@ class PdfClientTest {
 
     private fun klient(
         transport: HttpTransport,
-        isLocalOrDev: Boolean = false,
-        pdfEndpoint: String = "http://pdf",
     ) = PdfClient(
-        pdfEndpoint = pdfEndpoint,
         pdfgenrsEndpoint = "http://pdfgenrs",
-        isLocalOrDev = isLocalOrDev,
         clock = fixedClock,
         transport = transport,
     )
@@ -50,31 +46,15 @@ class PdfClientTest {
 
             runTest {
                 val klient = PdfClient(
-                    pdfEndpoint = wiremock.baseUrl(),
-                    pdfgenrsEndpoint = "http://pdfgenrs",
-                    isLocalOrDev = false,
+                    pdfgenrsEndpoint = wiremock.baseUrl(),
                     clock = fixedClock,
                 )
 
-                val (hovedPdf, skyggePdf) = klient.genererPdf(søknad()).getOrFail()
+                val hovedPdf = klient.genererPdf(søknad()).getOrFail()
 
-                hovedPdf.toList() shouldBe pdf.toList()
-                skyggePdf shouldBe null
+                hovedPdf shouldBe pdf
             }
         }
-    }
-
-    @Test
-    fun `genererer også skygge-pdf fra pdfgenrs i local og dev`() = runTest {
-        val transport = FakeHttpTransport()
-        transport.leggIKøBytes(pdf, contentType = "application/pdf")
-        transport.leggIKøBytes(pdf, contentType = "application/pdf")
-
-        val (hovedPdf, skyggePdf) = klient(transport, isLocalOrDev = true).genererPdf(søknad()).getOrFail()
-
-        hovedPdf.toList() shouldBe pdf.toList()
-        skyggePdf!!.toList() shouldBe pdf.toList()
-        transport.mottatteKall.map { it.uri.host }.toSet() shouldBe setOf("pdf", "pdfgenrs")
     }
 
     @Test
@@ -85,7 +65,7 @@ class PdfClientTest {
         klient(transport).genererPdf(søknad()).getOrFail()
 
         val kall = transport.mottatteKall.single()
-        kall.uri.toString() shouldBe "http://pdf/$PDFGEN_PATH/$SOKNAD_TEMPLATE"
+        kall.uri.toString() shouldBe "http://pdfgenrs/$PDFGEN_PATH/$SOKNAD_TEMPLATE"
         kall.request.headers().firstValue("Content-Type").get() shouldBe "application/json"
         kall.request.headers().firstValue("Accept").get() shouldBe "application/pdf"
         kall.request.headers().firstValue("X-Correlation-ID").isPresent shouldBe true
@@ -100,16 +80,6 @@ class PdfClientTest {
         val feil = klient(transport).genererPdf(søknad()).leftOrNull()!!
 
         feil.shouldBeInstanceOf<HttpKlientError.UventetStatus>().statusCode shouldBe 404
-    }
-
-    @Test
-    fun `feiler skygge-kallet, feiler hele genereringen i local og dev`() = runTest {
-        val transport = FakeHttpTransport()
-        transport.leggIKøBytes(pdf, contentType = "application/pdf")
-        transport.leggIKøStatus(500, body = "pdfgenrs er nede")
-
-        klient(transport, isLocalOrDev = true).genererPdf(søknad()).leftOrNull()!!
-            .shouldBeInstanceOf<HttpKlientError.UventetStatus>().statusCode shouldBe 500
     }
 
     @Test

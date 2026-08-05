@@ -1,11 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.pdf
 
 import arrow.core.Either
-import arrow.core.flatMap
 import arrow.core.raise.either
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlient
 import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlientConfig
@@ -26,7 +23,6 @@ import java.time.Clock
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.measureTimedValue
 
 const val PDFGEN_PATH = "api/v1/genpdf/tpts"
 const val PDFGEN_IMAGE_PATH = "api/v1/genpdf/image/tpts"
@@ -51,9 +47,7 @@ const val SOKNAD_TEMPLATE = "soknad"
  * @param transport Det eneste stedet klienten rører nettverket; default er produksjonstransporten, tester sender inn `FakeHttpTransport`.
  */
 class PdfClient(
-    pdfEndpoint: String,
     pdfgenrsEndpoint: String,
-    private val isLocalOrDev: Boolean,
     clock: Clock,
     connectTimeout: Duration = 30.seconds,
     timeout: Duration = 30.seconds,
@@ -70,30 +64,13 @@ class PdfClient(
         transport = transport,
     )
 
-    private val søknadUri = URI.create("$pdfEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE")
     private val pdfgenrsSøknadUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE")
     private val bildeUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_IMAGE_PATH")
 
-    /*
-        TODO - pdfgenrs: skift tilbake til ByteArray når det er verifisert at PDF fra pdfgenrs er ok.
-            I local/dev kalles pdfgenrs i parallell (skygge-kall) slik at begge PDF-ene kan journalføres og sammenlignes manuelt i Gosys.
-     */
-    override suspend fun genererPdf(søknad: Søknad): Either<HttpKlientError, Pair<ByteArray, ByteArray?>> {
+    override suspend fun genererPdf(søknad: Søknad): Either<HttpKlientError, ByteArray> {
         log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
-        if (!isLocalOrDev) {
-            return genererPdf(søknad, søknadUri).map { it to null }
-        }
-        return coroutineScope {
-            val pdfgenDeferred = async { measureTimedValue { genererPdf(søknad, søknadUri) } }
-            val pdfgenrsDeferred = async { measureTimedValue { genererPdf(søknad, pdfgenrsSøknadUri) } }
 
-            val (pdfgen, pdfgenDuration) = pdfgenDeferred.await()
-            val (pdfgenrs, pdfgenrsDuration) = pdfgenrsDeferred.await()
-
-            log.info { "pdfgen brukte $pdfgenDuration, pdfgenrs brukte $pdfgenrsDuration" }
-
-            pdfgen.flatMap { pdf -> pdfgenrs.map { skyggePdf -> pdf to skyggePdf } }
-        }
+        return genererPdf(søknad, pdfgenrsSøknadUri)
     }
 
     private suspend fun genererPdf(søknad: Søknad, uri: URI): Either<HttpKlientError, ByteArray> =
@@ -103,9 +80,10 @@ class PdfClient(
             headere = listOf(NavHeadere.xCorrelationId(UUID.randomUUID().toString())),
         ).map { it.body }
 
-    override suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>> = either {
-        vedlegg.map { konverter(it).bind() }
-    }
+    override suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>> =
+        either {
+            vedlegg.map { konverter(it).bind() }
+        }
 
     private suspend fun konverter(vedlegg: Vedlegg): Either<KunneIkkeKonvertereVedlegg, Vedlegg> = either {
         when (val contentType = vedlegg.dokument.detect()) {

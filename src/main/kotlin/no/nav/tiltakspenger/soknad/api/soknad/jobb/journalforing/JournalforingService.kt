@@ -59,7 +59,7 @@ class JournalforingService(
             vedleggsnavn = vedlegg.map { it.filnavn },
         )
 
-        val (pdf, pdfgenrsPdf) = pdfService.lagPdf(søknad).mapLeft { feil ->
+        val pdf = pdfService.lagPdf(søknad).mapLeft { feil ->
             feil.loggFeil(log, "generering av søknadspdf", kontekst, sikkerlogg)
             KunneIkkeOpprettDokumenter.PdfGenereringFeilet
         }.bind()
@@ -79,23 +79,6 @@ class JournalforingService(
             callId = callId,
             saksnummer = saksnummer,
         ).tilDomenefeil(kontekst).bind()
-
-        /*
-            TODO - pdfgenrs: fjern journalføringen av pdfgenrs-pdf'en når det er verifisert at pdf'en er ok.
-                Vi journalfører den kun for å manuelt kunne sjekke at pdfgenrs genererer riktig pdf i dev.
-                Vedleggene journalføres kun på den ordinære journalposten.
-         */
-        pdfgenrsPdf?.let {
-            dokarkivService.sendPdfTilDokarkiv(
-                pdf = it,
-                søknad = søknad,
-                fnr = fnr,
-                vedlegg = emptyList(),
-                callId = callId,
-                saksnummer = saksnummer,
-                pdfgenrs = true,
-            ).tilDomenefeil("$kontekst (pdfgenrs-skyggejournalpost)").bind()
-        }
 
         journalpostId to søknad
     }

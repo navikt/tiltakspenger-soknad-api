@@ -15,7 +15,6 @@ import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.testutils.TestApplicationContext
 import no.nav.tiltakspenger.soknad.api.testutils.enkelPdf
-import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
@@ -144,23 +143,6 @@ class SøknadJobbServiceTest {
             "/api/v1/genpdf/tpts/soknad",
             "/api/v1/genpdf/image/tpts",
         )
-    }
-
-    @Test
-    fun `journalførLagredeSøknader journalfører også skygge-pdf-en fra pdfgenrs lokalt og i dev`() = runTest {
-        val tac = TestApplicationContext(isLocalOrDev = true)
-        val søknad = tac.medSøknad(tpSøknad(saksnummer = saksnummer))
-        tac.pdlTransport.leggIKøJson(søkerRespons())
-        // pdfgen og pdfgenrs kalles i parallell, så begge svarene må ligge i køen.
-        tac.pdfTransport.leggIKøBytes(enkelPdf(), contentType = "application/pdf")
-        tac.pdfTransport.leggIKøBytes(enkelPdf(), contentType = "application/pdf")
-        tac.dokarkivTransport.leggIKøJson("""{"journalpostId":"15","journalpostferdigstilt":true}""")
-        tac.dokarkivTransport.leggIKøJson("""{"journalpostId":"16","journalpostferdigstilt":true}""")
-
-        tac.søknadJobbService.journalførLagredeSøknader(correlationId)
-
-        tac.søknadRepo.hentSøknad(søknad.id)?.journalpostId shouldBe JournalpostId("15")
-        tac.dokarkivTransport.mottatteKall.size shouldBe 2
     }
 
     @Test
