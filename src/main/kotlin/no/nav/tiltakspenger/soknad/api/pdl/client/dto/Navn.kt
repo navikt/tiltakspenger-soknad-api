@@ -5,7 +5,7 @@ data class Navn(
     val mellomnavn: String? = null,
     val etternavn: String,
     override val metadata: EndringsMetadata,
-    override val folkeregistermetadata: FolkeregisterMetadata,
+    override val folkeregistermetadata: FolkeregisterMetadata?,
 ) : Changeable
 
 fun avklarNavn(navn: List<Navn>): Navn {

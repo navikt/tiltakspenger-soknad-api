@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 data class Fødsel(
     val foedselsdato: LocalDate,
-    override val folkeregistermetadata: FolkeregisterMetadata,
+    override val folkeregistermetadata: FolkeregisterMetadata?,
     override val metadata: EndringsMetadata,
 ) : Changeable
 
