@@ -175,6 +175,13 @@ class SkyggesammenligningTest {
         utfall.antallFelles shouldBe 1
         utfall.kunIGammel.shouldBeEmpty()
         utfall.kunINy.shouldBeEmpty()
+        // Uten denne tellingen forsvinner tilfellet inn i mengden av rader begge veier er enige om.
+        utfall.søkbareVedUnntak shouldContainExactly listOf("Arena:IKKE_MOTT")
+    }
+
+    @Test
+    fun `en vanlig søkbar deltakelse telles ikke som unntak`() {
+        sammenlign(gammel = listOf(gammelRad()), ny = listOf(testdeltakelse())).søkbareVedUnntak.shouldBeEmpty()
     }
 
     @Test

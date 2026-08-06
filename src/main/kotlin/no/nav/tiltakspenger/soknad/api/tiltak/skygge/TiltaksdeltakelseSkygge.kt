@@ -125,6 +125,7 @@ class TiltaksdeltakelseSkygge(
         utfall.feltavvik.forEach { metricsCollector.tiltaksdeltakelseSkyggeFeltavvik.labels(it.felt).inc() }
         utfall.kunIGammel.forEach { metricsCollector.tiltaksdeltakelseSkyggeKunIGammel.labels(it.grunn).inc() }
         utfall.kunINy.forEach { metricsCollector.tiltaksdeltakelseSkyggeKunINy.labels(it.kildestatus).inc() }
+        utfall.søkbareVedUnntak.forEach { metricsCollector.tiltaksdeltakelseSkyggeSøkbarVedUnntak.labels(it).inc() }
         utfall.ukjenteKildeverdier.forEach { metricsCollector.tiltaksdeltakelseSkyggeUkjentKildeverdi.labels(it.hva).inc() }
         utfall.manglendeKilder.forEach { metricsCollector.tiltaksdeltakelseSkyggeManglendeKilde.labels(it.name).inc() }
 

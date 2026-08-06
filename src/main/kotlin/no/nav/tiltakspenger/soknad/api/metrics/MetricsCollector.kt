@@ -94,6 +94,13 @@ class MetricsCollector(
         .help("Oppslag der PDL ikke ga brukbare identer, så historikken ble hentet på innsendt fnr alene")
         .register(registry)
 
+    val tiltaksdeltakelseSkyggeSøkbarVedUnntak: Counter = Counter.build()
+        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_soekbar_ved_unntak")
+        .namespace(namespace)
+        .labelNames("kildestatus")
+        .help("Deltakelser som bare er søkbare fordi et unntak i Søkbarhet slipper dem gjennom — i dag Arenas «ikke møtt»")
+        .register(registry)
+
     val tiltaksdeltakelseSkyggeUkjentKildeverdi: Counter = Counter.build()
         .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_ukjent_kildeverdi")
         .namespace(namespace)

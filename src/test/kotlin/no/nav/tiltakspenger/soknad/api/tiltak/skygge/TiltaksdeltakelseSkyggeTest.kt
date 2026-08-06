@@ -130,6 +130,22 @@ class TiltaksdeltakelseSkyggeTest {
     }
 
     /**
+     * Arenas «ikke møtt» er søkbar via unntaket i `Søkbarhet`, så raden er felles og gir ingen avvik.
+     * Nettopp derfor telles den for seg: ellers finnes det ingen måte å svare på hvor ofte noen faktisk søker på et «ikke møtt».
+     */
+    @Test
+    fun `deltakelser som bare er søkbare via unntaket telles for seg`() = runTest {
+        val oppsett = Oppsett(påslag = true, scope = this)
+        oppsett.pdlTransport.leggIKøJson(pdlJson)
+        oppsett.historikkTransport.leggIKøJson(historikkJson.replace(""""status": "GJENNOMFORES"""", """"status": "IKKE_MOTT""""))
+
+        oppsett.skygge.sammenlign(fnr, listOf(gammelRad()), correlationId)
+
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeSøkbarVedUnntak.labels("Arena:IKKE_MOTT").get() shouldBe 1.0
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_LIKT).get() shouldBe 1.0
+    }
+
+    /**
      * En vei som feiler ofte skal ikke kunne se ut som en vei uten avvik.
      * Feilen er allerede logget i hente-tjenesten, så skyggen teller den bare.
      */

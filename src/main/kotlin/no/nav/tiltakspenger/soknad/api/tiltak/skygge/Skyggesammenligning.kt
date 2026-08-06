@@ -26,6 +26,13 @@ data class Skyggeutfall(
     val kunINy: List<KunINy>,
     val ukjenteKildeverdier: List<UkjentKildeverdi>,
     val manglendeKilder: Set<Tiltakskilde>,
+    /**
+     * Kildestatusen til radene som bare er søkbare fordi et unntak i `Søkbarhet` slipper dem gjennom — i dag Arenas «ikke møtt».
+     *
+     * Dette er ikke et avvik: begge veier tar med raden, og det er nettopp det unntaket sørger for.
+     * Det telles fordi tallet ellers er usynlig — når pariteten er gjenopprettet, forsvinner tilfellet inn i mengden av rader de to veiene er enige om, og da kan ingen svare på hvor ofte noen faktisk søker på et «ikke møtt».
+     */
+    val søkbareVedUnntak: List<String>,
 ) {
     val harAvvik: Boolean get() = feltavvik.isNotEmpty() || kunIGammel.isNotEmpty() || kunINy.isNotEmpty()
 }
@@ -128,6 +135,9 @@ fun sammenlignSkygge(
         },
         ukjenteKildeverdier = ny.ukjenteKildeverdier,
         manglendeKilder = ny.meldinger.manglendeKilder,
+        søkbareVedUnntak = nyPerId.values
+            .filter { it.søkbarhet(iDato) is Søkbarhet.KanSøkesPåVedUnntak }
+            .map { "${it.kildestatus.kilde}:${it.kildestatus.kodeIKontrakten}" },
     )
 }
 
