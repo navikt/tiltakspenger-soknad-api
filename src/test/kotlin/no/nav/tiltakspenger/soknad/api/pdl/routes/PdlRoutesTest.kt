@@ -91,6 +91,25 @@ class PdlRoutesTest {
     }
 
     @Test
+    fun `get på personalia-endepunkt svarer 200 når PDL utelater folkeregistermetadata`() {
+        // PDL sender folkeregistermetadata=null på opplysninger som ikke er mastret i Folkeregisteret.
+        // Da DTO-ene krevde feltet, feilet hele oppslaget på deserialiseringen og ruta svarte 500.
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer), utenFregmeta = true))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnFødselsnummer, utenFregmeta = true))
+
+            val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val body: PersonDTO = response.body()
+            body.fornavn shouldBe "Fornavn"
+            body.barn.single().fornavn shouldBe "Barn"
+        }
+    }
+
+    @Test
     fun `get på personalia-endepunkt slår opp fødselsnummeret i pid-claimet`() {
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)

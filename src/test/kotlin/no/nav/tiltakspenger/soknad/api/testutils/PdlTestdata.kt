@@ -14,33 +14,39 @@ private val folkeregistermetadata = """
     }
 """.trimIndent()
 
-private fun navn(fornavn: String, mellomnavn: String?, etternavn: String) = """
+/**
+ * PDL svarer `folkeregistermetadata: null` på opplysninger som ikke er mastret i Folkeregisteret.
+ * Feltet er nullable i PDL-skjemaet, og fixturene må kunne gjengi begge formene.
+ */
+private fun fregmeta(uten: Boolean) = if (uten) "null" else folkeregistermetadata
+
+private fun navn(fornavn: String, mellomnavn: String?, etternavn: String, utenFregmeta: Boolean) = """
     {
       "fornavn": "$fornavn",
       "mellomnavn": ${mellomnavn?.let { "\"$it\"" } ?: "null"},
       "etternavn": "$etternavn",
       "metadata": $metadata,
-      "folkeregistermetadata": $folkeregistermetadata
+      "folkeregistermetadata": ${fregmeta(utenFregmeta)}
     }
 """.trimIndent()
 
-private fun fødsel(dato: String) = """
+private fun fødsel(dato: String, utenFregmeta: Boolean) = """
     {
       "foedselsdato": "$dato",
       "metadata": $metadata,
-      "folkeregistermetadata": $folkeregistermetadata
+      "folkeregistermetadata": ${fregmeta(utenFregmeta)}
     }
 """.trimIndent()
 
-private fun adressebeskyttelse(gradering: AdressebeskyttelseGradering?) =
-    gradering?.let { """{ "gradering": "$it", "metadata": $metadata, "folkeregistermetadata": $folkeregistermetadata }""" } ?: ""
+private fun adressebeskyttelse(gradering: AdressebeskyttelseGradering?, utenFregmeta: Boolean) =
+    gradering?.let { """{ "gradering": "$it", "metadata": $metadata, "folkeregistermetadata": ${fregmeta(utenFregmeta)} }""" } ?: ""
 
-private fun barnRelasjon(ident: String) = """
+private fun barnRelasjon(ident: String, utenFregmeta: Boolean) = """
     {
       "relatertPersonsIdent": "$ident",
       "relatertPersonsRolle": "BARN",
       "metadata": $metadata,
-      "folkeregistermetadata": $folkeregistermetadata
+      "folkeregistermetadata": ${fregmeta(utenFregmeta)}
     }
 """.trimIndent()
 
@@ -53,14 +59,15 @@ fun søkerRespons(
     gradering: AdressebeskyttelseGradering? = null,
     barnIdenter: List<String> = emptyList(),
     død: Boolean = false,
+    utenFregmeta: Boolean = false,
 ): String = """
     {
       "data": {
         "hentPerson": {
-          "navn": [ ${navn(fornavn, mellomnavn, etternavn)} ],
-          "adressebeskyttelse": [ ${adressebeskyttelse(gradering)} ],
-          "foedselsdato": [ ${fødsel(fødselsdato)} ],
-          "forelderBarnRelasjon": [ ${barnIdenter.joinToString(",") { barnRelasjon(it) }} ],
+          "navn": [ ${navn(fornavn, mellomnavn, etternavn, utenFregmeta)} ],
+          "adressebeskyttelse": [ ${adressebeskyttelse(gradering, utenFregmeta)} ],
+          "foedselsdato": [ ${fødsel(fødselsdato, utenFregmeta)} ],
+          "forelderBarnRelasjon": [ ${barnIdenter.joinToString(",") { barnRelasjon(it, utenFregmeta) }} ],
           "doedsfall": [ ${if (død) """{ "doedsdato": "2024-01-01" }""" else ""} ]
         },
         "hentGeografiskTilknytning": {
@@ -76,22 +83,23 @@ fun barnRespons(
     fornavn: String = "Barn",
     etternavn: String = "Barnesen",
     fødselsdato: String = "2020-06-21",
+    utenFregmeta: Boolean = false,
 ): String = """
     {
       "data": {
-        "hentPersonBolk": [ ${barnIBolk(ident, fornavn, etternavn, fødselsdato)} ]
+        "hentPersonBolk": [ ${barnIBolk(ident, fornavn, etternavn, fødselsdato, utenFregmeta)} ]
       }
     }
 """.trimIndent()
 
-private fun barnIBolk(ident: String, fornavn: String, etternavn: String, fødselsdato: String) = """
+private fun barnIBolk(ident: String, fornavn: String, etternavn: String, fødselsdato: String, utenFregmeta: Boolean) = """
     {
       "ident": "$ident",
       "code": "ok",
       "person": {
-        "navn": [ ${navn(fornavn, null, etternavn)} ],
+        "navn": [ ${navn(fornavn, null, etternavn, utenFregmeta)} ],
         "adressebeskyttelse": [],
-        "foedselsdato": [ ${fødsel(fødselsdato)} ],
+        "foedselsdato": [ ${fødsel(fødselsdato, utenFregmeta)} ],
         "doedsfall": []
       }
     }
