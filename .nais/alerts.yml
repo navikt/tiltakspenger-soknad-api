@@ -1,3 +1,7 @@
+# nais/deploy templaterer manifestet med handlebars når workflowen sender variabler (delte deploy-alerts sender alltid datasource).
+# Prometheus-uttrykk må derfor escapes med backslash - \{{ $labels.app }} - ellers rendres de stille til tom streng.
+# Merk at templatingen også leser kommentarer, så uescapede krøllparentes-uttrykk er farlige selv her.
+# Bruk enkle anførselstegn rundt escapede verdier - i doble anførselstegn er \{ et ugyldig YAML-escape.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -14,7 +18,7 @@ spec:
           for: 30s
           annotations:
             consequence: '\{{ $labels.app }} har ikke klart å ta imot en eller flere søknader de siste 2 minuttene'
-            action: "Sjekk loggene til app {{ $labels.app }} for å se hvorfor søknad ikke har blitt tatt imot"
+            action: 'Sjekk loggene til app \{{ $labels.app }} for å se hvorfor søknad ikke har blitt tatt imot'
           labels:
             namespace: tpts
             severity: warning
@@ -24,7 +28,7 @@ spec:
           for: 30s
           annotations:
             consequence: '\{{ $labels.app }} har ikke klart å hente tiltak for en eller flere personer de siste 2 minuttene'
-            action: "Sjekk loggene til app {{ $labels.app }} for å se hvorfor søknad ikke får hentet tiltak"
+            action: 'Sjekk loggene til app \{{ $labels.app }} for å se hvorfor søknad ikke får hentet tiltak'
           labels:
             namespace: tpts
             severity: warning
@@ -34,7 +38,7 @@ spec:
           for: 30s
           annotations:
             consequence: '\{{ $labels.app }} har ikke klart å hente personalia for en eller flere personer de siste 2 minuttene'
-            action: "Sjekk loggene til app {{ $labels.app }} for å se hvorfor søknad ikke får hentet personalia"
+            action: 'Sjekk loggene til app \{{ $labels.app }} for å se hvorfor søknad ikke får hentet personalia'
           labels:
             namespace: tpts
             severity: warning
