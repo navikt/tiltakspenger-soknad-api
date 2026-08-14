@@ -39,7 +39,7 @@ dependencies {
     // Lås alle io.netty:* til samme versjon som forsikring mot fremtidig 4.1/4.2-drift.
     // ktor-server-netty drar inn netty 4.2.x; en BOM hindrer at en transitiv avhengighet
     // senere blander inn 4.1.x og legger duplikate baseklasser på classpath (jf. `-cp lib/*`).
-    implementation(platform("io.netty:netty-bom:4.2.16.Final"))
+    implementation(platform("io.netty:netty-bom:4.2.17.Final"))
 
     constraints {
         // kafka-clients (via libs:kafka) drar inn lz4-java 1.10.2, der de native XXHash-
