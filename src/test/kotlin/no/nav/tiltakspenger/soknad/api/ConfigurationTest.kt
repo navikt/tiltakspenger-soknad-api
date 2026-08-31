@@ -48,7 +48,6 @@ class ConfigurationTest {
         Configuration.dokarkivScope shouldBe "localhost"
         Configuration.saksbehandlingApiUrl shouldContain "http"
         Configuration.saksbehandlingApiScope shouldBe "localhost"
-        Configuration.pdfUrl shouldContain "http"
         Configuration.pdfgenrsUrl shouldContain "http"
         Configuration.avUrl shouldContain "http"
         Configuration.tiltakspengerTiltakUrl shouldContain "http"

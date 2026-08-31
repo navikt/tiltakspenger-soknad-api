@@ -54,7 +54,6 @@ AZURE_APP_WELL_KNOWN_URL=http://host.docker.internal:6969/azure/.well-known/open
 DOKARKIV_AUDIENCE=mock_audience
 DOKARKIV_ENDPOINT_URL=http://localhost:8484
 DOKARKIV_SCOPE=mock_scope
-PDF_ENDPOINT_URL=http://localhost:8081
 PDL_ENDPOINT_URL=http://localhost:8484/personalia
 PDL_SCOPE=mock_scope
 TILTAKSPENGER_ARENA_AUDIENCE=mock_audience

@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 /**
- * Verktøyene bak konverteringen av PDF-vedlegg: hver side rastreres til et bilde, bildene sendes gjennom pdfgen og settes sammen igjen.
+ * Verktøyene bak konverteringen av PDF-vedlegg: hver side rastreres til et bilde, bildene sendes gjennom pdfgenrs og settes sammen igjen.
  * Rastreringen er tilsiktet — den flater ut redigerbare skjemafelter før arkivering — men den koster tekstlaget og låser oppløsningen til 72 dpi.
  * Om det er riktig avveining er ikke avgjort; alternativene er beskrevet i navikt/tiltakspenger-soknad-api#865, og dagens oppførsel er låst i `PdfToolsTest`.
  */
@@ -63,7 +63,7 @@ object PdfTools {
     }
 }
 
-/** [type] er media-typen bildet sendes med til pdfgen, f.eks. [Detect.IMAGE_PNG]. */
+/** [type] er media-typen bildet sendes med til pdfgenrs, f.eks. [Detect.IMAGE_PNG]. */
 class Bilde(
     val type: String,
     val data: ByteArray,

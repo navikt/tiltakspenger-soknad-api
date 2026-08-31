@@ -74,7 +74,6 @@ spec:
         - application: tiltakspenger-tiltak
         - application: tiltakshistorikk
           namespace: team-mulighetsrommet
-        - application: tiltakspenger-pdfgen
         - application: tiltakspenger-pdfgenrs
         - application: tiltakspenger-saksbehandling-api
         - application: clamav
@@ -97,8 +96,6 @@ spec:
       value: {{ scope.vedtak }}
     - name: TILTAKSPENGER_VEDTAK_ENDPOINT_URL
       value: {{ endpoints.tiltakspengervedtak }}
-    - name: PDF_ENDPOINT_URL
-      value: {{ endpoints.pdf }}
     - name: PDFGENRS_ENDPOINT_URL
       value: {{ endpoints.pdfgenrs }}
     - name: AV_ENDPOINT_URL

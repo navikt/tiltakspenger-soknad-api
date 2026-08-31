@@ -3,7 +3,6 @@ kafka:
 cluster: prod-gcp
 endpoints:
   pdl: https://pdl-api.prod-fss-pub.nais.io/graphql
-  pdf: http://tiltakspenger-pdfgen
   pdfgenrs: http://tiltakspenger-pdfgenrs
   dokarkiv: https://dokarkiv.prod-fss-pub.nais.io
   tiltakspengertiltak: http://tiltakspenger-tiltak

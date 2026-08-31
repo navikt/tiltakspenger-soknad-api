@@ -172,7 +172,7 @@ class SøknadJobbServiceTest {
         val tac = TestApplicationContext()
         val søknad = tac.medSøknad(tpSøknad(saksnummer = saksnummer))
         tac.pdlTransport.leggIKøJson(søkerRespons())
-        tac.pdfTransport.leggIKøStatus(500, "pdfgen er nede")
+        tac.pdfTransport.leggIKøStatus(500, "pdfgenrs er nede")
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 
@@ -187,7 +187,7 @@ class SøknadJobbServiceTest {
         val søknad = tac.medSøknad(tpSøknad(saksnummer = saksnummer, vedlegg = listOf(vedlegg)))
         tac.pdlTransport.leggIKøJson(søkerRespons())
         tac.pdfTransport.leggIKøBytes(enkelPdf(), contentType = "application/pdf")
-        tac.pdfTransport.leggIKøStatus(500, "pdfgen er nede")
+        tac.pdfTransport.leggIKøStatus(500, "pdfgenrs er nede")
 
         tac.søknadJobbService.journalførLagredeSøknader(correlationId)
 

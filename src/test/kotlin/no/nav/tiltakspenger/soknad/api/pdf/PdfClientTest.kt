@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 
 class PdfClientTest {
-    private val pdf = "dette er innholdet i pdf vi får tilbake fra pdfGen".toByteArray()
+    private val pdf = "dette er innholdet i pdf vi får tilbake fra pdfgenrs".toByteArray()
 
     private fun klient(
         transport: HttpTransport,
@@ -73,7 +73,7 @@ class PdfClientTest {
     }
 
     @Test
-    fun `feil fra pdfgen gir Left`() = runTest {
+    fun `feil fra pdfgenrs gir Left`() = runTest {
         val transport = FakeHttpTransport()
         transport.leggIKøStatus(404, body = "finnes ikke")
 
@@ -95,7 +95,7 @@ class PdfClientTest {
         konvertert.dokument.toList() shouldBe pdf.toList()
 
         val kall = transport.mottatteKall.single()
-        // Bildekonverteringen går mot pdfgenrs, ikke pdfgen, også i prod.
+        // Bildekonverteringen går mot det egne bilde-endepunktet, ikke søknadsmalen.
         kall.uri.toString() shouldBe "http://pdfgenrs/$PDFGEN_IMAGE_PATH"
         kall.request.headers().firstValue("Content-Type").get() shouldBe IMAGE_PNG
         kall.request.headers().firstValue("Accept").get() shouldBe "application/pdf"
@@ -141,7 +141,7 @@ class PdfClientTest {
     @Test
     fun `feil fra bilde-endepunktet gir KallFeilet`() = runTest {
         val transport = FakeHttpTransport()
-        transport.leggIKøStatus(500, body = "pdfgen er nede")
+        transport.leggIKøStatus(500, body = "pdfgenrs er nede")
 
         val feil = klient(transport).konverterVedlegg(listOf(vedlegg(pngBytes(), IMAGE_PNG))).leftOrNull()!!
 
