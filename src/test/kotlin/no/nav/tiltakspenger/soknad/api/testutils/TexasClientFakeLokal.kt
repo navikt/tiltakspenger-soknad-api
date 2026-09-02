@@ -13,7 +13,7 @@ import java.time.Clock
  */
 class TexasClientFakeLokal(
     private val clock: Clock,
-    private val fnr: String = "12345678910",
+    private val fnr: String = nyttTestFødselsnummer(),
 ) : TexasClient {
     override suspend fun introspectToken(
         token: String,

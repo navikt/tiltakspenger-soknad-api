@@ -9,7 +9,6 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.CorrelationId
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.getOrFail
@@ -18,11 +17,13 @@ import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFnr
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.testTokenProvider
 import org.junit.jupiter.api.Test
 
 class SaksbehandlingApiKlientTest {
-    private val fnr = Fnr.fromString("12345678910")
+    private val fnr = nyttTestFnr()
     private val correlationId = CorrelationId("correlation-id")
 
     private fun klient(baseUrl: String, transport: HttpTransport? = null) = if (transport == null) {
@@ -56,7 +57,7 @@ class SaksbehandlingApiKlientTest {
 
         val kall = transport.mottatteKall.single()
         kall.uri.toString() shouldBe "http://sb-api/saksnummer"
-        kall.bodyTekst shouldBe """{"fnr":"12345678910"}"""
+        kall.bodyTekst shouldBe """{"fnr":"${fnr.verdi}"}"""
         kall.request.headers().firstValue("Nav-Call-Id").get() shouldBe "correlation-id"
         kall.request.headers().firstValue("Authorization").get() shouldBe "Bearer test-token"
     }
@@ -112,7 +113,8 @@ class SaksbehandlingApiKlientTest {
 
     @Test
     fun `FnrDTO maskerer fnr i toString slik at det ikke lekker til logg`() {
-        FnrDTO("12345678910").toString() shouldBe "FnrDTO(fnr=*****)"
-        FnrDTO("12345678910").toString() shouldNotContain "12345678910"
+        val fnrVerdi = nyttTestFødselsnummer()
+        FnrDTO(fnrVerdi).toString() shouldBe "FnrDTO(fnr=*****)"
+        FnrDTO(fnrVerdi).toString() shouldNotContain fnrVerdi
     }
 }

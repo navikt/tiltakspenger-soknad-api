@@ -15,6 +15,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.FakeSøknadRepo
 import no.nav.tiltakspenger.soknad.api.testutils.enkelPdf
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.medApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.postSøknad
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakDto
 import org.junit.jupiter.api.Test
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test
  * Klientene fakene erstatter, dekkes av sine egne tester over `FakeHttpTransport`.
  */
 class LokalApplicationContextTest {
-    private val fnr = "12345678910"
+    private val fnr = nyttTestFødselsnummer()
 
     private fun lokalKontekst() = LokalApplicationContext(
         clock = fixedClock,

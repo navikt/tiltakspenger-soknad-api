@@ -7,6 +7,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFnr
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
@@ -29,7 +30,7 @@ class PersonTest {
     }
 
     private fun mockPerson(
-        fnr: Fnr = Fnr.fromString("02058938710"),
+        fnr: Fnr = nyttTestFnr(),
         gradering: AdressebeskyttelseGradering = AdressebeskyttelseGradering.UGRADERT,
         forelderBarnRelasjon: List<ForelderBarnRelasjon> = emptyList(),
         erDød: Boolean = false,

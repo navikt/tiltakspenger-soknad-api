@@ -11,6 +11,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.barnRespons
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikk
 import org.junit.jupiter.api.Test
@@ -18,8 +19,8 @@ import java.io.IOException
 import java.time.LocalDate
 
 class PdlRoutesTest {
-    private val testFødselsnummer = "12345678910"
-    private val barnFødselsnummer = "02062012345"
+    private val testFødselsnummer = nyttTestFødselsnummer()
+    private val barnFødselsnummer = nyttTestFødselsnummer()
 
     @Test
     fun `get på personalia-endepunkt svarer med personalia fra PDL når tokenet er gyldig`() {
@@ -60,7 +61,7 @@ class PdlRoutesTest {
     @Test
     fun `get på personalia-endepunkt filtrerer barn på tiltakets tidligste fra-dato, ikke dagens dato`() {
         // Barnet fyller 16 mellom tiltakets fra-dato og dagens dato, og skal dermed regnes som under 16.
-        val barnSomFyller16 = "15120812345"
+        val barnSomFyller16 = nyttTestFødselsnummer()
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
             tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk(deltakelseFom = LocalDate.of(2024, 12, 1))))
@@ -76,7 +77,7 @@ class PdlRoutesTest {
 
     @Test
     fun `get på personalia-endepunkt utelater barn som har fylt 16 på styrende dato`() {
-        val barnSomHarFylt16 = "15120812345"
+        val barnSomHarFylt16 = nyttTestFødselsnummer()
         medTestApplikasjon { tac ->
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
             tac.tiltakTransport.leggIKøJson(listOf(tiltakshistorikk()))

@@ -15,6 +15,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.PersonKlientFake
 import no.nav.tiltakspenger.soknad.api.testutils.SaksbehandlingKlientFake
 import no.nav.tiltakspenger.soknad.api.testutils.TexasClientFakeLokal
 import no.nav.tiltakspenger.soknad.api.testutils.TiltakKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
 import java.time.Clock
 import java.time.LocalDate
@@ -30,7 +31,7 @@ import java.time.LocalDate
 class LokalApplicationContext(
     clock: Clock,
     søknadRepo: SøknadRepo,
-    private val fnr: String = "12345678910",
+    private val fnr: String = nyttTestFødselsnummer(),
     /** Drift bruker det globale registeret; tester sender inn sitt eget, slik at to kontekster i samme JVM ikke kolliderer. */
     collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry,
 ) : ApplicationContext(
@@ -40,8 +41,8 @@ class LokalApplicationContext(
 ) {
     /** Barn under 16 år, slik at barnetillegg kan fylles ut lokalt. */
     private val barn: Map<String, LocalDate> = mapOf(
-        "01011012345" to LocalDate.now(clock).minusYears(8),
-        "02022014567" to LocalDate.now(clock).minusYears(12),
+        nyttTestFødselsnummer() to LocalDate.now(clock).minusYears(8),
+        nyttTestFødselsnummer() to LocalDate.now(clock).minusYears(12),
     )
 
     override val texasClient: TexasClient = TexasClientFakeLokal(clock, fnr)

@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 import no.nav.tiltakspenger.soknad.api.testutils.TestApplicationContext
 import no.nav.tiltakspenger.soknad.api.testutils.enkelPdf
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.postSøknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_ANTALL_VEDLEGG
 import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_FILSTØRRELSE_BYTES
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class SøknadRoutesTest {
-    private val testFødselsnummer = "12345678910"
+    private val testFødselsnummer = nyttTestFødselsnummer()
 
     @Test
     fun `post uten token gir 401`() {

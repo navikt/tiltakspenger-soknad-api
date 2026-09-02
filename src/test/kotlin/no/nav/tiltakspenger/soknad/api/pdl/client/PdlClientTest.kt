@@ -19,13 +19,14 @@ import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
 import no.nav.tiltakspenger.libs.texas.client.TexasHttpClient
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.testTokenProvider
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class PdlClientTest {
-    private val fødselsnummer = "02058938710"
-    private val barnFødselsnummer = "21062002856"
+    private val fødselsnummer = nyttTestFødselsnummer()
+    private val barnFødselsnummer = nyttTestFødselsnummer()
 
     // TexasHttpClient er en final klasse som ikke kan byttes ut i libs, så OBO-vekslingen mockes; selve HTTP-kallet går gjennom den ekte pipelinen.
     private fun texasClient() = mockk<TexasHttpClient>().also {

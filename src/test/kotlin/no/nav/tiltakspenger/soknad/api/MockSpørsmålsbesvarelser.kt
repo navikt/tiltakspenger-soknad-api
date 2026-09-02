@@ -17,6 +17,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadflyktninger
 import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.tiltak.Deltakelsesperiode
 import java.time.LocalDate
 import java.util.UUID
@@ -128,7 +129,7 @@ fun mockManueltRegistrertBarn(
     )
 
 fun mockRegistrertBarn(
-    fnr: String = "12345678910",
+    fnr: String = nyttTestFødselsnummer(),
     fornavn: String = "Test",
     etternavn: String = "Testesen",
     mellomnavn: String? = null,

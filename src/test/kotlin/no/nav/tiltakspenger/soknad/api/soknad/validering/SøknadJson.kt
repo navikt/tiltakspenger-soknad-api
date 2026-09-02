@@ -6,6 +6,7 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.soknad.api.domain.Personopplysninger
 import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 
 fun søknad(
     spørsmålsbesvarelser: SpørsmålsbesvarelserDTO = spørsmålsbesvarelser(),
@@ -22,7 +23,7 @@ fun søknad(
 
 private fun personopplysninger() =
     Personopplysninger(
-        ident = "12345678910",
+        ident = nyttTestFødselsnummer(),
         fornavn = "Test",
         etternavn = "Testesen",
     )

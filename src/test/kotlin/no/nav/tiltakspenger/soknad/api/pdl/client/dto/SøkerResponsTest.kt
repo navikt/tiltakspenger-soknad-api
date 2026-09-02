@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -13,8 +14,8 @@ import java.time.LocalDateTime
  * Selve happy-pathen dekkes ende-til-ende av rute- og jobb-testene.
  */
 class SøkerResponsTest {
-    private val fødselsnummer = "02058938710"
-    private val barnFødselsnummer = "21062002856"
+    private val fødselsnummer = nyttTestFødselsnummer()
+    private val barnFødselsnummer = nyttTestFødselsnummer()
 
     private fun metadata(master: String = "FREG", endringer: List<Endring> = emptyList()) =
         EndringsMetadata(endringer = endringer, master = master)

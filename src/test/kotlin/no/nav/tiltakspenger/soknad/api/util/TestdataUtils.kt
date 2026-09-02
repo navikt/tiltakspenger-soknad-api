@@ -12,13 +12,14 @@ import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 import java.time.LocalDateTime
 
 fun genererMottattSøknadForTest(
     id: SøknadId = SøknadId.random(),
     søknadSpm: SpørsmålsbesvarelserDTO = spørsmålsbesvarelser(),
-    fnr: String = "12345678901",
+    fnr: String = nyttTestFødselsnummer(),
     opprettet: LocalDateTime = nå(fixedClock),
     vedlegg: List<Vedlegg> = listOf(
         Vedlegg(

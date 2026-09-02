@@ -18,6 +18,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadflyktninger
 import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadover67
 import no.nav.tiltakspenger.soknad.api.soknad.Sykepenger
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import java.time.LocalDate
 import java.util.UUID
 
@@ -87,7 +88,7 @@ fun barnetillegg(
     ),
     registrerteBarnSøktBarnetilleggFor: List<RegistrertBarn> = listOf(
         RegistrertBarn(
-            fnr = "02058938710",
+            fnr = nyttTestFødselsnummer(),
             fornavn = "Test",
             fødselsdato = LocalDate.of(2023, 1, 1),
             etternavn = "Testesen",

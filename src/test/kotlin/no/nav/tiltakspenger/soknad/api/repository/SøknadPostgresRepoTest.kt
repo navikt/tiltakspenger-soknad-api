@@ -15,6 +15,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -182,7 +183,7 @@ class SøknadPostgresRepoTest {
     @Test
     fun `hent brukers søknader`() = withCleanDb { søknadRepo ->
         val nå = nå(fixedClock)
-        val fnr = "12345678910"
+        val fnr = nyttTestFødselsnummer()
         val mottattSøknad = genererMottattSøknadForTest(
             opprettet = nå,
             eier = Applikasjonseier.Tiltakspenger,

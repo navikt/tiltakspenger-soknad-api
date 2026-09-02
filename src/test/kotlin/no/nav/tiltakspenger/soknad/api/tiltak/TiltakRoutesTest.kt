@@ -14,13 +14,14 @@ import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_F
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikk
 import org.junit.jupiter.api.Test
 import java.io.IOException
 
 class TiltakRoutesTest {
-    private val testFødselsnummer = "12345678910"
+    private val testFødselsnummer = nyttTestFødselsnummer()
 
     @Test
     fun `get på tiltak-endepunkt svarer med tiltak når tokenet er gyldig`() {

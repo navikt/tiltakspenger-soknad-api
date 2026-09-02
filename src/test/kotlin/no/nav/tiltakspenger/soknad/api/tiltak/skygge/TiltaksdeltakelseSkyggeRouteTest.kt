@@ -11,6 +11,7 @@ import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
 import no.nav.tiltakspenger.soknad.api.testutils.TestApplicationContext
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakDto
 import org.junit.jupiter.api.Test
@@ -23,7 +24,7 @@ import java.time.LocalDate
  * Datoene ligger innenfor tidsrommet søknaden viser deltakelser fra, målt mot testklokka (2025-01-01).
  */
 class TiltaksdeltakelseSkyggeRouteTest {
-    private val testFødselsnummer = "12345678910"
+    private val testFødselsnummer = nyttTestFødselsnummer()
     private val deltakelseId = "0190c9a2-2222-7000-8000-000000000002"
     private val gjennomføringId = "0190c9a2-3333-7000-8000-000000000003"
 

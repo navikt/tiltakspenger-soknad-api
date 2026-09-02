@@ -11,7 +11,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.CorrelationId
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.fixedClockAt
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
@@ -23,6 +22,7 @@ import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.T
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkKlient
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.testutils.TestTokenProvider
+import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFnr
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -31,8 +31,8 @@ import java.time.LocalDate
  * Klokka står 2024-03-01, som er innenfor tidsrommet søknaden viser deltakelsene i testdataen fra.
  */
 class TiltaksdeltakelseSkyggeTest {
-    private val testFødselsnummer = "12345678901"
-    private val fnr = Fnr.fromString(testFødselsnummer)
+    private val fnr = nyttTestFnr()
+    private val testFødselsnummer = fnr.verdi
     private val correlationId = CorrelationId("test-kall-id")
     private val skyggeklokke = fixedClockAt(LocalDate.of(2024, 3, 1))
 
