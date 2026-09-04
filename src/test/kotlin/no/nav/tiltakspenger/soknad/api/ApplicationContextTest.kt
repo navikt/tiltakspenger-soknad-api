@@ -33,12 +33,9 @@ class ApplicationContextTest {
             context.texasClient
             context.metricsCollector
             context.personKlient
-            context.tiltakKlient
             context.pdlIdentklient
             context.tiltakshistorikkKlient
             context.tiltakshistorikkHenter
-            context.skyggescope
-            context.tiltaksdeltakelseSkygge
             context.avKlient
             context.pdfGenerator
             context.journalpostKlient
@@ -64,10 +61,8 @@ class ApplicationContextTest {
         // Klientene holder både HTTP-klient og cache, så en ny instans per oppslag ville vært en reell feil i drift.
         context.texasClient shouldBeSameInstanceAs context.texasClient
         context.personKlient shouldBeSameInstanceAs context.personKlient
-        context.tiltakKlient shouldBeSameInstanceAs context.tiltakKlient
-        // Skyggen deler scope mellom kjøringene; et nytt scope per oppslag ville lekket en trådpool per request.
-        context.skyggescope shouldBeSameInstanceAs context.skyggescope
-        context.tiltaksdeltakelseSkygge shouldBeSameInstanceAs context.tiltaksdeltakelseSkygge
+        context.pdlIdentklient shouldBeSameInstanceAs context.pdlIdentklient
+        context.tiltakshistorikkKlient shouldBeSameInstanceAs context.tiltakshistorikkKlient
         context.pdlService shouldBeSameInstanceAs context.pdlService
         context.søknadJobbService shouldBeSameInstanceAs context.søknadJobbService
         context.metricsCollector shouldBeSameInstanceAs context.metricsCollector

@@ -38,7 +38,6 @@ fun Route.pdlRoutes(
 
                 // Feilene er allerede logget i servicene; ruta oversetter dem bare til 500, som før migreringen.
                 val tiltak = tiltakService.hentTiltak(
-                    subjectToken = subjectToken,
                     fnr = fødselsnummer,
                     maskerArrangørnavn = true,
                     correlationId = CorrelationId(call.callId!!),

@@ -1,9 +1,6 @@
 package no.nav.tiltakspenger.soknad.api
 
 import io.prometheus.client.CollectorRegistry
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.libs.logging.infra.KotlinLoggingSikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
@@ -34,10 +31,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.journalforing.JournalforingService
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakspengerTiltakClient
-import no.nav.tiltakspenger.soknad.api.tiltak.skygge.TiltaksdeltakelseSkygge
 import java.time.Clock
 
 /**
@@ -91,18 +85,9 @@ open class ApplicationContext(
         )
     }
 
-    open val tiltakKlient: TiltakKlient by lazy {
-        TiltakspengerTiltakClient(
-            tiltakspengerTiltakEndpoint = Configuration.tiltakspengerTiltakUrl,
-            clock = clock,
-            tiltakspengerTiltakScope = Configuration.tiltakspengerTiltakScope,
-            texasClient = texasClient,
-        )
-    }
-
     /**
-     * De tre neste hører til skyggekjøringen av tiltaksdeltakelse-modulen, som skal overta for tiltakspenger-tiltak, og dør med den.
-     * Begge klientene går med systemtoken, slik dagens kjede om tiltakspenger-tiltak også gjør — brukertokenet autentiserer bare inn til oss.
+     * De tre neste utgjør hentingen av tiltaksdeltakelser: identer fra PDL, historikk fra `tiltakshistorikk` hos Team Valp, og tjenesten som binder dem sammen.
+     * Begge klientene går med systemtoken; brukertokenet autentiserer bare inn til oss.
      */
     open val pdlIdentklient: PdlIdentklient by lazy {
         PdlIdentklient(
@@ -125,35 +110,6 @@ open class ApplicationContext(
             tiltakshistorikkKlient = tiltakshistorikkKlient,
             pdlIdentklient = pdlIdentklient,
             clock = clock,
-        )
-    }
-
-    /**
-     * Scopet skyggekjøringen lever i, utenfor request-pathen.
-     * [SupervisorJob] gjør at én mislykket sammenligning ikke river med seg de andre, og IO-dispatcheren brukes fordi arbeidet er to nettverkskall.
-     */
-    open val skyggescope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
-
-    /**
-     * Skyggen kjører i både dev og prod.
-     *
-     * Prod ble tatt med fordi dev ikke har trafikk: `/tiltak` ble ikke kalt én gang der på et døgn, så empirien vi er ute etter — hvilke avviksklasser som faktisk opptrer, og hvor ofte — finnes bare i prod.
-     * Prisen er ett ekstra oppslag mot PDL og tiltakshistorikk per ferske henting, som er den dobbeltlasten Team Valp ble varslet om da vi ba om tilgang.
-     * Den er tidsbegrenset: skyggen slås av ved cutover, og fram til da kalles ny vei aldri på cachede svar.
-     *
-     * Den står av lokalt fordi lokalmiljøet ikke har noen tiltakshistorikk å svare med, og en skygge som bare feiler er støy.
-     * Dette er én linje som endres og deployes; en bryter utenfor koden kjøper ingenting når vi uansett må deploye.
-     *
-     * Hele kjeden fra ruta og ut til begge kildene kjøres i test uavhengig av dette — se `TiltaksdeltakelseSkyggeRouteTest`, som slår den på i test-konteksten.
-     */
-    open val tiltaksdeltakelseSkygge: TiltaksdeltakelseSkygge by lazy {
-        TiltaksdeltakelseSkygge(
-            tiltakshistorikkHenter = tiltakshistorikkHenter,
-            metricsCollector = metricsCollector,
-            skyggescope = skyggescope,
-            clock = clock,
-            sikkerlogg = sikkerlogg,
-            påslag = Configuration.isNais(),
         )
     }
 
@@ -198,7 +154,7 @@ open class ApplicationContext(
     }
 
     open val pdlService: PdlService by lazy { PdlService(personKlient, clock, sikkerlogg) }
-    open val tiltakService: TiltakService by lazy { TiltakService(tiltakKlient, clock, sikkerlogg, tiltaksdeltakelseSkygge) }
+    open val tiltakService: TiltakService by lazy { TiltakService(tiltakshistorikkHenter, clock, sikkerlogg) }
     open val avService: AvService by lazy { AvService(avKlient, sikkerlogg) }
     open val nySøknadService: NySøknadService by lazy { NySøknadService(søknadRepo) }
     open val identhendelseService: IdenthendelseService by lazy { IdenthendelseService(søknadRepo) }

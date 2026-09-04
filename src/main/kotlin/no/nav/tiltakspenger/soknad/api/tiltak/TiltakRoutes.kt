@@ -46,7 +46,6 @@ fun Route.tiltakRoutes(
                 val adressebeskyttelse = pdlService.hentAdressebeskyttelse(fødselsnummer.verdi, subjectToken, callId)
                     .getOrElse { return@get call.serverFeil(metricsCollector) }
                 val tiltak = tiltakService.hentTiltak(
-                    subjectToken = subjectToken,
                     maskerArrangørnavn = adressebeskyttelse != UGRADERT,
                     fnr = fødselsnummer,
                     correlationId = CorrelationId(callId),

@@ -71,7 +71,6 @@ spec:
           cluster: {{ cluster }}
     outbound:
       rules:
-        - application: tiltakspenger-tiltak
         - application: tiltakshistorikk
           namespace: team-mulighetsrommet
         - application: tiltakspenger-pdfgenrs
@@ -100,10 +99,6 @@ spec:
       value: {{ endpoints.pdfgenrs }}
     - name: AV_ENDPOINT_URL
       value: {{ endpoints.av }}
-    - name: TILTAKSPENGER_TILTAK_ENDPOINT_URL
-      value: {{ endpoints.tiltakspengertiltak }}
-    - name: TILTAKSPENGER_TILTAK_SCOPE
-      value: {{ scope.tiltakspengertiltak }}
     - name: TILTAKSHISTORIKK_ENDPOINT_URL
       value: {{ endpoints.tiltakshistorikk }}
     - name: TILTAKSHISTORIKK_SCOPE

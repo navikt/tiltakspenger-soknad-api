@@ -50,8 +50,6 @@ class ConfigurationTest {
         Configuration.saksbehandlingApiScope shouldBe "localhost"
         Configuration.pdfgenrsUrl shouldContain "http"
         Configuration.avUrl shouldContain "http"
-        Configuration.tiltakspengerTiltakUrl shouldContain "http"
-        Configuration.tiltakspengerTiltakScope shouldBe "localhost"
         Configuration.tiltakshistorikkUrl shouldContain "http"
         Configuration.tiltakshistorikkScope shouldBe "localhost"
         Configuration.naisTokenIntrospectionEndpoint shouldContain "http"

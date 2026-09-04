@@ -54,8 +54,8 @@ dependencies {
     implementation("org.jetbrains:annotations:26.1.0")
     implementation("com.natpryce:konfig:1.6.10.0")
     implementation("com.github.navikt.tiltakspenger-libs:soknad-dtos:$felleslibVersion")
+    // Fortsatt i bruk for TiltakTypeDTO, som er arenakoden `/tiltak` svarer med og søknaden bærer videre.
     implementation("com.github.navikt.tiltakspenger-libs:tiltak-dtos:$felleslibVersion")
-    // TODO: Modulene er ikke tatt i bruk ennå — direktekall mot tiltakshistorikk er blokkert til tilgangs-PR-en i navikt/mulighetsrommet er merget.
     implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-domene:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-infrastruktur:$felleslibVersion")
     implementation("com.github.navikt.tiltakspenger-libs:common:$felleslibVersion")
@@ -137,7 +137,6 @@ dependencies {
     testImplementation("com.github.navikt.tiltakspenger-libs:persistering-test-common:$felleslibVersion")
     // FakeHttpTransport: ekte HttpKlient med byttet transport, så hele pipelinen kjører i test.
     testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion"))
-    testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-domene:$felleslibVersion"))
 }
 
 application {

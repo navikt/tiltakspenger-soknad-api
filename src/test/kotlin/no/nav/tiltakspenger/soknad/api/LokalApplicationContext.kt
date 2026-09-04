@@ -2,6 +2,8 @@ package no.nav.tiltakspenger.soknad.api
 
 import io.prometheus.client.CollectorRegistry
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.pdl.PdlIdentklient
+import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkKlient
 import no.nav.tiltakspenger.soknad.api.antivirus.AvKlient
 import no.nav.tiltakspenger.soknad.api.dokarkiv.JournalpostKlient
 import no.nav.tiltakspenger.soknad.api.pdf.PdfGenerator
@@ -13,16 +15,21 @@ import no.nav.tiltakspenger.soknad.api.testutils.JournalpostKlientFake
 import no.nav.tiltakspenger.soknad.api.testutils.PdfGeneratorFake
 import no.nav.tiltakspenger.soknad.api.testutils.PersonKlientFake
 import no.nav.tiltakspenger.soknad.api.testutils.SaksbehandlingKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.StåendeJsonTransport
 import no.nav.tiltakspenger.soknad.api.testutils.TexasClientFakeLokal
-import no.nav.tiltakspenger.soknad.api.testutils.TiltakKlientFake
+import no.nav.tiltakspenger.soknad.api.testutils.kometDeltakelse
 import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
-import no.nav.tiltakspenger.soknad.api.tiltak.TiltakKlient
+import no.nav.tiltakspenger.soknad.api.testutils.pdlIdenterRespons
+import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikkRespons
 import java.time.Clock
 import java.time.LocalDate
 
 /**
  * Konteksten [LokalMain] kjører med.
- * Hver utgående avhengighet er byttet ut med sin egen fake, og Texas godtar hvilket som helst token, så postgres er det eneste som må kjøre ved siden av.
+ * Ingen av de utgående avhengighetene rører nettverket, og Texas godtar hvilket som helst token, så postgres er det eneste som må kjøre ved siden av.
+ *
+ * De fleste avhengighetene er byttet ut med sin egen fake.
+ * Tiltaksdeltakelsene er unntaket: der står de ekte klientene med et stående svar i stedet for nettverk, siden hentingen går om to kilder og det er kjeden mellom dem som er verdt å kjøre lokalt.
  *
  * Klientene selv dekkes av sine egne tester over `FakeHttpTransport`; her er poenget at appen kjører uten eksterne avhengigheter.
  *
@@ -49,7 +56,35 @@ class LokalApplicationContext(
 
     override val personKlient: PersonKlient = PersonKlientFake(clock = clock, standardBarn = barn)
 
-    override val tiltakKlient: TiltakKlient = TiltakKlientFake(clock)
+    /**
+     * Tiltaksdeltakelsene lokalt: de ekte klientene med et stående svar i stedet for nettverk, så hele hentingen kjører — auth, deserialisering, søknadsguarden og tidsromsfilteret.
+     *
+     * Deltakelsen har både fra- og til-dato med vilje.
+     * Søknaden lar deg ikke velge et tiltak som mangler en av dem, men viser det i stedet under «tiltak som mangler start- eller sluttdato», og der stopper utfyllingen.
+     */
+    override val pdlIdentklient: PdlIdentklient = PdlIdentklient(
+        baseUrl = "http://lokal-pdl",
+        clock = clock,
+        authTokenProvider = systemTokenProvider(Configuration.pdlScope),
+        transport = StåendeJsonTransport { pdlIdenterRespons(fnr) },
+    )
+
+    override val tiltakshistorikkKlient: TiltakshistorikkKlient = TiltakshistorikkKlient(
+        baseUrl = "http://lokal-tiltakshistorikk",
+        clock = clock,
+        authTokenProvider = systemTokenProvider(Configuration.tiltakshistorikkScope),
+        transport = StåendeJsonTransport {
+            tiltakshistorikkRespons(
+                kometDeltakelse(
+                    fnr = fnr,
+                    tittel = "Arbeidsforberedende trening hos Lokal arrangør AS",
+                    arrangørnavn = "Lokal arrangør AS",
+                    fraOgMed = LocalDate.now(clock).minusMonths(1),
+                    tilOgMed = LocalDate.now(clock).plusMonths(3),
+                ),
+            )
+        },
+    )
 
     override val avKlient: AvKlient = AvKlientFake()
 

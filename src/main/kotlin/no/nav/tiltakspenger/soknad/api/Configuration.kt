@@ -33,8 +33,6 @@ object Configuration {
                 "VEDTAK_SCOPE" to System.getenv("VEDTAK_SCOPE"),
                 "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to System.getenv("TILTAKSPENGER_VEDTAK_ENDPOINT_URL"),
                 "AV_ENDPOINT_URL" to System.getenv("AV_ENDPOINT_URL"),
-                "TILTAKSPENGER_TILTAK_SCOPE" to System.getenv("TILTAKSPENGER_TILTAK_SCOPE"),
-                "TILTAKSPENGER_TILTAK_ENDPOINT_URL" to System.getenv("TILTAKSPENGER_TILTAK_ENDPOINT_URL"),
                 "TILTAKSHISTORIKK_SCOPE" to System.getenv("TILTAKSHISTORIKK_SCOPE"),
                 "TILTAKSHISTORIKK_ENDPOINT_URL" to System.getenv("TILTAKSHISTORIKK_ENDPOINT_URL"),
                 "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to System.getenv("NAIS_TOKEN_INTROSPECTION_ENDPOINT"),
@@ -59,8 +57,6 @@ object Configuration {
                 "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to "http://host.docker.internal:8080",
                 "PDFGENRS_ENDPOINT_URL" to "http://localhost:8084",
                 "AV_ENDPOINT_URL" to "http://localhost:8484/av",
-                "TILTAKSPENGER_TILTAK_SCOPE" to "localhost",
-                "TILTAKSPENGER_TILTAK_ENDPOINT_URL" to "http://localhost:8484",
                 "TILTAKSHISTORIKK_SCOPE" to "localhost",
                 "TILTAKSHISTORIKK_ENDPOINT_URL" to "http://localhost:8484",
                 "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to "http://localhost:7164/api/v1/introspect",
@@ -123,7 +119,6 @@ object Configuration {
     val pdlScope: String by lazy { config()[Key("PDL_SCOPE", stringType)] }
     val dokarkivScope: String by lazy { config()[Key("DOKARKIV_SCOPE", stringType)] }
     val saksbehandlingApiScope: String by lazy { config()[Key("VEDTAK_SCOPE", stringType)] }
-    val tiltakspengerTiltakScope: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_SCOPE", stringType)] }
     val tiltakshistorikkScope: String by lazy { config()[Key("TILTAKSHISTORIKK_SCOPE", stringType)] }
 
     val pdlUrl by lazy { config()[Key("PDL_ENDPOINT_URL", stringType)] }
@@ -137,7 +132,6 @@ object Configuration {
     val saksbehandlingApiUrl: String by lazy { config()[Key("TILTAKSPENGER_VEDTAK_ENDPOINT_URL", stringType)] }
     val pdfgenrsUrl: String by lazy { config()[Key("PDFGENRS_ENDPOINT_URL", stringType)] }
     val avUrl: String by lazy { config()[Key("AV_ENDPOINT_URL", stringType)] }
-    val tiltakspengerTiltakUrl: String by lazy { config()[Key("TILTAKSPENGER_TILTAK_ENDPOINT_URL", stringType)] }
     val tiltakshistorikkUrl: String by lazy { config()[Key("TILTAKSHISTORIKK_ENDPOINT_URL", stringType)] }
 
     val naisTokenIntrospectionEndpoint: String by lazy { config()[Key("NAIS_TOKEN_INTROSPECTION_ENDPOINT", stringType)] }

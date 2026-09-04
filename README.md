@@ -35,8 +35,9 @@ docker compose -f ../docker-compose-soknad.yml up postgresSoknad
 ```
 
 `LokalMain` kjører nøyaktig samme `start()`-rutine som i drift, men med `LokalApplicationContext`.
-Der er hver utgående avhengighet — PDL, tiltak, virussjekk, PDF-generering, journalføring og oversending til saksbehandling-api — byttet ut med sin egen fake, og hvilket som helst token godtas.
-Fakene ligger i testkildene ved siden av de andre testhjelperne, og implementerer den samme porten som produksjonsklienten.
+Der rører ingen utgående avhengighet nettverket, og hvilket som helst token godtas.
+PDL-personalia, virussjekk, PDF-generering, journalføring og oversending til saksbehandling-api er byttet ut med hver sin fake i testkildene, som implementerer den samme porten som produksjonsklienten.
+Tiltaksdeltakelsene er unntaket: der står de ekte klientene mot PDL og `tiltakshistorikk` med et stående JSON-svar i stedet for nettverk, siden hentingen går om to kilder og det er kjeden mellom dem som er verdt å kjøre lokalt.
 Klientene selv er dekket av sine egne tester over `FakeHttpTransport`; lokal kjøring skal bare gi en app som står på egne bein.
 Testbrukeren har to barn under 16 år og ett aktivt tiltak, slik at hele søknaden kan fylles ut.
 
@@ -56,10 +57,8 @@ DOKARKIV_ENDPOINT_URL=http://localhost:8484
 DOKARKIV_SCOPE=mock_scope
 PDL_ENDPOINT_URL=http://localhost:8484/personalia
 PDL_SCOPE=mock_scope
-TILTAKSPENGER_ARENA_AUDIENCE=mock_audience
-TILTAKSPENGER_ARENA_ENDPOINT_URL=http://localhost:8484
-TILTAKSPENGER_TILTAK_AUDIENCE=blabla
-TILTAKSPENGER_TILTAK_ENDPOINT_URL=http://localhost:8484
+TILTAKSHISTORIKK_ENDPOINT_URL=http://localhost:8484
+TILTAKSHISTORIKK_SCOPE=mock_scope
 TOKEN_X_CLIENT_ID=localhost:tpts:tiltakspenger-soknad-api
 TOKEN_X_PRIVATE_JWK=<din jwk>
 TOKEN_X_WELL_KNOWN_URL=http://host.docker.internal:6969/tokendings/.well-known/openid-configuration
