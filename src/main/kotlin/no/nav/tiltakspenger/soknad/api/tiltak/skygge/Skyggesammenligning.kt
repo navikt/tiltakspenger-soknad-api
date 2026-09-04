@@ -6,7 +6,6 @@ import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Kildestatus
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Søkbarhet
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelse
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakshistorikk
-import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakskilde
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.UkjentKildeverdi
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.somKildenTilsierManKanSøkePå
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.søkbarhet
@@ -17,7 +16,7 @@ import java.time.LocalDate
  * Utfallet av én sammenligning mellom deltakelsene søknaden viser i dag og uttrekket fra tiltaksdeltakelse-modulen.
  *
  * Ren data uten logging og uten tellere, slik at hele klassifiseringen kan testes uten fakes.
- * [ukjenteKildeverdier] og [manglendeKilder] er ikke uenighet mellom de to veiene, men funn ny vei bærer og gammel vei aldri kunne fortelle oss — de teller derfor ikke som avvik.
+ * [ukjenteKildeverdier] er ikke uenighet mellom de to veiene, men funn ny vei bærer og gammel vei aldri kunne fortelle oss — de teller derfor ikke som avvik.
  */
 data class Skyggeutfall(
     val antallFelles: Int,
@@ -25,7 +24,6 @@ data class Skyggeutfall(
     val kunIGammel: List<KunIGammel>,
     val kunINy: List<KunINy>,
     val ukjenteKildeverdier: List<UkjentKildeverdi>,
-    val manglendeKilder: Set<Tiltakskilde>,
     /**
      * Kildestatusen til radene som bare er søkbare fordi et unntak i `Søkbarhet` slipper dem gjennom — i dag Arenas «ikke møtt».
      *
@@ -134,7 +132,6 @@ fun sammenlignSkygge(
             KunINy(id = id, kildestatus = "${status.kilde}:${status.kodeIKontrakten}")
         },
         ukjenteKildeverdier = ny.ukjenteKildeverdier,
-        manglendeKilder = ny.meldinger.manglendeKilder,
         søkbareVedUnntak = nyPerId.values
             .filter { it.søkbarhet(iDato) is Søkbarhet.KanSøkesPåVedUnntak }
             .map { "${it.kildestatus.kilde}:${it.kildestatus.kodeIKontrakten}" },

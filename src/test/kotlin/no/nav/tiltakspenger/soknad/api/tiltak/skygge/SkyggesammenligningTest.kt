@@ -10,9 +10,6 @@ import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Arenastatus
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelse
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelser
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakshistorikk
-import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakshistorikkmelding
-import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakshistorikkmeldinger
-import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakskilde
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltakstype
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.UkjentDeltakelsesform
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.UkjenteDeltakelsesformer
@@ -246,7 +243,7 @@ class SkyggesammenligningTest {
     }
 
     /**
-     * Ukjente kildeverdier og manglende kilder er ikke uenighet mellom veiene — gammel vei kunne aldri fortalt oss om dem.
+     * Ukjente kildeverdier er ikke uenighet mellom veiene — gammel vei kunne aldri fortalt oss om dem.
      * De rapporteres, men gjør ikke kjøringen til en avvikskjøring.
      */
     @Test
@@ -255,9 +252,6 @@ class SkyggesammenligningTest {
             gammel = listOf(gammelRad()),
             ny = Tiltakshistorikk(
                 deltakelser = Tiltaksdeltakelser(listOf(testdeltakelse())),
-                meldinger = Tiltakshistorikkmeldinger(
-                    listOf(Tiltakshistorikkmelding.ManglerHistorikkFraTeamTiltak, Tiltakshistorikkmelding.Ukjent("EN_NY_MELDING")),
-                ),
                 ukjenteDeltakelsesformer = UkjenteDeltakelsesformer(listOf(UkjentDeltakelsesform("EnNyDeltakelsesform"))),
                 hentetTidspunkt = LocalDateTime.of(2026, 4, 1, 12, 0),
             ),
@@ -265,8 +259,7 @@ class SkyggesammenligningTest {
         )
 
         utfall.harAvvik shouldBe false
-        utfall.manglendeKilder shouldBe setOf(Tiltakskilde.TeamTiltak)
-        utfall.ukjenteKildeverdier.map { it.kodeIKontrakten } shouldContainExactlyInAnyOrder listOf("EN_NY_MELDING", "EnNyDeltakelsesform")
+        utfall.ukjenteKildeverdier.map { it.kodeIKontrakten } shouldContainExactly listOf("EnNyDeltakelsesform")
     }
 
     @Test
@@ -285,7 +278,6 @@ class SkyggesammenligningTest {
         gammel = gammel,
         ny = Tiltakshistorikk(
             deltakelser = Tiltaksdeltakelser(ny),
-            meldinger = Tiltakshistorikkmeldinger(emptyList()),
             ukjenteDeltakelsesformer = UkjenteDeltakelsesformer(emptyList()),
             hentetTidspunkt = LocalDateTime.of(2026, 4, 1, 12, 0),
         ),

@@ -225,18 +225,17 @@ class TiltaksdeltakelseSkyggeTest {
     }
 
     /**
-     * Ukjente kildeverdier og ufullstendige svar er funn gammel vei aldri kunne fortalt oss om.
+     * Ukjente kildeverdier er funn gammel vei aldri kunne fortalt oss om.
      * De telles, men gjør ikke kjøringen til en avvikskjøring.
      */
     @Test
-    fun `ukjente kildeverdier og manglende kilder telles uten å bli avvik`() = runTest {
+    fun `ukjente kildeverdier telles uten å bli avvik`() = runTest {
         val oppsett = Oppsett(påslag = true, scope = this)
-        oppsett.køSvar(historikkMedMeldingerJson)
+        oppsett.køSvar(historikkMedUkjentFormJson)
 
         oppsett.skygge.sammenlign(fnr, listOf(gammelRad()), correlationId)
 
-        oppsett.metricsCollector.tiltaksdeltakelseSkyggeUkjentKildeverdi.labels("melding fra tiltakshistorikk").get() shouldBe 1.0
-        oppsett.metricsCollector.tiltaksdeltakelseSkyggeManglendeKilde.labels("TeamTiltak").get() shouldBe 1.0
+        oppsett.metricsCollector.tiltaksdeltakelseSkyggeUkjentKildeverdi.labels("deltakelsesform fra tiltakshistorikk").get() shouldBe 1.0
         oppsett.metricsCollector.tiltaksdeltakelseSkyggeKjøringer.labels(UTFALL_LIKT).get() shouldBe 1.0
     }
 
@@ -300,6 +299,10 @@ class TiltaksdeltakelseSkyggeTest {
 
     private val historikkJson = """{"historikk": [$arenaRadJson], "meldinger": []}"""
 
-    private val historikkMedMeldingerJson =
-        """{"historikk": [$arenaRadJson], "meldinger": ["MANGLER_HISTORIKK_FRA_TEAM_TILTAK", "HELT_NY_MELDING"]}"""
+    /**
+     * En deltakelsesform vi ikke kjenner, sammen med en melding kontrakten fortsatt sender.
+     * Meldingene er ikke modellert i libs og skal passere uten spor, så bare deltakelsesformen skal telles.
+     */
+    private val historikkMedUkjentFormJson =
+        """{"historikk": [$arenaRadJson, {"type": "NyDeltakelsesform", "id": "0190c9a2-7777-7000-8000-000000000007"}], "meldinger": ["MANGLER_HISTORIKK_FRA_TEAM_TILTAK"]}"""
 }

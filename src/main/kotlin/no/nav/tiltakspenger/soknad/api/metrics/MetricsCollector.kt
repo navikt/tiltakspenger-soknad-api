@@ -105,13 +105,6 @@ class MetricsCollector(
         .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_ukjent_kildeverdi")
         .namespace(namespace)
         .labelNames("hva")
-        .help("Kildeverdier ny vei ikke kjente igjen — statuser, tiltakskoder, Komet-årsaker, meldinger og deltakelsesformer")
-        .register(registry)
-
-    val tiltaksdeltakelseSkyggeManglendeKilde: Counter = Counter.build()
-        .name("tiltakspenger_soknad_tiltaksdeltakelse_skygge_manglende_kilde")
-        .namespace(namespace)
-        .labelNames("kilde")
-        .help("Kilder tiltakshistorikk meldte at svaret er ufullstendig for")
+        .help("Kildeverdier ny vei ikke kjente igjen — statuser, tiltakskoder, Komet-årsaker og deltakelsesformer")
         .register(registry)
 }

@@ -127,7 +127,6 @@ class TiltaksdeltakelseSkygge(
         utfall.kunINy.forEach { metricsCollector.tiltaksdeltakelseSkyggeKunINy.labels(it.kildestatus).inc() }
         utfall.søkbareVedUnntak.forEach { metricsCollector.tiltaksdeltakelseSkyggeSøkbarVedUnntak.labels(it).inc() }
         utfall.ukjenteKildeverdier.forEach { metricsCollector.tiltaksdeltakelseSkyggeUkjentKildeverdi.labels(it.hva).inc() }
-        utfall.manglendeKilder.forEach { metricsCollector.tiltaksdeltakelseSkyggeManglendeKilde.labels(it.name).inc() }
 
         // Hvor mange rader vi faktisk har sammenlignet er svaret på «hvor mye har vi egentlig verifisert» — og dermed på når vi tør bytte vei.
         metricsCollector.tiltaksdeltakelseSkyggeSammenlignedeDeltakelser.inc(utfall.antallFelles.toDouble())
