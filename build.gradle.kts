@@ -12,15 +12,15 @@ val kotlinxCoroutinesVersion = "1.11.0"
 val prometheusVersion = "0.16.0"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
-val felleslibVersion = "0.0.20260904111551"
-val flywayVersjon = "12.10.0"
+val felleslibVersion = "0.0.20260907134256"
+val flywayVersjon = "13.4.0"
 val testContainersVersion = "2.0.5"
 
 plugins {
     application
     distribution
     kotlin("jvm") version "2.4.10"
-    id("com.diffplug.spotless") version "8.8.0"
+    id("com.diffplug.spotless") version "8.10.1"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
 }
 
@@ -48,7 +48,7 @@ dependencies {
         implementation("at.yawk.lz4:lz4-java:$lz4Version")
     }
 
-    implementation("ch.qos.logback:logback-classic:1.5.38")
+    implementation("ch.qos.logback:logback-classic:1.6.3")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
     implementation("org.jetbrains:annotations:26.1.0")
@@ -103,7 +103,7 @@ dependencies {
     implementation("org.apache.pdfbox:pdfbox:$pdfboxVersion")
 
     // Apache Tika
-    implementation("org.apache.tika:tika-core:3.3.2")
+    implementation("org.apache.tika:tika-core:4.0.0")
 
     // Caffeine
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
