@@ -48,21 +48,15 @@ Testbrukeren har to barn under 16 år og ett aktivt tiltak, slik at hele søknad
 Eksempel på miljøvariabler som kan settes i en Run Configuration for å kjøre opp appen fra IntelliJ mot kjørende Compose-oppsett:
 
 ```
-AV_ENDPOINT_URL=http://localhost:8484/av
 AZURE_APP_CLIENT_ID=mocked_client_id
 AZURE_APP_CLIENT_SECRET=mocked_secret
 AZURE_APP_WELL_KNOWN_URL=http://host.docker.internal:6969/azure/.well-known/openid-configuration
-DOKARKIV_AUDIENCE=mock_audience
-DOKARKIV_ENDPOINT_URL=http://localhost:8484
-DOKARKIV_SCOPE=mock_scope
-PDL_ENDPOINT_URL=http://localhost:8484/personalia
-PDL_SCOPE=mock_scope
-TILTAKSHISTORIKK_ENDPOINT_URL=http://localhost:8484
-TILTAKSHISTORIKK_SCOPE=mock_scope
 TOKEN_X_CLIENT_ID=localhost:tpts:tiltakspenger-soknad-api
 TOKEN_X_PRIVATE_JWK=<din jwk>
 TOKEN_X_WELL_KNOWN_URL=http://host.docker.internal:6969/tokendings/.well-known/openid-configuration
 ```
+
+Endepunkter og scopes mot PDL, dokarkiv, tiltakshistorikk, saksbehandling-api, pdfgenrs og antivirus ligger i `EnvironmentConfig.kt` (`LocalConfig`/`DevConfig`/`ProdConfig`), ikke i miljøvariabler.
 
 ## Bygging og denslags
 For å bygge artifaktene:

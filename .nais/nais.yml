@@ -82,27 +82,6 @@ spec:
       external:
         - host: {{outboundExternalUrls.pdl}}
         - host: {{outboundExternalUrls.dokarkiv}}
-  env:
-    - name: PDL_ENDPOINT_URL
-      value: {{ endpoints.pdl }}
-    - name: PDL_SCOPE
-      value: {{ scope.pdl }}
-    - name: DOKARKIV_ENDPOINT_URL
-      value: {{ endpoints.dokarkiv }}
-    - name: DOKARKIV_SCOPE
-      value: {{ scope.dokarkiv }}
-    - name: VEDTAK_SCOPE
-      value: {{ scope.vedtak }}
-    - name: TILTAKSPENGER_VEDTAK_ENDPOINT_URL
-      value: {{ endpoints.tiltakspengervedtak }}
-    - name: PDFGENRS_ENDPOINT_URL
-      value: {{ endpoints.pdfgenrs }}
-    - name: AV_ENDPOINT_URL
-      value: {{ endpoints.av }}
-    - name: TILTAKSHISTORIKK_ENDPOINT_URL
-      value: {{ endpoints.tiltakshistorikk }}
-    - name: TILTAKSHISTORIKK_SCOPE
-      value: {{ scope.tiltakshistorikk }}
   resources:
     limits:
       memory: 2048Mi

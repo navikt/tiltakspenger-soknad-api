@@ -1,154 +1,40 @@
 package no.nav.tiltakspenger.soknad.api
 
-import com.natpryce.konfig.Configuration
-import com.natpryce.konfig.ConfigurationMap
-import com.natpryce.konfig.ConfigurationProperties
-import com.natpryce.konfig.EnvironmentVariables
-import com.natpryce.konfig.Key
-import com.natpryce.konfig.intType
-import com.natpryce.konfig.overriding
-import com.natpryce.konfig.stringType
+const val KAFKA_CONSUMER_GROUP_ID = "tiltakspenger-soknad-api-consumer"
 
-private const val APPLICATION_NAME = "tiltakspenger-soknad-api"
-const val KAFKA_CONSUMER_GROUP_ID = "$APPLICATION_NAME-consumer"
-
-enum class Profile {
-    LOCAL,
-    DEV,
-    PROD,
+/**
+ * Cluster-navnet er det eneste som skiller miljøene, og det tas inn som parameter.
+ * Dermed kan DEV- og PROD-grenene testes uten å mutere JVM-global systemtilstand som deles med andre tester.
+ */
+fun configForMiljø(clusterName: String?): EnvironmentConfig {
+    return when (clusterName) {
+        "prod-gcp" -> ProdConfig
+        "dev-gcp" -> DevConfig
+        else -> LocalConfig
+    }
 }
 
-object Configuration {
-    private val defaultProperties =
-        ConfigurationMap(
-            mapOf(
-                "application.httpPort" to 8080.toString(),
-                "DB_JDBC_URL" to System.getenv("DB_JDBC_URL"),
-                "ELECTOR_PATH" to System.getenv("ELECTOR_PATH"),
-                "logback.configurationFile" to "logback.xml",
-                "PDL_SCOPE" to System.getenv("PDL_SCOPE"),
-                "PDL_ENDPOINT_URL" to System.getenv("PDL_ENDPOINT_URL"),
-                "DOKARKIV_SCOPE" to System.getenv("DOKARKIV_SCOPE"),
-                "DOKARKIV_ENDPOINT_URL" to System.getenv("DOKARKIV_ENDPOINT_URL"),
-                "VEDTAK_SCOPE" to System.getenv("VEDTAK_SCOPE"),
-                "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to System.getenv("TILTAKSPENGER_VEDTAK_ENDPOINT_URL"),
-                "AV_ENDPOINT_URL" to System.getenv("AV_ENDPOINT_URL"),
-                "TILTAKSHISTORIKK_SCOPE" to System.getenv("TILTAKSHISTORIKK_SCOPE"),
-                "TILTAKSHISTORIKK_ENDPOINT_URL" to System.getenv("TILTAKSHISTORIKK_ENDPOINT_URL"),
-                "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to System.getenv("NAIS_TOKEN_INTROSPECTION_ENDPOINT"),
-                "NAIS_TOKEN_ENDPOINT" to System.getenv("NAIS_TOKEN_ENDPOINT"),
-                "NAIS_TOKEN_EXCHANGE_ENDPOINT" to System.getenv("NAIS_TOKEN_EXCHANGE_ENDPOINT"),
-                "IDENTHENDELSE_TOPIC" to "tpts.identhendelse-v1",
-            ),
-        )
-    private val localProperties =
-        ConfigurationMap(
-            mapOf(
-                "application.profile" to Profile.LOCAL.toString(),
-                "logback.configurationFile" to "logback.local.xml",
-                // Leader election kjører kun i Nais, men verdien må finnes for at oppslaget ikke skal feile lokalt.
-                "ELECTOR_PATH" to "http://localhost:4040",
-                "DB_JDBC_URL" to "jdbc:postgresql://host.docker.internal:5436/soknad?user=postgres&password=test",
-                "PDL_SCOPE" to "localhost",
-                "PDL_ENDPOINT_URL" to "http://localhost:8484/personalia",
-                "DOKARKIV_SCOPE" to "localhost",
-                "DOKARKIV_ENDPOINT_URL" to "http://localhost:8484",
-                "VEDTAK_SCOPE" to "localhost",
-                "TILTAKSPENGER_VEDTAK_ENDPOINT_URL" to "http://host.docker.internal:8080",
-                "PDFGENRS_ENDPOINT_URL" to "http://localhost:8084",
-                "AV_ENDPOINT_URL" to "http://localhost:8484/av",
-                "TILTAKSHISTORIKK_SCOPE" to "localhost",
-                "TILTAKSHISTORIKK_ENDPOINT_URL" to "http://localhost:8484",
-                "NAIS_TOKEN_INTROSPECTION_ENDPOINT" to "http://localhost:7164/api/v1/introspect",
-                "NAIS_TOKEN_ENDPOINT" to "http://localhost:7164/api/v1/token",
-                "NAIS_TOKEN_EXCHANGE_ENDPOINT" to "http://localhost:7164/api/v1/token",
-            ),
-        )
-    private val devProperties =
-        ConfigurationMap(
-            mapOf(
-                "application.profile" to Profile.DEV.toString(),
-            ),
-        )
-    private val prodProperties =
-        ConfigurationMap(
-            mapOf(
-                "application.profile" to Profile.PROD.toString(),
-            ),
-        )
+private fun hentConfigForMiljø(): EnvironmentConfig = configForMiljø(System.getenv("NAIS_CLUSTER_NAME"))
+
+object Configuration : EnvironmentConfig by hentConfigForMiljø() {
+    fun isNais(): Boolean = environmentProfile != EnvironmentProfile.LOCAL
+
+    fun isProd(): Boolean = environmentProfile == EnvironmentProfile.PROD
+
+    fun isLocalOrDev(): Boolean = !isProd()
 
     /**
-     * Cluster-navnet er JVM-global tilstand.
-     * Det leses ett sted, slik at profil- og config-utledningen under kan testes uten å mutere systemmiljøet.
-     */
-    private fun naisClusterName(): String? = System.getenv("NAIS_CLUSTER_NAME") ?: System.getProperty("NAIS_CLUSTER_NAME")
-
-    fun profilFor(clusterName: String?): Profile =
-        when (clusterName) {
-            "dev-gcp" -> Profile.DEV
-            "prod-gcp" -> Profile.PROD
-            else -> Profile.LOCAL
-        }
-
-    fun config(profile: Profile): Configuration =
-        when (profile) {
-            Profile.DEV ->
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding devProperties overriding defaultProperties
-
-            Profile.PROD ->
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding prodProperties overriding defaultProperties
-
-            Profile.LOCAL ->
-                ConfigurationProperties.systemProperties() overriding EnvironmentVariables overriding localProperties overriding defaultProperties
-        }
-
-    private fun config(): Configuration = config(applicationProfile())
-
-    fun applicationProfile(): Profile = profilFor(naisClusterName())
-
-    fun logbackConfigurationFile() = config()[Key("logback.configurationFile", stringType)]
-
-    fun httpPort() = config()[Key("application.httpPort", intType)]
-
-    fun isNais() = applicationProfile() != Profile.LOCAL
-    fun isProd() = applicationProfile() == Profile.PROD
-    fun isLocalOrDev() = !isProd()
-
-    fun electorPath(): String = config()[Key("ELECTOR_PATH", stringType)]
-
-    val pdlScope: String by lazy { config()[Key("PDL_SCOPE", stringType)] }
-    val dokarkivScope: String by lazy { config()[Key("DOKARKIV_SCOPE", stringType)] }
-    val saksbehandlingApiScope: String by lazy { config()[Key("VEDTAK_SCOPE", stringType)] }
-    val tiltakshistorikkScope: String by lazy { config()[Key("TILTAKSHISTORIKK_SCOPE", stringType)] }
-
-    val pdlUrl by lazy { config()[Key("PDL_ENDPOINT_URL", stringType)] }
-
-    /**
-     * PDL-verdien i nais-manifestet peker rett på GraphQL-endepunktet, mens `PdlIdentklient` fra libs legger på `/graphql` selv.
-     * Suffikset strippes her framfor å legge inn en egen miljøvariabel, slik at de to PDL-klientene våre fortsatt har én kilde til sannhet for hvor PDL står.
+     * PDL-urlen peker rett på GraphQL-endepunktet, mens `PdlIdentklient` fra libs legger på `/graphql` selv.
+     * Suffikset strippes her framfor å holde en egen verdi, slik at de to PDL-klientene våre fortsatt har én kilde til sannhet for hvor PDL står.
      */
     val pdlBaseUrl: String by lazy { pdlUrl.removeSuffix("/graphql") }
-    val dokarkivUrl: String by lazy { config()[Key("DOKARKIV_ENDPOINT_URL", stringType)] }
-    val saksbehandlingApiUrl: String by lazy { config()[Key("TILTAKSPENGER_VEDTAK_ENDPOINT_URL", stringType)] }
-    val pdfgenrsUrl: String by lazy { config()[Key("PDFGENRS_ENDPOINT_URL", stringType)] }
-    val avUrl: String by lazy { config()[Key("AV_ENDPOINT_URL", stringType)] }
-    val tiltakshistorikkUrl: String by lazy { config()[Key("TILTAKSHISTORIKK_ENDPOINT_URL", stringType)] }
-
-    val naisTokenIntrospectionEndpoint: String by lazy { config()[Key("NAIS_TOKEN_INTROSPECTION_ENDPOINT", stringType)] }
-    val naisTokenEndpoint: String by lazy { config()[Key("NAIS_TOKEN_ENDPOINT", stringType)] }
-    val tokenExchangeEndpoint: String by lazy { config()[Key("NAIS_TOKEN_EXCHANGE_ENDPOINT", stringType)] }
-
-    val identhendelseTopic: String by lazy { config()[Key("IDENTHENDELSE_TOPIC", stringType)] }
 
     // Settes automatisk av nais; brukes til å bygge den klikkbare sikkerlogg-lenken i KotlinLoggingSikkerlogg.
     // Nullable fordi de ikke finnes lokalt — da faller lenken tilbake til ren tekst.
     val naisAppName: String? by lazy { System.getenv("NAIS_APP_NAME") }
     val gcpTeamProjectId: String? by lazy { System.getenv("GCP_TEAM_PROJECT_ID") }
 
-    data class DataBaseConf(
-        val url: String,
-    )
-    fun database() = DataBaseConf(
-        url = config()[Key("DB_JDBC_URL", stringType)],
-    )
+    data class DataBaseConf(val url: String)
+
+    fun database(): DataBaseConf = DataBaseConf(url = dbJdbcUrl)
 }

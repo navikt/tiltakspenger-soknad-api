@@ -19,7 +19,7 @@ import kotlin.system.exitProcess
  * Postgres startes for deg hvis den ikke allerede kjører — se [startLokalPostgres].
  */
 fun main() {
-    System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile())
+    System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile)
 
     val log = KotlinLogging.logger {}
     log.info { "Starter lokal server" }
@@ -38,7 +38,6 @@ fun main() {
         exitProcess(1)
     }
     // Jdbc-url-en er den samme som i Configuration når vi kjører mot compose, men i testcontainers-modus er porten tilfeldig.
-    System.setProperty("DB_JDBC_URL", postgres.jdbcUrl)
     log.info { "Lokal postgres er klar: ${postgres.beskrivelse}" }
 
     start(
@@ -48,7 +47,7 @@ fun main() {
         isNais = false,
         applicationContext = LokalApplicationContext(
             clock = clock,
-            søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(Configuration.database().url)),
+            søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(postgres.jdbcUrl)),
         ),
     )
 }

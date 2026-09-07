@@ -52,7 +52,6 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
     implementation("org.jetbrains:annotations:26.1.0")
-    implementation("com.natpryce:konfig:1.6.10.0")
     implementation("com.github.navikt.tiltakspenger-libs:soknad-dtos:$felleslibVersion")
     // Fortsatt i bruk for TiltakTypeDTO, som er arenakoden `/tiltak` svarer med og søknaden bærer videre.
     implementation("com.github.navikt.tiltakspenger-libs:tiltak-dtos:$felleslibVersion")
@@ -217,6 +216,14 @@ tasks {
         useJUnitPlatform()
         // https://phauer.com/2018/best-practices-unit-testing-kotlin/
         systemProperty("junit.jupiter.testinstance.lifecycle.default", "per_class")
+
+        // DevConfig/ProdConfig leser de nais-injiserte variablene ved initialisering.
+        // Dummy-verdiene lar testene åpne begge konfigene uten å kjøre i Nais; NAIS_CLUSTER_NAME holdes uendret slik at Configuration fortsatt delegerer til LocalConfig.
+        environment("ELECTOR_PATH", "http://localhost:4040")
+        environment("DB_JDBC_URL", "jdbc:postgresql://localhost:5432/test")
+        environment("NAIS_TOKEN_ENDPOINT", "http://localhost/token")
+        environment("NAIS_TOKEN_INTROSPECTION_ENDPOINT", "http://localhost/introspect")
+        environment("NAIS_TOKEN_EXCHANGE_ENDPOINT", "http://localhost/token-exchange")
 
         testLogging {
             // Vi logger bare feilede og hoppede tester når Gradle kjører.

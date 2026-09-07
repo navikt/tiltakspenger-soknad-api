@@ -16,7 +16,7 @@ fun bakgrunnsprosessoppsett(
     isNais: Boolean,
 ): Bakgrunnsprosessoppsett = Bakgrunnsprosessoppsett(
     mdcCallIdKey = CALL_ID_MDC_KEY,
-    electorPath = Configuration::electorPath,
+    electorPath = { Configuration.electorPath },
     tasks = jobber(applicationContext),
     kafkaConsumers = kafkaConsumers(isNais = isNais, applicationContext = applicationContext),
     clock = applicationContext.clock,

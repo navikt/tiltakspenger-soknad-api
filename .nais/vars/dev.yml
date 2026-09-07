@@ -1,21 +1,9 @@
 kafka:
   pool: nav-dev
 cluster: dev-gcp
-endpoints:
-  pdl: https://pdl-api.dev-fss-pub.nais.io/graphql
-  pdfgenrs: http://tiltakspenger-pdfgenrs
-  dokarkiv: https://dokarkiv-q2.dev-fss-pub.nais.io
-  tiltakshistorikk: http://tiltakshistorikk.team-mulighetsrommet
-  tiltakspengervedtak: http://tiltakspenger-saksbehandling-api
-  av: http://clamav.nais-system/scan
 outboundExternalUrls:
   pdl: pdl-api.dev-fss-pub.nais.io
   dokarkiv: dokarkiv-q2.dev-fss-pub.nais.io
-scope:
-  pdl: dev-fss:pdl:pdl-api
-  dokarkiv: dev-fss:teamdokumenthandtering:dokarkiv
-  vedtak: dev-gcp:tpts:tiltakspenger-saksbehandling-api
-  tiltakshistorikk: dev-gcp:team-mulighetsrommet:tiltakshistorikk
 sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: false

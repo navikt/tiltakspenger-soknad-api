@@ -58,8 +58,8 @@ open class ApplicationContext(
 
     open val texasClient: TexasClient by lazy {
         TexasHttpClient(
-            introspectionUrl = Configuration.naisTokenIntrospectionEndpoint,
-            tokenUrl = Configuration.naisTokenEndpoint,
+            introspectionUrl = Configuration.tokenIntrospectionEndpoint,
+            tokenUrl = Configuration.tokenEndpoint,
             tokenExchangeUrl = Configuration.tokenExchangeEndpoint,
             clock = clock,
         )

@@ -11,7 +11,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import java.time.Clock
 
 fun main() {
-    System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile())
+    System.setProperty("logback.configurationFile", Configuration.logbackConfigurationFile)
 
     val log = KotlinLogging.logger {}
     log.info { "starting server" }
@@ -26,7 +26,7 @@ fun main() {
  */
 fun start(
     log: KLogger,
-    port: Int = Configuration.httpPort(),
+    port: Int = Configuration.httpPort,
     host: String = "0.0.0.0",
     isNais: Boolean = Configuration.isNais(),
     applicationContext: ApplicationContext = ApplicationContext(
