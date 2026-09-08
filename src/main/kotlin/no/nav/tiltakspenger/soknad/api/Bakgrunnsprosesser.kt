@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api
 
 import no.nav.tiltakspenger.libs.jobber.TaskResultat
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Bakgrunnsprosessoppsett
+import no.nav.tiltakspenger.libs.ktor.common.oppstart.Jobboppsett
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.KafkaConsumerOppsett
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Miljøverdi
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Task
@@ -15,11 +16,13 @@ fun bakgrunnsprosessoppsett(
     applicationContext: ApplicationContext,
     isNais: Boolean,
 ): Bakgrunnsprosessoppsett = Bakgrunnsprosessoppsett(
-    mdcCallIdKey = CALL_ID_MDC_KEY,
-    electorPath = { Configuration.electorPath },
-    tasks = jobber(applicationContext),
+    jobber = Jobboppsett(
+        mdcCallIdKey = CALL_ID_MDC_KEY,
+        electorPath = { Configuration.electorPath },
+        clock = applicationContext.clock,
+        tasks = jobber(applicationContext),
+    ),
     kafkaConsumers = kafkaConsumers(isNais = isNais, applicationContext = applicationContext),
-    clock = applicationContext.clock,
 )
 
 fun jobber(applicationContext: ApplicationContext): List<Task> = listOf(

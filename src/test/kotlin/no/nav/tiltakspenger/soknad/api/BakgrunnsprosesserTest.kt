@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
@@ -118,9 +119,10 @@ class BakgrunnsprosesserTest {
 
         val oppsett = bakgrunnsprosessoppsett(applicationContext = tac, isNais = false)
 
-        oppsett.mdcCallIdKey shouldBe CALL_ID_MDC_KEY
-        oppsett.tasks.size shouldBe 3
+        val jobboppsett = oppsett.jobber.shouldNotBeNull()
+        jobboppsett.mdcCallIdKey shouldBe CALL_ID_MDC_KEY
+        jobboppsett.tasks.size shouldBe 3
+        jobboppsett.clock shouldBe tac.clock
         oppsett.kafkaConsumers shouldBe emptyList()
-        oppsett.clock shouldBe tac.clock
     }
 }
