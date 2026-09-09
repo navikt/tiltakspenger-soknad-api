@@ -19,7 +19,8 @@ val testContainersVersion = "2.0.5"
 plugins {
     application
     distribution
-    kotlin("jvm") version "2.4.10"
+    // 2.4.10 deserialiserer build cache-oppføringer usikkert, som gir kodekjøring fra en forgiftet cache (CVE-2026-53914); fikset fra 2.4.20.
+    kotlin("jvm") version "2.4.20"
     id("com.diffplug.spotless") version "8.10.1"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
 }
@@ -42,6 +43,9 @@ dependencies {
     implementation(platform("io.netty:netty-bom:4.2.17.Final"))
 
     constraints {
+        // Konsist 0.17.3 setter opp kompilatormiljøet sitt mot kotlin-compiler-embeddable 2.0.21 og krasjer med 2.4.20
+        // («Extensions storage is not registered»), som kotlin-bom ellers løfter den til. Låst til Konsists egen versjon, som i libs.
+        testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable") { version { strictly("2.0.21") } }
         // kafka-clients (via libs:kafka) drar inn lz4-java 1.10.2, der de native XXHash-
         // implementasjonene kan krasje JVM-en på ugyldige byte-intervaller (GHSA-xx22-p4ch-683r).
         // Transitiv-only, derfor constraint og ikke en deklarert avhengighet.
@@ -111,7 +115,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     // Ktor-klienten brukes kun av testApplication sin innebygde klient i rute-testene; produksjonskoden går via libs httpklient.
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.20")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
