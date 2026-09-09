@@ -2,8 +2,10 @@ package no.nav.tiltakspenger.soknad.api.identhendelse
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.libs.json.serialize
 import no.nav.tiltakspenger.libs.kafka.infra.KafkaConfig
@@ -21,6 +23,8 @@ class IdenthendelseConsumerTest {
         identhendelseService = IdenthendelseService(søknadRepo),
         topic = topic,
         kafkaConfig = KafkaConfig(kafkaBrokers = "localhost:9092"),
+        clock = fixedClock,
+        meterRegistry = SimpleMeterRegistry(),
     )
 
     @Test
@@ -57,6 +61,8 @@ class IdenthendelseConsumerTest {
             IdenthendelseConsumer(
                 identhendelseService = IdenthendelseService(søknadRepo),
                 topic = "identhendelse-default-config",
+                clock = fixedClock,
+                meterRegistry = SimpleMeterRegistry(),
             )
         }
     }

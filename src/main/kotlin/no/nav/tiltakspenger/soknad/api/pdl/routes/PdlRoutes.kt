@@ -19,7 +19,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.PdlService
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 
 private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollector) {
-    metricsCollector.antallFeilVedHentPersonaliaCounter.inc()
+    metricsCollector.antallFeilVedHentPersonaliaCounter.increment()
     respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
 }
 

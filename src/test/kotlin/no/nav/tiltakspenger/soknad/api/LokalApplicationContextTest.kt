@@ -6,7 +6,6 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpStatusCode
-import io.prometheus.client.CollectorRegistry
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.fixedClock
@@ -34,7 +33,6 @@ class LokalApplicationContextTest {
         clock = fixedClock,
         søknadRepo = FakeSøknadRepo(),
         fnr = fnr,
-        collectorRegistry = CollectorRegistry(),
     )
 
     @Test

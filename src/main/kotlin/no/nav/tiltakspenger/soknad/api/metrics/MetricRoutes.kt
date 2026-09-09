@@ -1,17 +1,20 @@
 package no.nav.tiltakspenger.soknad.api.metrics
 
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.response.respondTextWriter
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.exporter.common.TextFormat
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 
-fun Route.metricRoutes() {
+/**
+ * Eksponerer registeret appen selv eier.
+ * Registeret kommer inn som parameter i stedet for å slås opp globalt, slik at rutene, jobbene og meldingsleseren fører målingene sine i nøyaktig det registeret som skrapes.
+ */
+fun Route.metricRoutes(meterRegistry: PrometheusMeterRegistry) {
     get("/metrics") {
-        call.respondTextWriter(contentType = ContentType.parse(TextFormat.CONTENT_TYPE_004), status = HttpStatusCode.OK) {
-            TextFormat.write004(this, CollectorRegistry.defaultRegistry.metricFamilySamples())
-        }
+        call.respondText(
+            text = meterRegistry.scrape(),
+            status = HttpStatusCode.OK,
+        )
     }
 }

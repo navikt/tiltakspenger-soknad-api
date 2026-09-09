@@ -3,7 +3,6 @@ package no.nav.tiltakspenger.soknad.api.soknad.routes
 import io.kotest.matchers.shouldBe
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.prometheus.client.CollectorRegistry
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.Readiness
@@ -44,7 +43,6 @@ class SøknadMultipartOverEkteServerTest {
         val context = LokalApplicationContext(
             clock = fixedClock,
             søknadRepo = søknadRepo,
-            collectorRegistry = CollectorRegistry(),
         )
         // Port 0 lar OS-et velge en ledig port, slik at testen ikke kolliderer med en lokal server.
         val server = embeddedServer(Netty, port = 0) { ktorSetup(context, Readiness()) }

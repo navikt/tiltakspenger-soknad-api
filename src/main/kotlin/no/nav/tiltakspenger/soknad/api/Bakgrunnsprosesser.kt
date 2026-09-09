@@ -20,6 +20,7 @@ fun bakgrunnsprosessoppsett(
         mdcCallIdKey = CALL_ID_MDC_KEY,
         electorPath = { Configuration.electorPath },
         clock = applicationContext.clock,
+        meterRegistry = applicationContext.meterRegistry,
         tasks = jobber(applicationContext),
     ),
     kafkaConsumers = kafkaConsumers(isNais = isNais, applicationContext = applicationContext),

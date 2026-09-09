@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.testutils
 
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.pdl.PdlIdentklient
@@ -34,8 +35,8 @@ open class TestApplicationContext(
 ) : ApplicationContext(
     clock = clock,
     søknadRepo = søknadRepo,
-    // Eget register per kontekst, slik at testene ikke deler global, muterende tilstand.
-    collectorRegistry = CollectorRegistry(),
+    // Eget register per kontekst, slik at testene ikke deler muterende tilstand, og slik at to kontekster ikke kolliderer på det samme prosessnavnet.
+    meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
 ) {
     val pdlTransport = FakeHttpTransport()
     val pdlIdentTransport = FakeHttpTransport()

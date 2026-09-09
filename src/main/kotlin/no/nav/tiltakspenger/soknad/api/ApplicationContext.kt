@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api
 
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.libs.logging.infra.KotlinLoggingSikkerlogg
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
@@ -40,14 +40,19 @@ import java.time.Clock
  *
  * Konteksten leser [Configuration] selv, men gjør ingen I/O ved konstruksjon.
  * Derfor tas datasource-avhengigheten inn ferdig som [søknadRepo] — [no.nav.tiltakspenger.soknad.api.db.DataSourceSetup] kobler til ved konstruksjon, og en kontekst som gjorde det kunne ikke vært bygget i en test.
- * Av samme grunn tas [CollectorRegistry] inn: drift sender inn det globale default-registeret, tester sitt eget.
+ * Av samme grunn tas [meterRegistry] inn: registeret konstrueres i komposisjonsroten, slik at målingene havner i det samme registeret som `/metrics` skraper.
  */
 open class ApplicationContext(
     open val clock: Clock,
     open val søknadRepo: SøknadRepo,
-    private val collectorRegistry: CollectorRegistry,
+    /**
+     * Registeret Ktor, appens egne tellere, jobbene og Kafka-consumeren fører målingene sine i, og som `/metrics` skraper.
+     * Injiseres fra komposisjonsroten slik at appen har nøyaktig ett register.
+     * Test- og lokalkontekstene lager sitt eget, siden et prosessnavn bare kan registreres én gang per register.
+     */
+    val meterRegistry: PrometheusMeterRegistry,
 ) {
-    open val metricsCollector: MetricsCollector by lazy { MetricsCollector(collectorRegistry) }
+    open val metricsCollector: MetricsCollector by lazy { MetricsCollector(meterRegistry) }
 
     open val sikkerlogg: Sikkerlogg by lazy {
         KotlinLoggingSikkerlogg(
@@ -162,6 +167,8 @@ open class ApplicationContext(
         IdenthendelseConsumer(
             identhendelseService = identhendelseService,
             topic = Configuration.identhendelseTopic,
+            clock = clock,
+            meterRegistry = meterRegistry,
         )
     }
 

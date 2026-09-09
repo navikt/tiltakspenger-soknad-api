@@ -2,8 +2,8 @@ package no.nav.tiltakspenger.soknad.api
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.hotspot.DefaultExports
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.startApp
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
 import no.nav.tiltakspenger.soknad.api.db.DataSourceSetup
@@ -23,6 +23,11 @@ fun main() {
  * [applicationContext] bygges by default fra [Configuration] og en ekte datasource; lokal kjøring (`LokalMain`) sender inn sin egen kontekst med fakes.
  *
  * Selve innholdet — jobbene, Kafka-consumerne og Ktor-oppsettet — ligger i [bakgrunnsprosessoppsett] og [ktorSetup], slik at tester kan kjøre nøyaktig den samme oppkoblingen uten en Netty-server.
+ *
+ * Her konstrueres også registeret alle appens målinger føres i: Ktor-metrikkene, appens egne tellere, jobbmålingene og meldingsleser-målingene.
+ * Det er det samme registeret `/metrics` skraper, så sender vi inn et annet register ett av stedene, forsvinner seriene stille.
+ * Registeret er appens eget og bindes ikke til Prometheus sitt globale register, siden ingenting i dette repoet registrerer målinger der.
+ * Test- og lokalkontekstene lager sitt eget, fordi et prosessnavn bare kan registreres én gang per register.
  */
 fun start(
     log: KLogger,
@@ -32,11 +37,9 @@ fun start(
     applicationContext: ApplicationContext = ApplicationContext(
         clock = Clock.system(zoneIdOslo),
         søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(Configuration.database().url)),
-        collectorRegistry = CollectorRegistry.defaultRegistry,
+        meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
     ),
 ) {
-    DefaultExports.initialize()
-
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         log.error(e) { e.message }
     }

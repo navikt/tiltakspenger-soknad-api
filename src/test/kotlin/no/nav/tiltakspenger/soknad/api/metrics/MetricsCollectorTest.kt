@@ -1,23 +1,23 @@
 package no.nav.tiltakspenger.soknad.api.metrics
 
 import io.kotest.matchers.shouldBe
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.junit.jupiter.api.Test
 
 class MetricsCollectorTest {
     @Test
-    fun `registrerer tellere og summary som kan brukes`() {
-        // Eget register per test, ikke det globale CollectorRegistry.defaultRegistry — ingen delt, muterende tilstand mellom tester.
-        val metricsCollector = MetricsCollector(CollectorRegistry())
+    fun `registrerer tellere og en timer som kan brukes`() {
+        // Eget register per test — ingen delt, muterende tilstand mellom tester.
+        val metricsCollector = MetricsCollector(SimpleMeterRegistry())
 
-        metricsCollector.antallSøknaderMottattCounter.inc()
-        metricsCollector.antallUgyldigeSøknaderCounter.inc()
-        metricsCollector.antallFeiledeInnsendingerCounter.inc()
-        metricsCollector.antallFeilVedHentPersonaliaCounter.inc()
-        metricsCollector.antallFeilVedHentTiltakCounter.inc()
-        metricsCollector.søknadsmottakLatencySeconds.observe(0.5)
+        metricsCollector.antallSøknaderMottattCounter.increment()
+        metricsCollector.antallUgyldigeSøknaderCounter.increment()
+        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+        metricsCollector.antallFeilVedHentPersonaliaCounter.increment()
+        metricsCollector.antallFeilVedHentTiltakCounter.increment()
+        metricsCollector.startSøknadsmottak().stop(metricsCollector.søknadsmottakLatency)
 
-        metricsCollector.antallSøknaderMottattCounter.get() shouldBe 1.0
-        metricsCollector.søknadsmottakLatencySeconds.get().count shouldBe 1.0
+        metricsCollector.antallSøknaderMottattCounter.count() shouldBe 1.0
+        metricsCollector.søknadsmottakLatency.count() shouldBe 1L
     }
 }

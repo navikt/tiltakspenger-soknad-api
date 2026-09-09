@@ -23,7 +23,7 @@ data class TiltakDto(
 )
 
 private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollector) {
-    metricsCollector.antallFeilVedHentTiltakCounter.inc()
+    metricsCollector.antallFeilVedHentTiltakCounter.increment()
     respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
 }
 

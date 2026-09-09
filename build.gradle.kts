@@ -9,10 +9,10 @@ val lz4Version = "1.11.2"
 val jacksonVersion = "3.2.2"
 val jacksonAnnotationsVersion = "2.22"
 val kotlinxCoroutinesVersion = "1.11.0"
-val prometheusVersion = "0.16.0"
+val micrometerVersion = "1.17.1"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
-val felleslibVersion = "0.0.20260908081919"
+val felleslibVersion = "0.0.20260908114306"
 val flywayVersjon = "13.4.0"
 val testContainersVersion = "2.0.5"
 
@@ -88,10 +88,9 @@ dependencies {
     // Arrow
     implementation("io.arrow-kt:arrow-core:2.2.3")
 
-    // Prometheus
-    implementation("io.prometheus:simpleclient:$prometheusVersion")
-    implementation("io.prometheus:simpleclient_common:$prometheusVersion")
-    implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
+    // Metrikker: Micrometer med Prometheus-eksposisjon.
+    implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus:$micrometerVersion")
 
     // Jackson
     implementation("tools.jackson.core:jackson-databind:$jacksonVersion")

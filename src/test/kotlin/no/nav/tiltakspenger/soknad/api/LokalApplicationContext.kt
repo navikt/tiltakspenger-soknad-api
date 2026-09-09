@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api
 
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.tiltakspenger.libs.texas.client.TexasClient
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.pdl.PdlIdentklient
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkKlient
@@ -39,12 +40,12 @@ class LokalApplicationContext(
     clock: Clock,
     søknadRepo: SøknadRepo,
     private val fnr: String = nyttTestFødselsnummer(),
-    /** Drift bruker det globale registeret; tester sender inn sitt eget, slik at to kontekster i samme JVM ikke kolliderer. */
-    collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry,
+    /** Eget register per kontekst, slik at to kontekster i samme JVM ikke kolliderer på det samme prosessnavnet. */
+    meterRegistry: PrometheusMeterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
 ) : ApplicationContext(
     clock = clock,
     søknadRepo = søknadRepo,
-    collectorRegistry = collectorRegistry,
+    meterRegistry = meterRegistry,
 ) {
     /** Barn under 16 år, slik at barnetillegg kan fylles ut lokalt. */
     private val barn: Map<String, LocalDate> = mapOf(

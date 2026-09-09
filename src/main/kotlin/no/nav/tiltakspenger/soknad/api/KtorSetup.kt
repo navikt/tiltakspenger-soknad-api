@@ -6,6 +6,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callId
 import io.ktor.server.plugins.callid.callIdMdc
@@ -33,6 +34,7 @@ fun Application.ktorSetup(
 ) {
     installCallLogging()
     installJacksonFeature()
+    installMetrikker(context)
     install(RequestValidation) {
         validateSøknad(context.clock)
     }
@@ -77,7 +79,17 @@ fun Application.setupRouting(
             )
         }
         healthRoutes { readiness.erKlar() }
-        metricRoutes()
+        metricRoutes(context.meterRegistry)
+    }
+}
+
+/**
+ * Kobler Ktor-metrikkene til registeret appen allerede eier.
+ * Pluginen tar med seg standardbinderne for JVM og prosess, så `jvm_memory_used_bytes` og resten av dem kommer herfra.
+ */
+fun Application.installMetrikker(context: ApplicationContext) {
+    install(MicrometerMetrics) {
+        registry = context.meterRegistry
     }
 }
 

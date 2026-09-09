@@ -3,7 +3,8 @@ package no.nav.tiltakspenger.soknad.api
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import io.prometheus.client.CollectorRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import kotlinx.coroutines.test.runTest
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
@@ -21,7 +22,7 @@ class ApplicationContextTest {
     private fun context() = ApplicationContext(
         clock = fixedClock,
         søknadRepo = FakeSøknadRepo(),
-        collectorRegistry = CollectorRegistry(),
+        meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
     )
 
     @Test
@@ -80,7 +81,7 @@ class ApplicationContextTest {
         val context = object : ApplicationContext(
             clock = fixedClock,
             søknadRepo = FakeSøknadRepo(),
-            collectorRegistry = CollectorRegistry(),
+            meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
         ) {
             override val texasClient: TexasClient = TexasHttpClient(
                 introspectionUrl = "http://texas/api/v1/introspect",

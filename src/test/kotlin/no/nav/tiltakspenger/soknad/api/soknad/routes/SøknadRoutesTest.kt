@@ -94,7 +94,7 @@ class SøknadRoutesTest {
 
             tac.clamAvTransport.mottatteKall shouldBe emptyList()
             tac.søknadRepo.alle shouldBe emptyList()
-            tac.metricsCollector.antallUgyldigeSøknaderCounter.get() shouldBe 1.0
+            tac.metricsCollector.antallUgyldigeSøknaderCounter.count() shouldBe 1.0
         }
     }
 
@@ -109,7 +109,7 @@ class SøknadRoutesTest {
 
             tac.clamAvTransport.mottatteKall shouldBe emptyList()
             tac.søknadRepo.alle shouldBe emptyList()
-            tac.metricsCollector.antallUgyldigeSøknaderCounter.get() shouldBe 1.0
+            tac.metricsCollector.antallUgyldigeSøknaderCounter.count() shouldBe 1.0
         }
     }
 

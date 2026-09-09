@@ -35,7 +35,7 @@ fun Route.søknadRoutes(
     route(SØKNAD_PATH) {
         post {
             log.info { "Mottatt kall til $SØKNAD_PATH" }
-            val requestTimer = metricsCollector.søknadsmottakLatencySeconds.startTimer()
+            val requestTimer = metricsCollector.startSøknadsmottak()
             try {
                 val principal =
                     call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
@@ -46,8 +46,8 @@ fun Route.søknadRoutes(
                 val vedleggsfeil = vedlegg.validerVedlegg().leftOrNull()
                 if (vedleggsfeil != null) {
                     log.warn { "Avviste søknad med ugyldige vedlegg: ${vedleggsfeil.joinToString(" ") { it.melding }}" }
-                    metricsCollector.antallUgyldigeSøknaderCounter.inc()
-                    requestTimer.observeDuration()
+                    metricsCollector.antallUgyldigeSøknaderCounter.increment()
+                    requestTimer.stop(metricsCollector.søknadsmottakLatency)
                     return@post call.respondText(
                         text = vedleggsfeil.joinToString("\n") { it.melding },
                         contentType = ContentType.Text.Plain,
@@ -60,10 +60,10 @@ fun Route.søknadRoutes(
                     // Skadevare er brukerens feil (400), resten er vår (500).
                     val virussjekkFeil = avService.gjørVirussjekkAvVedlegg(vedleggSomSkalSkannes).leftOrNull()
                     if (virussjekkFeil != null) {
-                        metricsCollector.antallFeiledeInnsendingerCounter.inc()
-                        requestTimer.observeDuration()
+                        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                        requestTimer.stop(metricsCollector.søknadsmottakLatency)
                         if (virussjekkFeil is VirussjekkFeil.SkadevareFunnet) {
-                            metricsCollector.antallUgyldigeSøknaderCounter.inc()
+                            metricsCollector.antallUgyldigeSøknaderCounter.increment()
                             return@post call.respondText(
                                 text = "Bad Request",
                                 contentType = ContentType.Text.Plain,
@@ -89,8 +89,8 @@ fun Route.søknadRoutes(
                 )
                 nySøknadService.nySøknad(command).fold(
                     {
-                        metricsCollector.antallFeiledeInnsendingerCounter.inc()
-                        requestTimer.observeDuration()
+                        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                        requestTimer.stop(metricsCollector.søknadsmottakLatency)
                         call.respondText(
                             text = "Internal server error",
                             contentType = ContentType.Text.Plain,
@@ -100,8 +100,8 @@ fun Route.søknadRoutes(
                     {
                         // Dette kan flyttes ut til funksjoner med try/catch og logging
                         // Kan legge til egen teller som teller antall søknader som er journalført og sendt til saksbehandling-apo
-                        metricsCollector.antallSøknaderMottattCounter.inc()
-                        requestTimer.observeDuration()
+                        metricsCollector.antallSøknaderMottattCounter.increment()
+                        requestTimer.stop(metricsCollector.søknadsmottakLatency)
 
                         val søknadResponse = SøknadResponse(
                             innsendingTidspunkt = innsendingTidspunkt,
@@ -120,9 +120,9 @@ fun Route.søknadRoutes(
                     is RequestValidationException,
                     -> {
                         log.error(exception) { "Ugyldig søknad: ${exception.message}" }
-                        metricsCollector.antallFeiledeInnsendingerCounter.inc()
-                        metricsCollector.antallUgyldigeSøknaderCounter.inc()
-                        requestTimer.observeDuration()
+                        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                        metricsCollector.antallUgyldigeSøknaderCounter.increment()
+                        requestTimer.stop(metricsCollector.søknadsmottakLatency)
                         call.respondText(
                             text = "Bad Request",
                             contentType = ContentType.Text.Plain,
@@ -132,8 +132,8 @@ fun Route.søknadRoutes(
 
                     else -> {
                         log.error(exception) { "Noe gikk galt ved post av søknad ${exception.message}" }
-                        metricsCollector.antallFeiledeInnsendingerCounter.inc()
-                        requestTimer.observeDuration()
+                        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                        requestTimer.stop(metricsCollector.søknadsmottakLatency)
                         call.respondText(
                             text = "Internal server error",
                             contentType = ContentType.Text.Plain,
