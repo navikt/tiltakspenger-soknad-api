@@ -13,7 +13,7 @@ val micrometerVersion = "1.17.1"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
 val felleslibVersion = "0.0.20260910084632"
-val flywayVersjon = "13.4.0"
+val flywayVersjon = "13.5.0"
 val testContainersVersion = "2.0.5"
 
 fun isNonStable(version: String): Boolean {
