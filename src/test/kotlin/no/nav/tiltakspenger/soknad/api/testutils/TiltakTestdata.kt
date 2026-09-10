@@ -12,7 +12,7 @@ fun pdlIdenterRespons(vararg identer: String): String =
 
 /** Et svar fra `tiltakshistorikk` med de radene testen sender inn. */
 fun tiltakshistorikkRespons(vararg rader: String): String =
-    """{"historikk": [${rader.joinToString(", ")}], "meldinger": []}"""
+    """{"historikk": [${rader.joinToString(", ")}]}"""
 
 /**
  * Én deltakelse fra Komet, den vanligste kilden.
@@ -36,9 +36,11 @@ fun kometDeltakelse(
       "norskIdent": "$fnr",
       "startDato": ${fraOgMed.somJsonDato()},
       "sluttDato": ${tilOgMed.somJsonDato()},
+      "opprettetTidspunkt": "2024-11-01T09:30:00Z",
+      "oppdatertTidspunkt": "2024-12-01T08:00:00Z",
       "id": "$id",
       "tittel": "$tittel",
-      "status": { "type": "$status", "aarsak": null, "opprettetDato": "2024-11-01T09:30:00" },
+      "status": { "type": "$status", "aarsak": null, "opprettetTidspunkt": "2024-11-01T09:30:00" },
       "tiltakstype": { "tiltakskode": "$tiltakskode", "navn": "$tiltakstypenavn" },
       "gjennomforing": { "id": "$gjennomføringId", "navn": null, "deltidsprosent": null },
       "arrangor": {

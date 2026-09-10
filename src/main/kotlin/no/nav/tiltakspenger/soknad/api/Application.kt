@@ -2,8 +2,7 @@ package no.nav.tiltakspenger.soknad.api
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.micrometer.prometheusmetrics.PrometheusConfig
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import no.nav.tiltakspenger.libs.ktor.common.oppstart.prometheusMeterRegistry
 import no.nav.tiltakspenger.libs.ktor.common.oppstart.startApp
 import no.nav.tiltakspenger.libs.tid.zoneIdOslo
 import no.nav.tiltakspenger.soknad.api.db.DataSourceSetup
@@ -26,7 +25,7 @@ fun main() {
  *
  * Her konstrueres også registeret alle appens målinger føres i: Ktor-metrikkene, appens egne tellere, jobbmålingene og meldingsleser-målingene.
  * Det er det samme registeret `/metrics` skraper, så sender vi inn et annet register ett av stedene, forsvinner seriene stille.
- * Registeret er appens eget og bindes ikke til Prometheus sitt globale register, siden ingenting i dette repoet registrerer målinger der.
+ * Registeret lages av `prometheusMeterRegistry()` fra libs, som binder det til Prometheus sitt globale register; se KDoc-en der.
  * Test- og lokalkontekstene lager sitt eget, fordi et prosessnavn bare kan registreres én gang per register.
  */
 fun start(
@@ -37,7 +36,7 @@ fun start(
     applicationContext: ApplicationContext = ApplicationContext(
         clock = Clock.system(zoneIdOslo),
         søknadRepo = SøknadPostgresRepo(DataSourceSetup.createDatasource(Configuration.database().url)),
-        meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+        meterRegistry = prometheusMeterRegistry(),
     ),
 ) {
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
