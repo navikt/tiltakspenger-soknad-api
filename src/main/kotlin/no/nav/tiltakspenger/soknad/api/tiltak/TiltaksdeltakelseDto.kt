@@ -71,7 +71,7 @@ fun List<Tiltaksdeltakelse.GirRett>.toTiltakDto(maskerArrangørnavn: Boolean): L
 /**
  * Arena-koden for tiltakstypen.
  *
- * Domenetypen er vår egen klassifisering, mens `type` på wiren har vært Arena-koden siden tiltakspenger-tiltak leverte den.
+ * Domenetypen er vår egen klassifisering, mens `type` på wiren har alltid vært Arena-koden.
  * Frontenden sender verdien uendret tilbake i søknaden, og saksbehandling-api leser den med `TiltakResponsDTO.TiltakTypeDTO.valueOf` — en annen verdi ville felt innsendingen der.
  * Mappingen er den eksakte inversen av `TiltakTypeDTO.toTiltakstypeSomGirRett()` i libs, og `TiltaksdeltakelseDtoTest` pinner både verdiene og at den fortsatt er inversen.
  */

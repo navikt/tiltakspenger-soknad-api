@@ -75,7 +75,7 @@ class TiltakRoutesTest {
 
     /**
      * `arrangør` og `gjennomforingId` er ikke-nullable på wiren.
-     * Mangler kilden dem, faller de tilbake på de samme plassholderne frontenden har fått siden tiltakspenger-tiltak leverte dem.
+     * Mangler kilden dem, faller de tilbake på de samme plassholderne frontenden alltid har fått.
      */
     @Test
     fun `get på tiltak-endepunkt faller tilbake på plassholdere når kilden mangler arrangørnavn`() {
