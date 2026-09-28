@@ -12,7 +12,7 @@ val kotlinxCoroutinesVersion = "1.11.0"
 val micrometerVersion = "1.17.1"
 val apacheCommonsTextVersion = "1.15.0"
 val pdfboxVersion = "3.0.8"
-val felleslibVersion = "0.0.20260910084632"
+val felleslibVersion = "0.0.20260925103121"
 val flywayVersjon = "13.4.0"
 val testContainersVersion = "2.0.5"
 
@@ -64,22 +64,22 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
     implementation("org.jetbrains:annotations:26.1.0")
-    implementation("com.github.navikt.tiltakspenger-libs:soknad-dtos:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:soknad-dtos:$felleslibVersion")
     // Fortsatt i bruk for TiltakTypeDTO, som er arenakoden `/tiltak` svarer med og søknaden bærer videre.
-    implementation("com.github.navikt.tiltakspenger-libs:tiltak-dtos:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-domene:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:tiltaksdeltakelse-infrastruktur:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:common:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:jobber:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:ktor-common:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:personklient-domene:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:personklient-infrastruktur:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:json:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:logging:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:kafka:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:periodisering:$felleslibVersion")
-    implementation("com.github.navikt.tiltakspenger-libs:texas:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:tiltak-dtos:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:tiltaksdeltakelse-domene:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:tiltaksdeltakelse-infrastruktur:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:common:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:jobber:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:ktor-common:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:httpklient-infrastruktur:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:personklient-domene:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:personklient-infrastruktur:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:json:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:logging:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:kafka:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:periodisering:$felleslibVersion")
+    implementation("no.nav.tiltakspenger.libs:texas:$felleslibVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
 
     // Ktor. Kun server-siden: utgående HTTP går via libs httpklient.
@@ -128,7 +128,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Delte arkitekturregler; drar inn konsist transitivt (api-avhengighet).
-    testImplementation("com.github.navikt.tiltakspenger-libs:konsist-regler:$felleslibVersion")
+    testImplementation("no.nav.tiltakspenger.libs:konsist-regler:$felleslibVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("io.mockk:mockk-dsl-jvm:$mockkVersion")
     // Brukes til å lage test-token (PlainJWT). Tidligere transitivt via mock-oauth2-server.
@@ -142,11 +142,11 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testContainersVersion")
     testImplementation("org.testcontainers:testcontainers-postgresql:$testContainersVersion")
     // Starter lokal postgres for LokalMain; hører hjemme i test-sourcesettet sammen med den.
-    testImplementation("com.github.navikt.tiltakspenger-libs:lokal-oppstart:$felleslibVersion")
-    testImplementation("com.github.navikt.tiltakspenger-libs:test-common:$felleslibVersion")
-    testImplementation("com.github.navikt.tiltakspenger-libs:persistering-test-common:$felleslibVersion")
+    testImplementation("no.nav.tiltakspenger.libs:lokal-oppstart:$felleslibVersion")
+    testImplementation("no.nav.tiltakspenger.libs:test-common:$felleslibVersion")
+    testImplementation("no.nav.tiltakspenger.libs:persistering-test-common:$felleslibVersion")
     // FakeHttpTransport: ekte HttpKlient med byttet transport, så hele pipelinen kjører i test.
-    testImplementation(testFixtures("com.github.navikt.tiltakspenger-libs:httpklient-infrastruktur:$felleslibVersion"))
+    testImplementation(testFixtures("no.nav.tiltakspenger.libs:httpklient-infrastruktur:$felleslibVersion"))
 }
 
 application {
