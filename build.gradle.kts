@@ -117,7 +117,7 @@ dependencies {
     implementation("org.apache.tika:tika-core:4.0.0")
 
     // Caffeine
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.3.0")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     // Ktor-klienten brukes kun av testApplication sin innebygde klient i rute-testene; produksjonskoden går via libs httpklient.
