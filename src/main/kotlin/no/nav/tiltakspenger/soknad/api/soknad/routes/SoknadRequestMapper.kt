@@ -3,12 +3,14 @@ package no.nav.tiltakspenger.soknad.api.soknad.routes
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.utils.io.toByteArray
 import no.nav.tiltakspenger.libs.json.deserialize
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.validerRequest
 import no.nav.tiltakspenger.soknad.api.util.sjekkContentType
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
+import tools.jackson.core.JacksonException
 import java.time.Clock
 
 suspend fun taInnSøknadSomMultipart(søknadSomMultipart: MultiPartData, clock: Clock): Pair<SpørsmålsbesvarelserDTO, List<Vedlegg>> {
@@ -42,9 +44,17 @@ suspend fun PartData.FileItem.toVedlegg(): Vedlegg {
     return Vedlegg(filnavn = filnavn, contentType = sjekkContentType(fileBytes), dokument = fileBytes)
 }
 
+/**
+ * JSON som ikke lar seg lese som en søknad, f.eks. et barn uten svar på oppholdssted, er en ugyldig forespørsel og skal gi 400.
+ */
 fun PartData.FormItem.toSpørsmålsbesvarelser(clock: Clock): SpørsmålsbesvarelserDTO {
     if (this.name == "søknad") {
-        return deserialize<SpørsmålsbesvarelserDTO>(this.value).validerRequest(clock)
+        val søknad = try {
+            deserialize<SpørsmålsbesvarelserDTO>(this.value)
+        } catch (e: JacksonException) {
+            throw BadRequestException("Kunne ikke lese søknaden", e)
+        }
+        return søknad.validerRequest(clock)
     }
     throw UnrecognizedFormItemException(message = "Recieved multipart form with unknown key ${this.name}")
 }

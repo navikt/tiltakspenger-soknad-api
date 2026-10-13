@@ -9,6 +9,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Introduksjonsprogram
 import no.nav.tiltakspenger.soknad.api.soknad.Jobbsjansen
 import no.nav.tiltakspenger.soknad.api.soknad.Kvalifiseringsprogram
 import no.nav.tiltakspenger.soknad.api.soknad.ManueltRegistrertBarn
+import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
 import no.nav.tiltakspenger.soknad.api.soknad.Pensjonsordning
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
@@ -118,7 +119,8 @@ fun mockManueltRegistrertBarn(
     etternavn: String = "Testesen",
     mellomnavn: String? = null,
     fødselsdato: LocalDate = LocalDate.of(2025, 1, 1),
-    oppholdInnenforEøs: Boolean = true,
+    oppholdInnenforEøs: Boolean? = true,
+    oppholdssted: Oppholdssted? = null,
 ): ManueltRegistrertBarn =
     ManueltRegistrertBarn(
         fornavn,
@@ -126,6 +128,7 @@ fun mockManueltRegistrertBarn(
         etternavn,
         fødselsdato,
         oppholdInnenforEøs,
+        oppholdssted,
     )
 
 fun mockRegistrertBarn(
@@ -134,7 +137,8 @@ fun mockRegistrertBarn(
     etternavn: String = "Testesen",
     mellomnavn: String? = null,
     fødselsdato: LocalDate = LocalDate.of(2025, 1, 1),
-    oppholdInnenforEøs: Boolean = true,
+    oppholdInnenforEøs: Boolean? = true,
+    oppholdssted: Oppholdssted? = null,
 ): RegistrertBarn =
     RegistrertBarn(
         fnr,
@@ -143,6 +147,7 @@ fun mockRegistrertBarn(
         etternavn,
         fødselsdato,
         oppholdInnenforEøs,
+        oppholdssted,
     )
 
 fun mockBarnetillegg(
@@ -150,10 +155,12 @@ fun mockBarnetillegg(
         listOf(mockManueltRegistrertBarn()),
     registrerteBarnSøktBarnetilleggFor: List<RegistrertBarn> =
         listOf(mockRegistrertBarn()),
+    søkerOmBarnetillegg: Boolean? = null,
 ): Barnetillegg =
     Barnetillegg(
         manueltRegistrerteBarnSøktBarnetilleggFor = manueltRegistrerteBarnSøktBarnetilleggFor,
         registrerteBarnSøktBarnetilleggFor = registrerteBarnSøktBarnetilleggFor,
+        søkerOmBarnetillegg = søkerOmBarnetillegg,
     )
 
 fun mockSpørsmålsbesvarelser(

@@ -21,6 +21,16 @@ class PdlService(
 ) {
     private val log = KotlinLogging.logger {}
 
+    /** Henter søkerens personalia uten å slå opp barna i PDL. */
+    suspend fun hentPersonalia(
+        fødselsnummer: String,
+        subjectToken: String,
+        callId: String,
+    ): Either<KanIkkeHentePerson, PersonDTO> = either {
+        hentSøker(fødselsnummer, subjectToken, callId).bind()
+            .toPersonDTO(dagensDato = LocalDate.now(clock))
+    }
+
     /**
      * Barn filtreres på om de er under 16 år på [styrendeDato].
      * Dersom [styrendeDato] er null brukes dagens dato.
@@ -32,10 +42,7 @@ class PdlService(
         styrendeDato: LocalDate?,
     ): Either<KanIkkeHentePerson, PersonDTO> = either {
         val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
-        val person = personKlient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
-            .loggFeil("henting av søkers personalia fra PDL", callId)
-            .bind()
-            .toPerson(Fnr.fromString(fødselsnummer))
+        val person = hentSøker(fødselsnummer, subjectToken, callId).bind()
         val barn = person.barnsIdenter().toNonEmptyListOrNull()?.let { identer ->
             personKlient.fetchBarn(identer)
                 .loggFeil("henting av personalia for søkers barn fra PDL", callId)
@@ -63,6 +70,15 @@ class PdlService(
         personKlient.fetchSøkerSystembruker(fødselsnummer = fnr.verdi)
             .loggFeil("henting av navn fra PDL", correlationId.toString())
             .map { it.toPerson(fnr).getNavn() }
+
+    private suspend fun hentSøker(
+        fødselsnummer: String,
+        subjectToken: String,
+        callId: String,
+    ): Either<KanIkkeHentePerson, Person> =
+        personKlient.fetchSøker(fødselsnummer = fødselsnummer, subjectToken = subjectToken)
+            .loggFeil("henting av søkers personalia fra PDL", callId)
+            .map { it.toPerson(Fnr.fromString(fødselsnummer)) }
 
     /** Én logghendelse per feilsituasjon, fra laget som har domenekonteksten. */
     private fun <T> Either<KanIkkeHentePerson, T>.loggFeil(

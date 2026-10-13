@@ -3,7 +3,7 @@ package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.logging.Sikkerlogg
-import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
+import no.nav.tiltakspenger.libs.personklient.infra.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
 import no.nav.tiltakspenger.soknad.api.pdl.Person
 import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering

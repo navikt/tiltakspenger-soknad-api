@@ -27,18 +27,48 @@ data class Periode(
     }
 }
 
+/**
+ * Hvor barnet oppholder seg i tiltaksperioden.
+ * Erstatter ja/nei-spørsmålet om barnet oppholder seg i Norge eller et annet EØS-land.
+ */
+enum class Oppholdssted {
+    NORGE,
+    ANNET_EØS_LAND,
+    IKKE_EØS_LAND,
+    ;
+
+    fun erInnenforEøs(): Boolean = this != IKKE_EØS_LAND
+}
+
+/**
+ * Søknader fra før søknaden spurte om [Oppholdssted] har bare [oppholdInnenforEøs].
+ * Nyere søknader har [oppholdssted], og da avledes [oppholdInnenforEøs] fra det.
+ * Er begge satt, må de stemme overens.
+ */
+private fun utledOppholdInnenforEøs(oppholdInnenforEøs: Boolean?, oppholdssted: Oppholdssted?): Boolean {
+    if (oppholdssted == null) {
+        return requireNotNull(oppholdInnenforEøs) { "Barnet må ha enten oppholdssted eller oppholdInnenforEøs" }
+    }
+    require(oppholdInnenforEøs == null || oppholdInnenforEøs == oppholdssted.erInnenforEøs()) {
+        "oppholdInnenforEøs=$oppholdInnenforEøs stemmer ikke med oppholdssted=$oppholdssted"
+    }
+    return oppholdssted.erInnenforEøs()
+}
+
 class ManueltRegistrertBarn(
     fornavn: String,
     mellomnavn: String?,
     etternavn: String,
     fødselsdato: LocalDate,
-    oppholdInnenforEøs: Boolean,
+    oppholdInnenforEøs: Boolean?,
+    oppholdssted: Oppholdssted?,
 ) {
     val fornavn: String = saniter(fornavn)
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String = saniter(etternavn)
     val fødselsdato: LocalDate = fødselsdato
-    val oppholdInnenforEøs = oppholdInnenforEøs
+    val oppholdssted: Oppholdssted? = oppholdssted
+    val oppholdInnenforEøs: Boolean = utledOppholdInnenforEøs(oppholdInnenforEøs, oppholdssted)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -49,12 +79,13 @@ class ManueltRegistrertBarn(
         if (etternavn != other.etternavn) return false
         if (fødselsdato != other.fødselsdato) return false
         if (oppholdInnenforEøs != other.oppholdInnenforEøs) return false
+        if (oppholdssted != other.oppholdssted) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs)
+        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs, oppholdssted)
     }
 }
 
@@ -64,14 +95,16 @@ class RegistrertBarn(
     mellomnavn: String?,
     etternavn: String?,
     fødselsdato: LocalDate,
-    oppholdInnenforEøs: Boolean,
+    oppholdInnenforEøs: Boolean?,
+    oppholdssted: Oppholdssted?,
 ) {
     val fnr: String? = fnr
     val fornavn: String? = fornavn?.let { saniter(fornavn) }
     val mellomnavn: String? = mellomnavn?.let { saniter(mellomnavn) }
     val etternavn: String? = etternavn?.let { saniter(etternavn) }
     val fødselsdato: LocalDate = fødselsdato
-    val oppholdInnenforEøs = oppholdInnenforEøs
+    val oppholdssted: Oppholdssted? = oppholdssted
+    val oppholdInnenforEøs: Boolean = utledOppholdInnenforEøs(oppholdInnenforEøs, oppholdssted)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -83,12 +116,13 @@ class RegistrertBarn(
         if (etternavn != other.etternavn) return false
         if (fødselsdato != other.fødselsdato) return false
         if (oppholdInnenforEøs != other.oppholdInnenforEøs) return false
+        if (oppholdssted != other.oppholdssted) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs, fnr)
+        return Objects.hash(fornavn, etternavn, mellomnavn, fødselsdato, oppholdInnenforEøs, oppholdssted, fnr)
     }
 }
 
@@ -184,9 +218,15 @@ class Tiltak(
     }
 }
 
+/**
+ * @property søkerOmBarnetillegg Svaret på om søkeren vil søke barnetillegg.
+ * Barna fra Folkeregisteret hentes bare ved ja.
+ * Er null for søknader fra før søknaden spurte om dette.
+ */
 data class Barnetillegg(
     val manueltRegistrerteBarnSøktBarnetilleggFor: List<ManueltRegistrertBarn>,
     val registrerteBarnSøktBarnetilleggFor: List<RegistrertBarn>,
+    val søkerOmBarnetillegg: Boolean? = null,
 )
 
 data class Pensjonsordning(

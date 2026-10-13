@@ -4,6 +4,7 @@ import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.soknad.BarnetilleggDTO
 import no.nav.tiltakspenger.libs.soknad.FraOgMedDatoSpmDTO
 import no.nav.tiltakspenger.libs.soknad.JaNeiSpmDTO
+import no.nav.tiltakspenger.libs.soknad.OppholdsstedDTO
 import no.nav.tiltakspenger.libs.soknad.PeriodeSpmDTO
 import no.nav.tiltakspenger.libs.soknad.PersonopplysningerDTO
 import no.nav.tiltakspenger.libs.soknad.SpmSvarDTO.Ja
@@ -14,6 +15,7 @@ import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.soknad.Alderspensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Gjenlevendepensjon
 import no.nav.tiltakspenger.soknad.api.soknad.Jobbsjansen
+import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
 import no.nav.tiltakspenger.soknad.api.soknad.Pensjonsordning
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.Supplerendestønadflyktninger
@@ -68,6 +70,7 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
+                oppholdssted = it.oppholdssted?.toDTO(),
             )
         },
         barnetilleggManuelle = soknad.spørsmålsbesvarelser.barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.map {
@@ -80,7 +83,11 @@ fun søknadMapper(
                 oppholderSegIEØS = JaNeiSpmDTO(
                     svar = if (it.oppholdInnenforEøs) Ja else Nei,
                 ),
+                oppholdssted = it.oppholdssted?.toDTO(),
             )
+        },
+        harSøktOmBarnetillegg = soknad.spørsmålsbesvarelser.barnetillegg.søkerOmBarnetillegg?.let {
+            JaNeiSpmDTO(svar = if (it) Ja else Nei)
         },
         vedlegg = søknad.vedleggsnavn.size,
         kvp = mapPeriodeSpm(
@@ -130,6 +137,13 @@ fun søknadMapper(
         saksnummer = saksnummer,
     )
 }
+
+private fun Oppholdssted.toDTO(): OppholdsstedDTO =
+    when (this) {
+        Oppholdssted.NORGE -> OppholdsstedDTO.NORGE
+        Oppholdssted.ANNET_EØS_LAND -> OppholdsstedDTO.ANNET_EØS_LAND
+        Oppholdssted.IKKE_EØS_LAND -> OppholdsstedDTO.IKKE_EØS_LAND
+    }
 
 private fun mapPeriodeSpm(mottar: Boolean, periode: Periode?) =
     if (mottar) {
