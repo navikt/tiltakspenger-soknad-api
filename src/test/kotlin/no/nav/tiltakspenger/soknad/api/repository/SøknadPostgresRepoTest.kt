@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
@@ -65,6 +66,7 @@ class SøknadPostgresRepoTest {
                                 etternavn = "conclusionemque",
                                 fødselsdato = LocalDate.now(fixedClock),
                                 oppholdInnenforEøs = false,
+                                oppholdssted = null,
                             ),
                         ),
                     ),
@@ -90,7 +92,8 @@ class SøknadPostgresRepoTest {
                                 mellomnavn = "latine",
                                 etternavn = "conclusionemque",
                                 fødselsdato = LocalDate.now(fixedClock),
-                                oppholdInnenforEøs = false,
+                                oppholdInnenforEøs = null,
+                                oppholdssted = Oppholdssted.IKKE_EØS_LAND,
                             ),
                         ),
                     ),
@@ -99,6 +102,40 @@ class SøknadPostgresRepoTest {
             søknadRepo.lagre(mottattSøknad)
             val actual = søknadRepo.hentSøknad(mottattSøknad.id)
             actual shouldBe mottattSøknad
+        }
+
+        @Test
+        fun `kan lagre og hente svaret på om søkeren søker barnetillegg`() = withCleanDb { søknadRepo ->
+            listOf(true, false).forEach { søkerOmBarnetillegg ->
+                val mottattSøknad = genererMottattSøknadForTest(
+                    opprettet = nå(fixedClock),
+                    eier = Applikasjonseier.Tiltakspenger,
+                    søknadSpm = spørsmålsbesvarelser(
+                        barnetillegg = barnetillegg(
+                            søkerOmBarnetillegg = søkerOmBarnetillegg,
+                            registrerteBarnSøktBarnetilleggFor = if (søkerOmBarnetillegg) {
+                                listOf(
+                                    RegistrertBarn(
+                                        fnr = "potenti",
+                                        fornavn = "quot",
+                                        mellomnavn = null,
+                                        etternavn = "conclusionemque",
+                                        fødselsdato = LocalDate.now(fixedClock),
+                                        oppholdInnenforEøs = null,
+                                        oppholdssted = Oppholdssted.NORGE,
+                                    ),
+                                )
+                            } else {
+                                emptyList()
+                            },
+                        ),
+                    ),
+                )
+                søknadRepo.lagre(mottattSøknad)
+                val actual = søknadRepo.hentSøknad(mottattSøknad.id)
+                actual shouldBe mottattSøknad
+                actual!!.søknadSpm.barnetillegg.søkerOmBarnetillegg shouldBe søkerOmBarnetillegg
+            }
         }
     }
 

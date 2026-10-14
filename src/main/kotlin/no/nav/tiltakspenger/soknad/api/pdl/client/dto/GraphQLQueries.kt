@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
-import no.nav.tiltakspenger.libs.personklient.pdl.GraphqlBolkQuery
+import no.nav.tiltakspenger.libs.personklient.infra.pdl.GraphqlBolkQuery
 import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 
 val hentPersonQueryString = requireNotNull(PdlClient::class.java.getResource("/hentPersonQuery.graphql")).readText()

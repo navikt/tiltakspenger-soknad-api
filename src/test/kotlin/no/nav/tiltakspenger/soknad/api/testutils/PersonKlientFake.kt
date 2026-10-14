@@ -5,7 +5,7 @@ import arrow.atomic.update
 import arrow.core.Either
 import arrow.core.Nel
 import arrow.core.right
-import no.nav.tiltakspenger.libs.personklient.pdl.dto.PdlPersonBolkCode
+import no.nav.tiltakspenger.libs.personklient.infra.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata

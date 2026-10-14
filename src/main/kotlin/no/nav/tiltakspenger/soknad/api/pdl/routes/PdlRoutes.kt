@@ -16,6 +16,8 @@ import no.nav.tiltakspenger.libs.texas.TexasPrincipalExternalUser
 import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
 import no.nav.tiltakspenger.soknad.api.pdl.PdlService
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnListeDTO
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.tiltak.TiltakService
 
 private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollector) {
@@ -23,39 +25,67 @@ private suspend fun ApplicationCall.serverFeil(metricsCollector: MetricsCollecto
     respondText(status = HttpStatusCode.InternalServerError, text = "Internal Server Error")
 }
 
+/**
+ * `GET /personalia` svarer med søkerens personalia.
+ * Med `medBarn=false` slås ikke barna opp i PDL.
+ * Søknaden henter dem i stedet fra `GET /personalia/barn` når søkeren har svart at hen vil søke barnetillegg.
+ * Uten parameteren tas barna med, slik eldre versjoner av søknaden forventer.
+ */
 fun Route.pdlRoutes(
     pdlService: PdlService,
     tiltakService: TiltakService,
     metricsCollector: MetricsCollector,
 ) {
     val log = KotlinLogging.logger {}
+
+    /** Feilene er allerede logget i servicene; null betyr at ruta skal svare 500. */
+    suspend fun ApplicationCall.hentPersonaliaMedBarn(principal: TexasPrincipalExternalUser): PersonDTO? {
+        val tiltak = tiltakService.hentTiltak(
+            fnr = principal.fnr,
+            maskerArrangørnavn = true,
+            correlationId = CorrelationId(callId!!),
+        ).getOrElse { return null }
+        val tiltakMedTidligsteFradato = tiltak
+            .filter { it.arenaRegistrertPeriode.fra != null }
+            .sortedBy { it.arenaRegistrertPeriode.fra }
+            .firstOrNull()
+
+        return pdlService.hentPersonaliaMedBarn(
+            fødselsnummer = principal.fnr.verdi,
+            styrendeDato = tiltakMedTidligsteFradato?.arenaRegistrertPeriode?.fra,
+            subjectToken = principal.token,
+            callId = callId!!,
+        ).getOrElse { null }
+    }
+
     route(PERSONALIA_PATH) {
         get {
             try {
                 val principal = call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
-                val fødselsnummer = principal.fnr
-                val subjectToken = principal.token
+                val medBarn = call.request.queryParameters["medBarn"]?.toBooleanStrictOrNull() ?: true
 
-                // Feilene er allerede logget i servicene; ruta oversetter dem bare til 500, som før migreringen.
-                val tiltak = tiltakService.hentTiltak(
-                    fnr = fødselsnummer,
-                    maskerArrangørnavn = true,
-                    correlationId = CorrelationId(call.callId!!),
-                ).getOrElse { return@get call.serverFeil(metricsCollector) }
-                val tiltakMedTidligsteFradato = tiltak
-                    .filter { it.arenaRegistrertPeriode.fra != null }
-                    .sortedBy { it.arenaRegistrertPeriode.fra }
-                    .firstOrNull()
-
-                val personDTO = pdlService.hentPersonaliaMedBarn(
-                    fødselsnummer = fødselsnummer.verdi,
-                    styrendeDato = tiltakMedTidligsteFradato?.arenaRegistrertPeriode?.fra,
-                    subjectToken = subjectToken,
-                    callId = call.callId!!,
-                ).getOrElse { return@get call.serverFeil(metricsCollector) }
+                val personDTO = if (medBarn) {
+                    call.hentPersonaliaMedBarn(principal)
+                } else {
+                    pdlService.hentPersonalia(
+                        fødselsnummer = principal.fnr.verdi,
+                        subjectToken = principal.token,
+                        callId = call.callId!!,
+                    ).getOrElse { null }
+                } ?: return@get call.serverFeil(metricsCollector)
                 call.respond(personDTO)
             } catch (e: Exception) {
                 log.error(e) { "Feil under pdlRoute" }
+                call.serverFeil(metricsCollector)
+            }
+        }
+        get("/barn") {
+            try {
+                val principal = call.principal<TexasPrincipalExternalUser>() ?: throw IllegalStateException("Mangler principal")
+                val personDTO = call.hentPersonaliaMedBarn(principal) ?: return@get call.serverFeil(metricsCollector)
+                call.respond(BarnListeDTO(barn = personDTO.barn))
+            } catch (e: Exception) {
+                log.error(e) { "Feil under pdlRoute for barn" }
                 call.serverFeil(metricsCollector)
             }
         }

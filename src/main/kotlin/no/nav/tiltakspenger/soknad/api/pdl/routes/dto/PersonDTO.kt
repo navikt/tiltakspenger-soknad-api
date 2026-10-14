@@ -17,3 +17,7 @@ data class PersonDTO(
     val barn: List<BarnDTO> = emptyList(),
     val harFylt18År: Boolean?,
 )
+
+data class BarnListeDTO(
+    val barn: List<BarnDTO>,
+)

@@ -2,9 +2,14 @@ package no.nav.tiltakspenger.soknad.api.soknad.routes
 
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.soknad.ManueltRegistrertBarn
+import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
+import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
+import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 import no.nav.tiltakspenger.soknad.api.testutils.TestApplicationContext
@@ -15,6 +20,7 @@ import no.nav.tiltakspenger.soknad.api.testutils.postSøknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_ANTALL_VEDLEGG
 import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_FILSTØRRELSE_BYTES
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.node.ObjectNode
 import java.time.LocalDate
 
 class SøknadRoutesTest {
@@ -199,6 +205,147 @@ class SøknadRoutesTest {
             postSøknad(token, søknadJson = ugyldig.toJsonString()).status shouldBe HttpStatusCode.BadRequest
         }
     }
+
+    @Test
+    fun `post med ja på barnetillegg og barn med oppholdssted gir 201 og lagrer svarene`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = true,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = listOf(manueltBarn(Oppholdssted.IKKE_EØS_LAND)),
+                    registrerteBarnSøktBarnetilleggFor = listOf(registrertBarn(Oppholdssted.ANNET_EØS_LAND)),
+                ),
+            )
+
+            postSøknad(token, søknadJson = søknad.toJsonString()).status shouldBe HttpStatusCode.Created
+
+            val barnetillegg = tac.søknadRepo.alle.single().søknadSpm.barnetillegg
+            barnetillegg.søkerOmBarnetillegg shouldBe true
+            barnetillegg.registrerteBarnSøktBarnetilleggFor.single().oppholdssted shouldBe Oppholdssted.ANNET_EØS_LAND
+            barnetillegg.manueltRegistrerteBarnSøktBarnetilleggFor.single().oppholdssted shouldBe Oppholdssted.IKKE_EØS_LAND
+        }
+    }
+
+    @Test
+    fun `post med nei på barnetillegg og ingen barn gir 201`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = false,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = emptyList(),
+                    registrerteBarnSøktBarnetilleggFor = emptyList(),
+                ),
+            )
+
+            postSøknad(token, søknadJson = søknad.toJsonString()).status shouldBe HttpStatusCode.Created
+
+            tac.søknadRepo.alle.single().søknadSpm.barnetillegg.søkerOmBarnetillegg shouldBe false
+        }
+    }
+
+    @Test
+    fun `post med ja på barnetillegg uten barn gir 400 og lagrer ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = true,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = emptyList(),
+                    registrerteBarnSøktBarnetilleggFor = emptyList(),
+                ),
+            )
+
+            postSøknad(token, søknadJson = søknad.toJsonString()).status shouldBe HttpStatusCode.BadRequest
+            tac.søknadRepo.alle shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `post med nei på barnetillegg og barn gir 400 og lagrer ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = false,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = emptyList(),
+                    registrerteBarnSøktBarnetilleggFor = listOf(registrertBarn(Oppholdssted.NORGE)),
+                ),
+            )
+
+            postSøknad(token, søknadJson = søknad.toJsonString()).status shouldBe HttpStatusCode.BadRequest
+            tac.søknadRepo.alle shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `post med barn uten noe svar om oppholdssted gir 400 og lagrer ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = true,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = emptyList(),
+                    registrerteBarnSøktBarnetilleggFor = listOf(registrertBarn(Oppholdssted.NORGE)),
+                ),
+            )
+            val json = objectMapper.readTree(søknad.toJsonString()) as ObjectNode
+            val barn = json["barnetillegg"]["registrerteBarnSøktBarnetilleggFor"][0] as ObjectNode
+            barn.remove(listOf("oppholdssted", "oppholdInnenforEøs"))
+
+            postSøknad(token, søknadJson = json.toString()).status shouldBe HttpStatusCode.BadRequest
+            tac.søknadRepo.alle shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `post med barn der oppholdssted og oppholdInnenforEøs motsier hverandre gir 400`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser(
+                barnetillegg = barnetillegg(
+                    søkerOmBarnetillegg = true,
+                    manueltRegistrerteBarnSøktBarnetilleggFor = emptyList(),
+                    registrerteBarnSøktBarnetilleggFor = listOf(registrertBarn(Oppholdssted.IKKE_EØS_LAND)),
+                ),
+            )
+            val json = objectMapper.readTree(søknad.toJsonString()) as ObjectNode
+            (json["barnetillegg"]["registrerteBarnSøktBarnetilleggFor"][0] as ObjectNode).put("oppholdInnenforEøs", true)
+
+            postSøknad(token, søknadJson = json.toString()).status shouldBe HttpStatusCode.BadRequest
+            tac.søknadRepo.alle shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `post med søknad som ikke er gyldig json gir 400`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+
+            postSøknad(token, søknadJson = "{ikke json").status shouldBe HttpStatusCode.BadRequest
+            tac.søknadRepo.alle shouldBe emptyList()
+        }
+    }
+
+    private fun registrertBarn(oppholdssted: Oppholdssted) = RegistrertBarn(
+        fnr = nyttTestFødselsnummer(),
+        fornavn = "Fornavn",
+        mellomnavn = null,
+        etternavn = "Etternavn",
+        fødselsdato = LocalDate.of(2020, 1, 1),
+        oppholdInnenforEøs = null,
+        oppholdssted = oppholdssted,
+    )
+
+    private fun manueltBarn(oppholdssted: Oppholdssted) = ManueltRegistrertBarn(
+        fornavn = "Manuelt",
+        mellomnavn = null,
+        etternavn = "Barn",
+        fødselsdato = LocalDate.of(2021, 1, 1),
+        oppholdInnenforEøs = null,
+        oppholdssted = oppholdssted,
+    )
 
     @Test
     fun `post med vedlegg av ikke-støttet filtype gir 500`() {

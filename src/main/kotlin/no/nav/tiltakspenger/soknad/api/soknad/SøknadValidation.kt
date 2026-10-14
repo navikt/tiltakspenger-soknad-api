@@ -281,6 +281,14 @@ fun validerBarnetillegg(barnetillegg: Barnetillegg, clock: Clock): List<String> 
         feilmeldinger.add("Manuelt registrert barn er ugyldig: fødselsdato kan ikke registreres fram i tid")
     }
 
+    val harBarn = manueltRegistrerteBarn.isNotEmpty() || barnetillegg.registrerteBarnSøktBarnetilleggFor.isNotEmpty()
+    if (barnetillegg.søkerOmBarnetillegg == false && harBarn) {
+        feilmeldinger.add("Bruker har svart nei på å søke barnetillegg, men søknaden har barn")
+    }
+    if (barnetillegg.søkerOmBarnetillegg == true && !harBarn) {
+        feilmeldinger.add("Bruker har svart ja på å søke barnetillegg, men søknaden har ingen barn")
+    }
+
     return feilmeldinger
 }
 

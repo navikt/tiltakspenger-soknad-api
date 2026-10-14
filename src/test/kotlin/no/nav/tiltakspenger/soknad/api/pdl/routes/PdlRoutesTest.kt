@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpStatusCode
 import no.nav.tiltakspenger.soknad.api.PERSONALIA_PATH
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnListeDTO
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.testutils.barnRespons
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
@@ -59,6 +60,139 @@ class PdlRoutesTest {
             val barn = response.body<PersonDTO>().barn.single()
             barn.fornavn shouldBe "Barn"
             barn.etternavn shouldBe "Barnesen"
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt med medBarn=false slår ikke opp barn eller tiltak`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer)))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH?medBarn=false") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val body: PersonDTO = response.body()
+            body.fornavn shouldBe "Fornavn"
+            body.harFylt18År shouldBe true
+            body.barn shouldBe emptyList()
+            tac.pdlTransport.mottatteKall.size shouldBe 1
+            tac.tiltakshistorikkTransport.mottatteKall shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer med søkerens barn under 16 år`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnFødselsnummer))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val barn = response.body<BarnListeDTO>().barn.single()
+            barn.fnr shouldBe barnFødselsnummer
+            barn.fornavn shouldBe "Barn"
+            barn.etternavn shouldBe "Barnesen"
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer 500 når pdl-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            tac.pdlTransport.leggIKøKast(IOException("pdl er nede"))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer 401 når token mangler`() {
+        medTestApplikasjon {
+            jsonKlient().get("$PERSONALIA_PATH/barn").status shouldBe HttpStatusCode.Unauthorized
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt med ugyldig medBarn tar med barn, slik eldre søknader forventer`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnFødselsnummer))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH?medBarn=tja") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            response.body<PersonDTO>().barn.single().fnr shouldBe barnFødselsnummer
+        }
+    }
+
+    @Test
+    fun `get på personalia-endepunkt med medBarn=false svarer 500 når pdl-kallet feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøKast(IOException("pdl er nede"))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH?medBarn=false") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer med tom liste når søkeren ikke har barn i PDL`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            response.body<BarnListeDTO>().barn shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt utelater barn som har fylt 16 på tiltakets tidligste fra-dato`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(
+                tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer, fraOgMed = LocalDate.of(2024, 12, 1))),
+            )
+            tac.pdlTransport.leggIKøJson(søkerRespons(barnIdenter = listOf(barnFødselsnummer)))
+            tac.pdlTransport.leggIKøJson(barnRespons(ident = barnFødselsnummer, fødselsdato = "2008-11-15"))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            response.body<BarnListeDTO>().barn shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer 500 når tiltakshistorikk feiler`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøStatusForAlleForsøk(500, "tiltakshistorikk er nede", maksForsøk = 3)
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+            tac.pdlTransport.mottatteKall shouldBe emptyList()
         }
     }
 
@@ -230,6 +364,21 @@ class PdlRoutesTest {
             tac.pdlTransport.leggIKøJson(søkerRespons(død = true))
 
             val response = jsonKlient().get(PERSONALIA_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `get på barn-endepunkt svarer 500 når søkeren er registrert som død i PDL`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            // Mappingen kaster på død søker; ruta skal ta det som en uventet feil og svare 500.
+            tac.pdlTransport.leggIKøJson(søkerRespons(død = true))
+
+            val response = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
 
             response.status shouldBe HttpStatusCode.InternalServerError
         }

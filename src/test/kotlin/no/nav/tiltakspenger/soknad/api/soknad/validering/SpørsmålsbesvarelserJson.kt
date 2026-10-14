@@ -84,6 +84,7 @@ fun barnetillegg(
             etternavn = "Test",
             fødselsdato = LocalDate.of(2023, 1, 1),
             oppholdInnenforEøs = true,
+            oppholdssted = null,
         ),
     ),
     registrerteBarnSøktBarnetilleggFor: List<RegistrertBarn> = listOf(
@@ -94,11 +95,14 @@ fun barnetillegg(
             etternavn = "Testesen",
             mellomnavn = "Test",
             oppholdInnenforEøs = true,
+            oppholdssted = null,
         ),
     ),
+    søkerOmBarnetillegg: Boolean? = null,
 ): Barnetillegg = Barnetillegg(
     manueltRegistrerteBarnSøktBarnetilleggFor = manueltRegistrerteBarnSøktBarnetilleggFor,
     registrerteBarnSøktBarnetilleggFor = registrerteBarnSøktBarnetilleggFor,
+    søkerOmBarnetillegg = søkerOmBarnetillegg,
 )
 
 private fun etterlønn(): Etterlønn = Etterlønn(mottar = true)
