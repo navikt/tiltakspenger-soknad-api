@@ -84,15 +84,23 @@ fun barnRespons(
     etternavn: String = "Barnesen",
     fødselsdato: String = "2020-06-21",
     utenFregmeta: Boolean = false,
+    død: Boolean = false,
 ): String = """
     {
       "data": {
-        "hentPersonBolk": [ ${barnIBolk(ident, fornavn, etternavn, fødselsdato, utenFregmeta)} ]
+        "hentPersonBolk": [ ${barnIBolk(ident, fornavn, etternavn, fødselsdato, utenFregmeta, død)} ]
       }
     }
 """.trimIndent()
 
-private fun barnIBolk(ident: String, fornavn: String, etternavn: String, fødselsdato: String, utenFregmeta: Boolean) = """
+private fun barnIBolk(
+    ident: String,
+    fornavn: String,
+    etternavn: String,
+    fødselsdato: String,
+    utenFregmeta: Boolean,
+    død: Boolean,
+) = """
     {
       "ident": "$ident",
       "code": "ok",
@@ -100,7 +108,7 @@ private fun barnIBolk(ident: String, fornavn: String, etternavn: String, fødsel
         "navn": [ ${navn(fornavn, null, etternavn, utenFregmeta)} ],
         "adressebeskyttelse": [],
         "foedselsdato": [ ${fødsel(fødselsdato, utenFregmeta)} ],
-        "doedsfall": []
+        "doedsfall": [ ${if (død) """{ "doedsdato": "2024-01-01" }""" else ""} ]
       }
     }
 """.trimIndent()

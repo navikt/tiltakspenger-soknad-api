@@ -7,13 +7,13 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFnr
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -56,7 +56,6 @@ class PersonTest {
     private val testpersonStrengtFortrolig = mockPerson(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG)
     private val testpersonStrengtFortroligUtland =
         mockPerson(gradering = AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND)
-    private val dødTestPerson = mockPerson(erDød = true, fornavn = "Død")
 
     private val testpersonMedRelasjoner = mockPerson(
         forelderBarnRelasjon = listOf(
@@ -71,53 +70,44 @@ class PersonTest {
     )
 
     @Test
-    fun `toPersonDTO skal returnere personens navn og en tom liste med barn når det ikke er noen barn`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, emptyList())
+    fun `toPersonDTO skal returnere personens navn`() {
+        val personDTO = testpersonUgradert.toPersonDTO(dagensDato)
         assertEquals(testpersonUgradert.fornavn, personDTO.fornavn)
         assertEquals(testpersonUgradert.mellomnavn, personDTO.mellomnavn)
         assertEquals(testpersonUgradert.etternavn, personDTO.etternavn)
-        assertTrue(personDTO.barn.isEmpty())
     }
 
     @Test
-    fun `toPersonDTO skal returnere personens navn og en liste med barn når man oppgir barn`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonUgradert))
-        assertEquals(testpersonUgradert.fornavn, personDTO.fornavn)
-        assertEquals(testpersonUgradert.mellomnavn, personDTO.mellomnavn)
-        assertEquals(testpersonUgradert.etternavn, personDTO.etternavn)
-        assertTrue(personDTO.barn.size == 1)
-
-        val ugradertBart = personDTO.barn[0]
-        assertEquals(testpersonUgradert.fornavn, ugradertBart.fornavn)
-        assertEquals(testpersonUgradert.mellomnavn, ugradertBart.mellomnavn)
-        assertEquals(testpersonUgradert.etternavn, ugradertBart.etternavn)
+    fun `toBarnDTO skal returnere navn, fødselsdato og fnr på ugradert barn`() {
+        val barnDTO = testpersonUgradert.toBarnDTO()
+        assertEquals(testpersonUgradert.fnr.verdi, barnDTO.fnr)
+        assertEquals(testpersonUgradert.fødselsdato, barnDTO.fødselsdato)
+        assertEquals(testpersonUgradert.fornavn, barnDTO.fornavn)
+        assertEquals(testpersonUgradert.mellomnavn, barnDTO.mellomnavn)
+        assertEquals(testpersonUgradert.etternavn, barnDTO.etternavn)
     }
 
     @Test
-    fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering FORTROLIG`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonFortrolig))
-        val fortroligBarn = personDTO.barn[0]
-        assertNull(fortroligBarn.fornavn)
-        assertNull(fortroligBarn.mellomnavn)
-        assertNull(fortroligBarn.etternavn)
+    fun `toBarnDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering FORTROLIG`() {
+        assertUtenNavn(testpersonFortrolig.toBarnDTO(), testpersonFortrolig)
     }
 
     @Test
-    fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonStrengtFortrolig))
-        val fortroligBarn = personDTO.barn[0]
-        assertNull(fortroligBarn.fornavn)
-        assertNull(fortroligBarn.mellomnavn)
-        assertNull(fortroligBarn.etternavn)
+    fun `toBarnDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG`() {
+        assertUtenNavn(testpersonStrengtFortrolig.toBarnDTO(), testpersonStrengtFortrolig)
     }
 
     @Test
-    fun `toPersonDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG_UTLAND`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonStrengtFortroligUtland))
-        val fortroligBarn = personDTO.barn[0]
-        assertNull(fortroligBarn.fornavn)
-        assertNull(fortroligBarn.mellomnavn)
-        assertNull(fortroligBarn.etternavn)
+    fun `toBarnDTO skal ikke returnere navn på barn som har AdressebeskyttelseGradering STRENGT_FORTROLIG_UTLAND`() {
+        assertUtenNavn(testpersonStrengtFortroligUtland.toBarnDTO(), testpersonStrengtFortroligUtland)
+    }
+
+    private fun assertUtenNavn(barnDTO: BarnDTO, barn: Person) {
+        assertEquals(barn.fnr.verdi, barnDTO.fnr)
+        assertEquals(barn.fødselsdato, barnDTO.fødselsdato)
+        assertNull(barnDTO.fornavn)
+        assertNull(barnDTO.mellomnavn)
+        assertNull(barnDTO.etternavn)
     }
 
     @Test
@@ -128,14 +118,6 @@ class PersonTest {
         assertTrue(barnsIdenter.size == 2)
         assertEquals(barnsIdenter[0], "1")
         assertEquals(barnsIdenter[1], "2")
-    }
-
-    @Test
-    fun `barn med dødsdato skal filtreres ut`() {
-        val personDTO = testpersonUgradert.toPersonDTO(dagensDato, listOf(testpersonUgradert, dødTestPerson))
-        assertEquals(personDTO.barn.size, 1)
-        val barn = personDTO.barn[0]
-        assertNotEquals(barn.fornavn, "Død")
     }
 
     @Test
