@@ -9,6 +9,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.tiltakspenger.libs.common.CorrelationId
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnListeDTO
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import no.nav.tiltakspenger.soknad.api.testutils.FakeSøknadRepo
 import no.nav.tiltakspenger.soknad.api.testutils.enkelPdf
@@ -48,8 +49,11 @@ class LokalApplicationContextTest {
             val person = personalia.body<PersonDTO>()
             person.fornavn shouldBe "Lokal"
             person.harFylt18År shouldBe true
+
+            val barn = jsonKlient().get("$PERSONALIA_PATH/barn") { header("Authorization", "Bearer $token") }
+            barn.status shouldBe HttpStatusCode.OK
             // Begge barna er under 16 år og skal kunne velges i barnetillegg.
-            person.barn.size shouldBe 2
+            barn.body<BarnListeDTO>().barn.size shouldBe 2
 
             val tiltak = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
             tiltak.status shouldBe HttpStatusCode.OK

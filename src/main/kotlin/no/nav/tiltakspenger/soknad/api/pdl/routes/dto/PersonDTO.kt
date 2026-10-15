@@ -14,7 +14,6 @@ data class PersonDTO(
     val fornavn: String,
     val mellomnavn: String?,
     val etternavn: String,
-    val barn: List<BarnDTO> = emptyList(),
     val harFylt18År: Boolean?,
 )
 

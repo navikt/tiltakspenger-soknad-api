@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.libs.logging.Sikkerlogg
 import no.nav.tiltakspenger.soknad.api.pdl.client.KanIkkeHentePerson
 import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
 import no.nav.tiltakspenger.soknad.api.pdl.client.logg
+import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.BarnDTO
 import no.nav.tiltakspenger.soknad.api.pdl.routes.dto.PersonDTO
 import java.time.Clock
 import java.time.LocalDate
@@ -32,26 +33,27 @@ class PdlService(
     }
 
     /**
-     * Barn filtreres på om de er under 16 år på [styrendeDato].
+     * Henter søkerens levende barn som er under 16 år på [styrendeDato].
      * Dersom [styrendeDato] er null brukes dagens dato.
      */
-    suspend fun hentPersonaliaMedBarn(
+    suspend fun hentBarn(
         fødselsnummer: String,
         subjectToken: String,
         callId: String,
         styrendeDato: LocalDate?,
-    ): Either<KanIkkeHentePerson, PersonDTO> = either {
+    ): Either<KanIkkeHentePerson, List<BarnDTO>> = either {
         val filtreringsdato = styrendeDato ?: LocalDate.now(clock)
         val person = hentSøker(fødselsnummer, subjectToken, callId).bind()
-        val barn = person.barnsIdenter().toNonEmptyListOrNull()?.let { identer ->
+        person.barnsIdenter().toNonEmptyListOrNull()?.let { identer ->
             personKlient.fetchBarn(identer)
                 .loggFeil("henting av personalia for søkers barn fra PDL", callId)
                 .bind()
                 .toPersoner()
                 .filterNotNull()
                 .filter { it.erUnder16ÅrPåDato(dato = filtreringsdato) }
+                .filterNot { it.erDød }
+                .map { it.toBarnDTO() }
         }.orEmpty()
-        person.toPersonDTO(dagensDato = LocalDate.now(clock), barn = barn)
     }
 
     suspend fun hentAdressebeskyttelse(

@@ -19,29 +19,27 @@ data class Person(
     val adressebeskyttelseGradering: AdressebeskyttelseGradering,
     val geografiskTilknytning: String?,
 ) {
-    fun toPersonDTO(dagensDato: LocalDate, barn: List<Person> = emptyList()): PersonDTO {
-        val levendeBarn = barn.filterNot { it.erDød }
-        return PersonDTO(
-            fornavn = fornavn,
-            mellomnavn = mellomnavn,
-            etternavn = etternavn,
-            barn = levendeBarn.map {
-                if (it.adressebeskyttelseGradering === AdressebeskyttelseGradering.UGRADERT) {
-                    BarnDTO(
-                        fnr = it.fnr.verdi,
-                        fødselsdato = it.fødselsdato!!,
-                        fornavn = it.fornavn,
-                        mellomnavn = it.mellomnavn,
-                        etternavn = it.etternavn,
-                    )
-                } else {
-                    BarnDTO(fnr = it.fnr.verdi, fødselsdato = it.fødselsdato!!)
-                }
-            },
-            harFylt18År = fødselsdato?.isSameOrBefore(dagensDato.minusYears(18))
-                ?: throw IllegalStateException("Søker mangler fødselsdato"),
-        )
-    }
+    fun toPersonDTO(dagensDato: LocalDate): PersonDTO = PersonDTO(
+        fornavn = fornavn,
+        mellomnavn = mellomnavn,
+        etternavn = etternavn,
+        harFylt18År = fødselsdato?.isSameOrBefore(dagensDato.minusYears(18))
+            ?: throw IllegalStateException("Søker mangler fødselsdato"),
+    )
+
+    /** Barn med adressebeskyttelse får ikke med navnet. */
+    fun toBarnDTO(): BarnDTO =
+        if (adressebeskyttelseGradering === AdressebeskyttelseGradering.UGRADERT) {
+            BarnDTO(
+                fnr = fnr.verdi,
+                fødselsdato = fødselsdato!!,
+                fornavn = fornavn,
+                mellomnavn = mellomnavn,
+                etternavn = etternavn,
+            )
+        } else {
+            BarnDTO(fnr = fnr.verdi, fødselsdato = fødselsdato!!)
+        }
 
     fun barnsIdenter(): List<String> {
         return (forelderBarnRelasjon ?: emptyList())
