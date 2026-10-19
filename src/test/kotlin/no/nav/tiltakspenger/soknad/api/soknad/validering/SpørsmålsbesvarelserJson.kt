@@ -29,9 +29,12 @@ fun defaultPeriode() = Periode(
     til = LocalDate.of(2025, 1, 1),
 )
 
-private fun tiltak() = Tiltak(
-    aktivitetId = "123",
-    periode = defaultPeriode(),
+fun tiltak(
+    aktivitetId: String = "123",
+    periode: Periode = defaultPeriode(),
+) = Tiltak(
+    aktivitetId = aktivitetId,
+    periode = periode,
     arrangør = "test",
     type = "test",
     typeNavn = "test",

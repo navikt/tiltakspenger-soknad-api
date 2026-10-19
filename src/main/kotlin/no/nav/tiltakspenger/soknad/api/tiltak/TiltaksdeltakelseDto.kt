@@ -3,12 +3,28 @@ package no.nav.tiltakspenger.soknad.api.tiltak
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakTypeDTO
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelse
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.TiltakstypeSomGirRett
+import no.nav.tiltakspenger.soknad.api.soknad.Periode
+import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
+import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
+import no.nav.tiltakspenger.soknad.api.soknad.søknadSomDekker
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class Deltakelsesperiode(
     val fra: LocalDate?,
     val til: LocalDate?,
+)
+
+/**
+ * En søknad vi allerede har mottatt for deltakelsen, se [TiltaksdeltakelseDto.medTidligereSøknad].
+ *
+ * @property svar Svarene i den tidligere søknaden, i samme form som frontenden sender dem inn.
+ * Frontenden viser dem før bruker søker på nytt, fyller ut den nye søknaden med dem og markerer hva som er endret.
+ */
+data class TidligereSøknadDto(
+    val mottatt: LocalDateTime,
+    val svar: SpørsmålsbesvarelserDTO,
 )
 
 /**
@@ -25,7 +41,21 @@ data class TiltaksdeltakelseDto(
     val arrangør: String,
     val gjennomforingId: String,
     val visningsnavn: String?,
+    val tidligereSøknad: TidligereSøknadDto?,
 ) {
+    /**
+     * Søknaden setter søkt periode lik deltakelsens registrerte periode.
+     * Er den perioden allerede dekket av en tidligere søknad for samme deltakelse, får deltakelsen med seg den sist mottatte av dem.
+     * En ny søknad sammenlignes med akkurat den, og avvises om svarene er de samme (se [no.nav.tiltakspenger.soknad.api.soknad.duplikatAv]).
+     * En deltakelse uten fullstendig periode kan ikke søkes digitalt, og får derfor aldri [tidligereSøknad].
+     */
+    fun medTidligereSøknad(tidligereSøknader: List<TidligereSøknad>): TiltaksdeltakelseDto {
+        val fra = arenaRegistrertPeriode.fra ?: return this
+        val til = arenaRegistrertPeriode.til ?: return this
+        val tidligere = tidligereSøknader.søknadSomDekker(aktivitetId, Periode(fra = fra, til = til)) ?: return this
+        return copy(tidligereSøknad = TidligereSøknadDto(mottatt = tidligere.mottatt, svar = tidligere.svar))
+    }
+
     /**
      * Tidsrommet søknaden viser tiltaksdeltakelser fra: seks måneder tilbake til to måneder fram.
      * En deltakelse uten startdato slipper alltid gjennom — vi vet ikke når den hører hjemme, og skjuler den derfor ikke.
@@ -65,6 +95,7 @@ fun List<Tiltaksdeltakelse.GirRett>.toTiltakDto(maskerArrangørnavn: Boolean): L
         arrangør = if (maskerArrangørnavn) "" else (it.arrangør.hovedenhet ?: it.arrangør.underenhet)?.verdi ?: "Ukjent",
         gjennomforingId = it.gjennomføringId?.verdi ?: "",
         visningsnavn = if (maskerArrangørnavn) it.tiltakstypenavn else it.tittel?.verdi,
+        tidligereSøknad = null,
     )
 }
 

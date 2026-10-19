@@ -11,6 +11,11 @@ import no.nav.tiltakspenger.soknad.api.TILTAK_PATH
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.FORTROLIG
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_FORTROLIG
 import no.nav.tiltakspenger.soknad.api.pdl.AdressebeskyttelseGradering.STRENGT_FORTROLIG_UTLAND
+import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.soknad.Periode
+import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
+import no.nav.tiltakspenger.soknad.api.soknad.validering.tiltak
+import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.kometDeltakelse
 import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
@@ -20,9 +25,11 @@ import no.nav.tiltakspenger.soknad.api.testutils.pdlIdenterRespons
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikkRespons
 import no.nav.tiltakspenger.soknad.api.testutils.ukjentDeltakelsesform
+import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * Hele kjeden ende til ende: ruta, tjenesten, begge klientene i hentingen med ekte auth og deserialisering, søknadsguarden, mappingen og tidsromsfilteret.
@@ -52,6 +59,43 @@ class TiltakRoutesTest {
             tiltak.gjennomforingId shouldBe "0190c9a2-3333-7000-8000-000000000003"
             tiltak.arenaRegistrertPeriode.fra shouldBe LocalDate.of(2024, 12, 1)
             tiltak.arenaRegistrertPeriode.til shouldBe LocalDate.of(2025, 2, 28)
+        }
+    }
+
+    @Test
+    fun `get på tiltak-endepunkt viser når vi mottok en tidligere søknad for deltakelsen og svarene i den`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(
+                tiltakshistorikkRespons(
+                    kometDeltakelse(fnr = testFødselsnummer),
+                    kometDeltakelse(fnr = testFødselsnummer, id = "0190c9a2-2222-7000-8000-000000000009"),
+                ),
+            )
+            val mottatt = LocalDateTime.of(2024, 12, 15, 12, 30)
+            val tidligereSøknad = genererMottattSøknadForTest(
+                fnr = testFødselsnummer,
+                opprettet = mottatt,
+                eier = Applikasjonseier.Tiltakspenger,
+                søknadSpm = spørsmålsbesvarelser(
+                    tiltak = tiltak(
+                        aktivitetId = "0190c9a2-2222-7000-8000-000000000002",
+                        periode = Periode(fra = LocalDate.of(2024, 12, 1), til = LocalDate.of(2025, 2, 28)),
+                    ),
+                ),
+            )
+            tac.søknadRepo.lagre(tidligereSøknad)
+
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val tidligereSøknader = response.body<TiltakDto>().tiltak.associate { it.aktivitetId to it.tidligereSøknad }
+            tidligereSøknader["0190c9a2-2222-7000-8000-000000000009"] shouldBe null
+            val tidligere = tidligereSøknader.getValue("0190c9a2-2222-7000-8000-000000000002")!!
+            tidligere.mottatt shouldBe mottatt
+            tidligere.svar.toJsonString() shouldBe tidligereSøknad.søknadSpm.toJsonString()
         }
     }
 

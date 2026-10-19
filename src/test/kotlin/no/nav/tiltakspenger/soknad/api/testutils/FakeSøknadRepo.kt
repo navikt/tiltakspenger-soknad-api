@@ -1,10 +1,15 @@
 package no.nav.tiltakspenger.soknad.api.testutils
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
+import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
+import no.nav.tiltakspenger.soknad.api.soknad.duplikatAv
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -23,6 +28,15 @@ class FakeSøknadRepo : SøknadRepo {
         kastVedLagring?.let { throw it }
         søknader[mottattSøknad.id] = mottattSøknad
     }
+
+    @Synchronized
+    override fun lagreHvisIkkeDuplikat(mottattSøknad: MottattSøknad): Either<TidligereSøknad, Unit> {
+        hentTidligereSøknader(mottattSøknad.fnr).duplikatAv(mottattSøknad.søknadSpm)?.let { return it.left() }
+        return lagre(mottattSøknad).right()
+    }
+
+    override fun hentTidligereSøknader(fnr: String): List<TidligereSøknad> =
+        alle.filter { it.fnr == fnr }.map { TidligereSøknad(id = it.id, mottatt = it.opprettet, svar = it.søknadSpm) }
 
     override fun oppdater(mottattSøknad: MottattSøknad) {
         søknader[mottattSøknad.id] = mottattSøknad

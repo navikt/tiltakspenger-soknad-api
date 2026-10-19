@@ -45,7 +45,7 @@ fun Route.tiltakRoutes(
                 // Feilene er allerede logget i servicene; ruta oversetter dem bare til 500, som før migreringen.
                 val adressebeskyttelse = pdlService.hentAdressebeskyttelse(fødselsnummer.verdi, subjectToken, callId)
                     .getOrElse { return@get call.serverFeil(metricsCollector) }
-                val tiltak = tiltakService.hentTiltak(
+                val tiltak = tiltakService.hentTiltakMedTidligereSøknader(
                     maskerArrangørnavn = adressebeskyttelse != UGRADERT,
                     fnr = fødselsnummer,
                     correlationId = CorrelationId(callId),

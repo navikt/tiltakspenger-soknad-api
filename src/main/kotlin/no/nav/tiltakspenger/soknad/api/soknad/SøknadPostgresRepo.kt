@@ -1,6 +1,10 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import kotliquery.Row
+import kotliquery.Session
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.tiltakspenger.libs.common.Fnr
@@ -19,30 +23,78 @@ class SøknadPostgresRepo(
     override fun lagre(mottattSøknad: MottattSøknad) {
         sessionOf(dataSource).use {
             it.transaction { transaction ->
-                transaction.run(
-                    queryOf(
-                        sqlLagre,
-                        mapOf(
-                            "id" to mottattSøknad.id.toString(),
-                            "versjon" to mottattSøknad.versjon,
-                            "soknad" to mottattSøknad.søknad?.toDbJson(),
-                            "soknadSpm" to mottattSøknad.søknadSpm.toDbJson(),
-                            "vedlegg" to mottattSøknad.vedlegg.toDbJson(),
-                            "acr" to mottattSøknad.acr,
-                            "fnr" to mottattSøknad.fnr,
-                            "fornavn" to mottattSøknad.fornavn,
-                            "etternavn" to mottattSøknad.etternavn,
-                            "sendtTilVedtak" to mottattSøknad.sendtTilVedtak,
-                            "journalfort" to mottattSøknad.journalført,
-                            "journalpostId" to mottattSøknad.journalpostId?.toString(),
-                            "opprettet" to mottattSøknad.opprettet,
-                            "eier" to mottattSøknad.eier.toDb(),
-                            "saksnummer" to mottattSøknad.saksnummer,
-                        ),
-                    ).asUpdate,
-                )
+                transaction.lagre(mottattSøknad)
             }
         }
+    }
+
+    override fun lagreHvisIkkeDuplikat(mottattSøknad: MottattSøknad): Either<TidligereSøknad, Unit> {
+        return sessionOf(dataSource).use {
+            it.transaction { transaction ->
+                // Låsen slippes når transaksjonen avsluttes, og holder en samtidig innsending fra samme bruker igjen til denne er lagret.
+                transaction.run(
+                    queryOf(
+                        """SELECT pg_advisory_xact_lock(hashtext(:fnr))""",
+                        mapOf("fnr" to mottattSøknad.fnr),
+                    ).asExecute,
+                )
+                transaction.hentTidligereSøknader(mottattSøknad.fnr)
+                    .duplikatAv(mottattSøknad.søknadSpm)
+                    ?.left()
+                    ?: transaction.lagre(mottattSøknad).right()
+            }
+        }
+    }
+
+    override fun hentTidligereSøknader(fnr: String): List<TidligereSøknad> {
+        return sessionOf(dataSource).use {
+            it.hentTidligereSøknader(fnr)
+        }
+    }
+
+    private fun Session.hentTidligereSøknader(fnr: String): List<TidligereSøknad> {
+        return run(
+            queryOf(
+                //language=SQL
+                """
+                    SELECT id, opprettet, søknadSpm
+                    FROM søknad
+                    WHERE fnr = :fnr
+                """.trimIndent(),
+                mapOf("fnr" to fnr),
+            ).map { row ->
+                TidligereSøknad(
+                    id = SøknadId.fromString(row.string("id")),
+                    mottatt = row.localDateTime("opprettet"),
+                    svar = row.string("søknadSpm").toSpørsmålsbesvarelserDbJson(),
+                )
+            }.asList,
+        )
+    }
+
+    private fun Session.lagre(mottattSøknad: MottattSøknad) {
+        run(
+            queryOf(
+                sqlLagre,
+                mapOf(
+                    "id" to mottattSøknad.id.toString(),
+                    "versjon" to mottattSøknad.versjon,
+                    "soknad" to mottattSøknad.søknad?.toDbJson(),
+                    "soknadSpm" to mottattSøknad.søknadSpm.toDbJson(),
+                    "vedlegg" to mottattSøknad.vedlegg.toDbJson(),
+                    "acr" to mottattSøknad.acr,
+                    "fnr" to mottattSøknad.fnr,
+                    "fornavn" to mottattSøknad.fornavn,
+                    "etternavn" to mottattSøknad.etternavn,
+                    "sendtTilVedtak" to mottattSøknad.sendtTilVedtak,
+                    "journalfort" to mottattSøknad.journalført,
+                    "journalpostId" to mottattSøknad.journalpostId?.toString(),
+                    "opprettet" to mottattSøknad.opprettet,
+                    "eier" to mottattSøknad.eier.toDb(),
+                    "saksnummer" to mottattSøknad.saksnummer,
+                ),
+            ).asUpdate,
+        )
     }
 
     override fun oppdater(mottattSøknad: MottattSøknad) {
