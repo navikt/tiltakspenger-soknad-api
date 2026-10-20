@@ -95,7 +95,36 @@ class TiltakRoutesTest {
             tidligereSøknader["0190c9a2-2222-7000-8000-000000000009"] shouldBe null
             val tidligere = tidligereSøknader.getValue("0190c9a2-2222-7000-8000-000000000002")!!
             tidligere.mottatt shouldBe mottatt
-            tidligere.svar.toJsonString() shouldBe tidligereSøknad.søknadSpm.toJsonString()
+            tidligere.svar.copy(tiltak = tidligereSøknad.søknadSpm.tiltak).toJsonString() shouldBe tidligereSøknad.søknadSpm.toJsonString()
+        }
+    }
+
+    @Test
+    fun `get på tiltak-endepunkt fjerner arrangørnavn i tidligere søknad sendt inn før søker fikk adressebeskyttelse`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons(gradering = STRENGT_FORTROLIG))
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            val tidligereSøknad = genererMottattSøknadForTest(
+                fnr = testFødselsnummer,
+                eier = Applikasjonseier.Tiltakspenger,
+                søknadSpm = spørsmålsbesvarelser(
+                    tiltak = tiltak(
+                        aktivitetId = "0190c9a2-2222-7000-8000-000000000002",
+                        periode = Periode(fra = LocalDate.of(2024, 12, 1), til = LocalDate.of(2025, 2, 28)),
+                    ),
+                ),
+            )
+            tac.søknadRepo.lagre(tidligereSøknad)
+
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            val tidligereTiltak = response.body<TiltakDto>().tiltak.single().tidligereSøknad!!.svar.tiltak
+            tidligereTiltak.arrangør shouldBe ""
+            tidligereTiltak.visningsnavn shouldBe "Arbeidsforberedende trening"
+            tidligereTiltak.periode shouldBe tidligereSøknad.søknadSpm.tiltak.periode
         }
     }
 

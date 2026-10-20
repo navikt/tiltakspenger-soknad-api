@@ -6,6 +6,7 @@ import no.nav.tiltakspenger.libs.tiltaksdeltakelse.TiltakstypeSomGirRett
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
+import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
 import no.nav.tiltakspenger.soknad.api.soknad.søknadSomDekker
 import java.time.Clock
 import java.time.LocalDate
@@ -48,12 +49,14 @@ data class TiltaksdeltakelseDto(
      * Er den perioden allerede dekket av en tidligere søknad for samme deltakelse, får deltakelsen med seg den sist mottatte av dem.
      * En ny søknad sammenlignes med akkurat den, og avvises om svarene er de samme (se [no.nav.tiltakspenger.soknad.api.soknad.duplikatAv]).
      * En deltakelse uten fullstendig periode kan ikke søkes digitalt, og får derfor aldri [tidligereSøknad].
+     * Beskrivelsen av tiltaket i svarene erstattes med deltakelsens, se [medBeskrivelseFra].
      */
     fun medTidligereSøknad(tidligereSøknader: List<TidligereSøknad>): TiltaksdeltakelseDto {
         val fra = arenaRegistrertPeriode.fra ?: return this
         val til = arenaRegistrertPeriode.til ?: return this
         val tidligere = tidligereSøknader.søknadSomDekker(aktivitetId, Periode(fra = fra, til = til)) ?: return this
-        return copy(tidligereSøknad = TidligereSøknadDto(mottatt = tidligere.mottatt, svar = tidligere.svar))
+        val svar = tidligere.svar.copy(tiltak = tidligere.svar.tiltak.medBeskrivelseFra(this))
+        return copy(tidligereSøknad = TidligereSøknadDto(mottatt = tidligere.mottatt, svar = svar))
     }
 
     /**
@@ -76,6 +79,22 @@ data class TiltaksdeltakelseDto(
         }
     }
 }
+
+/**
+ * Tiltaket i en tidligere søknad, med arrangør, type og navn fra [deltakelse] slik den er nå.
+ * Søkere med adressebeskyttelse skal ikke få arrangørnavnet (se [toTiltakDto]).
+ * Det gjelder også en søknad sendt inn før adressebeskyttelsen kom, der arrangørnavnet ligger lagret i klartekst.
+ */
+private fun Tiltak.medBeskrivelseFra(deltakelse: TiltaksdeltakelseDto) = Tiltak(
+    aktivitetId = aktivitetId,
+    periode = periode,
+    arenaRegistrertPeriode = arenaRegistrertPeriode,
+    arrangør = deltakelse.arrangør,
+    type = deltakelse.type.name,
+    typeNavn = deltakelse.typeNavn,
+    gjennomforingId = deltakelse.gjennomforingId,
+    visningsnavn = deltakelse.visningsnavn,
+)
 
 /**
  * Mapper deltakelsene kilden tilsier at bruker kan søke på til formen frontenden venter.
