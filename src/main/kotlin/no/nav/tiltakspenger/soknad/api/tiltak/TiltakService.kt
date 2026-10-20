@@ -11,6 +11,7 @@ import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.I
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.KunneIkkeHenteTiltakshistorikk
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.infra.http.tiltakshistorikk.TiltakshistorikkHenter
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.somKildenTilsierManKanSøkePå
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import java.time.Clock
 import java.time.LocalDate
 
@@ -28,6 +29,7 @@ import java.time.LocalDate
  */
 class TiltakService(
     private val tiltakshistorikkHenter: TiltakshistorikkHenter,
+    private val søknadRepo: SøknadRepo,
     private val clock: Clock,
     private val sikkerlogg: Sikkerlogg,
 ) {
@@ -44,6 +46,21 @@ class TiltakService(
                 resultat.identoppslag.logg()
                 resultat.tiltakshistorikk.loggUkjenteKildeverdier()
                 resultat.tiltakshistorikk.tilSøkbareDeltakelser(maskerArrangørnavn)
+            }
+
+    /**
+     * Som [hentTiltak], men hver deltakelse får med seg en eventuell tidligere søknad som allerede dekker den.
+     * Frontenden viser den tidligere søknaden før bruker søker på nytt for deltakelsen.
+     */
+    suspend fun hentTiltakMedTidligereSøknader(
+        fnr: Fnr,
+        maskerArrangørnavn: Boolean,
+        correlationId: CorrelationId,
+    ): Either<KunneIkkeHenteTiltakshistorikk, List<TiltaksdeltakelseDto>> =
+        hentTiltak(fnr = fnr, maskerArrangørnavn = maskerArrangørnavn, correlationId = correlationId)
+            .map { tiltak ->
+                val tidligereSøknader = søknadRepo.hentTidligereSøknader(fnr.verdi)
+                tiltak.map { it.medTidligereSøknad(tidligereSøknader) }
             }
 
     private fun Tiltakshistorikk.tilSøkbareDeltakelser(maskerArrangørnavn: Boolean): List<TiltaksdeltakelseDto> =

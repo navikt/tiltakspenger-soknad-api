@@ -159,7 +159,7 @@ open class ApplicationContext(
     }
 
     open val pdlService: PdlService by lazy { PdlService(personKlient, clock, sikkerlogg) }
-    open val tiltakService: TiltakService by lazy { TiltakService(tiltakshistorikkHenter, clock, sikkerlogg) }
+    open val tiltakService: TiltakService by lazy { TiltakService(tiltakshistorikkHenter, søknadRepo, clock, sikkerlogg) }
     open val avService: AvService by lazy { AvService(avKlient, sikkerlogg) }
     open val nySøknadService: NySøknadService by lazy { NySøknadService(søknadRepo) }
     open val identhendelseService: IdenthendelseService by lazy { IdenthendelseService(søknadRepo) }

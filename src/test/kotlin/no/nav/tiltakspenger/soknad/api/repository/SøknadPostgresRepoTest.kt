@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.repository
 
+import arrow.core.right
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -11,16 +12,23 @@ import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
+import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
+import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
+import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
+import no.nav.tiltakspenger.soknad.api.soknad.validering.tiltak
 import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
 class SøknadPostgresRepoTest {
@@ -278,5 +286,79 @@ class SøknadPostgresRepoTest {
 
         søknadRepo.hentSøknad(søknad.id)?.fnr shouldBe nyttFnr.verdi
         søknadRepo.hentSøknad(annenBrukersSøknad.id)?.fnr shouldBe urelatertFnr.verdi
+    }
+
+    @Nested
+    inner class Duplikatsperre {
+        private val januar = Periode(fra = LocalDate.of(2025, 1, 1), til = LocalDate.of(2025, 1, 31))
+        private val svar = spørsmålsbesvarelser(tiltak = tiltak(aktivitetId = "aktivitet", periode = januar))
+
+        private fun søknad(fnr: String, svar: SpørsmålsbesvarelserDTO = this.svar, eier: Applikasjonseier = Applikasjonseier.Tiltakspenger) =
+            genererMottattSøknadForTest(fnr = fnr, eier = eier, søknadSpm = svar)
+
+        @Test
+        fun `henter tidligere søknader med svar for brukeren uansett eier`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val tiltakspengesøknad = søknad(fnr = fnr)
+            val arenasøknad = søknad(fnr = fnr, svar = svar.copy(tiltak = tiltak(aktivitetId = "arena", periode = januar)), eier = Applikasjonseier.Arena)
+            søknadRepo.lagre(tiltakspengesøknad)
+            søknadRepo.lagre(arenasøknad)
+            søknadRepo.lagre(søknad(fnr = nyttTestFødselsnummer()))
+
+            søknadRepo.hentTidligereSøknader(fnr).sortedBy { it.aktivitetId } shouldBe listOf(
+                TidligereSøknad(id = tiltakspengesøknad.id, mottatt = tiltakspengesøknad.opprettet, svar = tiltakspengesøknad.søknadSpm),
+                TidligereSøknad(id = arenasøknad.id, mottatt = arenasøknad.opprettet, svar = arenasøknad.søknadSpm),
+            )
+        }
+
+        @Test
+        fun `lagrer ikke en søknad med samme tiltak, periode og svar som en tidligere søknad`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val første = søknad(fnr = fnr)
+            søknadRepo.lagreHvisIkkeDuplikat(første) shouldBe Unit.right()
+
+            val resultat = søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = fnr))
+
+            resultat.leftOrNull()?.id shouldBe første.id
+            søknadRepo.hentBrukersSøknader(fnr, Applikasjonseier.Tiltakspenger).map { it.id } shouldBe listOf(første.id)
+        }
+
+        @Test
+        fun `lagrer søknad med endrede svar, for et annet tiltak, en forlenget periode og en annen bruker`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = fnr)) shouldBe Unit.right()
+
+            søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = fnr, svar = svar.copy(mottarAndreUtbetalinger = !svar.mottarAndreUtbetalinger))) shouldBe Unit.right()
+            søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = fnr, svar = svar.copy(tiltak = tiltak(aktivitetId = "annen", periode = januar)))) shouldBe Unit.right()
+            søknadRepo.lagreHvisIkkeDuplikat(
+                søknad(fnr = fnr, svar = svar.copy(tiltak = tiltak(aktivitetId = "aktivitet", periode = januar.copy(til = LocalDate.of(2025, 2, 28))))),
+            ) shouldBe Unit.right()
+            søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = nyttTestFødselsnummer())) shouldBe Unit.right()
+        }
+
+        /** Dobbeltklikk og parallelle faner: låsen per fnr sørger for at bare én av flere samtidige like innsendinger lagres. */
+        @Test
+        fun `bare én av flere samtidige innsendinger av samme søknad lagres`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val antall = 5
+            val start = CountDownLatch(1)
+            val executor = Executors.newFixedThreadPool(antall)
+            try {
+                val resultater = (1..antall)
+                    .map {
+                        executor.submit<Boolean> {
+                            start.await()
+                            søknadRepo.lagreHvisIkkeDuplikat(søknad(fnr = fnr)).isRight()
+                        }
+                    }
+                    .also { start.countDown() }
+                    .map { it.get(30, TimeUnit.SECONDS) }
+
+                resultater.count { it } shouldBe 1
+                søknadRepo.hentTidligereSøknader(fnr).size shouldBe 1
+            } finally {
+                executor.shutdownNow()
+            }
+        }
     }
 }

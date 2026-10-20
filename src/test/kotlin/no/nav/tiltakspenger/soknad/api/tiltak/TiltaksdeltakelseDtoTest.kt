@@ -19,6 +19,7 @@ class TiltaksdeltakelseDtoTest {
         arrangør = "arrangør",
         gjennomforingId = "gjennomforingId",
         visningsnavn = null,
+        tidligereSøknad = null,
     )
 
     @Test

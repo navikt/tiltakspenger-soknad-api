@@ -1,6 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.soknad.routes
 
 import io.kotest.matchers.shouldBe
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
@@ -22,6 +23,7 @@ import no.nav.tiltakspenger.soknad.api.vedlegg.MAKS_FILSTØRRELSE_BYTES
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.node.ObjectNode
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class SøknadRoutesTest {
     private val testFødselsnummer = nyttTestFødselsnummer()
@@ -164,6 +166,40 @@ class SøknadRoutesTest {
             val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
 
             postSøknad(token).status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    @Test
+    fun `post av søknad med samme tiltak, periode og svar som en mottatt søknad gir 409 og lagrer ingenting`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser()
+            postSøknad(token, søknadJson = søknad.toJsonString()).status shouldBe HttpStatusCode.Created
+            val førsteSøknad = tac.søknadRepo.alle.single()
+
+            val response = postSøknad(token, søknadJson = søknad.toJsonString())
+
+            response.status shouldBe HttpStatusCode.Conflict
+            val body = objectMapper.readTree(response.bodyAsText())
+            body["kode"].asString() shouldBe "SØKNAD_UTEN_ENDRINGER"
+            LocalDateTime.parse(body["mottatt"].asString()) shouldBe førsteSøknad.opprettet
+            tac.søknadRepo.alle shouldBe listOf(førsteSøknad)
+            tac.metricsCollector.antallSøknaderUtenEndringerCounter.count() shouldBe 1.0
+            tac.metricsCollector.antallFeiledeInnsendingerCounter.count() shouldBe 0.0
+        }
+    }
+
+    @Test
+    fun `post av søknad for samme tiltak og periode med endrede svar gir 201`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val søknad = spørsmålsbesvarelser()
+            postSøknad(token, søknadJson = søknad.toJsonString())
+
+            val endret = søknad.copy(mottarAndreUtbetalinger = !søknad.mottarAndreUtbetalinger)
+            postSøknad(token, søknadJson = endret.toJsonString()).status shouldBe HttpStatusCode.Created
+
+            tac.søknadRepo.alle.size shouldBe 2
         }
     }
 

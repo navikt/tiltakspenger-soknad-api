@@ -1,5 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
+import arrow.core.Either
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
 
@@ -9,6 +10,17 @@ import no.nav.tiltakspenger.libs.common.SøknadId
  */
 interface SøknadRepo {
     fun lagre(mottattSøknad: MottattSøknad)
+
+    /**
+     * Lagrer søknaden, med mindre den er en duplikat av en tidligere søknad (se [duplikatAv]).
+     * Oppslaget og lagringen skjer i én transaksjon under en lås per fnr, så to samtidige innsendinger ikke begge slipper gjennom.
+     *
+     * @return den tidligere søknaden som `Left` når søknaden ikke ble lagret.
+     */
+    fun lagreHvisIkkeDuplikat(mottattSøknad: MottattSøknad): Either<TidligereSøknad, Unit>
+
+    /** Alle søknadene brukeren har sendt inn, uansett eier, med svarene men uten vedlegg. */
+    fun hentTidligereSøknader(fnr: String): List<TidligereSøknad>
 
     fun oppdater(mottattSøknad: MottattSøknad)
 

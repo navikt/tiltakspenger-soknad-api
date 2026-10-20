@@ -5,7 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 
 /**
- * Appens egne forretningsmålinger: fem tellere og tidsbruken på søknadsmottaket.
+ * Appens egne forretningsmålinger: seks tellere og tidsbruken på søknadsmottaket.
  *
  * Navnene her er skrevet med punktum, slik Micrometer vil ha dem, og oversettes til understrek i eksposisjonen.
  * Tellerne får i tillegg `_total`, og [søknadsmottakLatency] får `_seconds` med `_count`, `_sum` og `_max`.
@@ -30,6 +30,11 @@ class MetricsCollector(
     val antallFeiledeInnsendingerCounter: Counter = Counter
         .builder("tpts.tiltakspenger.soknad.antall.soknader.feilet")
         .description("Antall feilede søknadsinnsendinger")
+        .register(meterRegistry)
+
+    val antallSøknaderUtenEndringerCounter: Counter = Counter
+        .builder("tpts.tiltakspenger.soknad.antall.soknader.uten.endringer")
+        .description("Antall søknader avvist fordi de har samme tiltaksdeltakelse, periode og svar som en søknad vi allerede har mottatt")
         .register(meterRegistry)
 
     val antallFeilVedHentPersonaliaCounter: Counter = Counter

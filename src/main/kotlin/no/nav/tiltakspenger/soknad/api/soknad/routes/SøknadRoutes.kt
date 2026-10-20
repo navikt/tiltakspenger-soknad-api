@@ -20,6 +20,7 @@ import no.nav.tiltakspenger.soknad.api.SØKNAD_PATH
 import no.nav.tiltakspenger.soknad.api.antivirus.AvService
 import no.nav.tiltakspenger.soknad.api.antivirus.VirussjekkFeil
 import no.nav.tiltakspenger.soknad.api.metrics.MetricsCollector
+import no.nav.tiltakspenger.soknad.api.soknad.KunneIkkeMottaNySøknad
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadCommand
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.vedlegg.validerVedlegg
@@ -88,14 +89,27 @@ fun Route.søknadRoutes(
                     innsendingTidspunkt = innsendingTidspunkt,
                 )
                 nySøknadService.nySøknad(command).fold(
-                    {
-                        metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                    { feil ->
                         requestTimer.stop(metricsCollector.søknadsmottakLatency)
-                        call.respondText(
-                            text = "Internal server error",
-                            contentType = ContentType.Text.Plain,
-                            status = HttpStatusCode.InternalServerError,
-                        )
+                        when (feil) {
+                            is KunneIkkeMottaNySøknad.IngenEndringer -> {
+                                // Brukerfeil, ikke driftsfeil: telles for seg, så «Mottak av søknad har feilet» ikke fyrer.
+                                metricsCollector.antallSøknaderUtenEndringerCounter.increment()
+                                call.respond(
+                                    status = HttpStatusCode.Conflict,
+                                    message = SøknadUtenEndringerResponse(mottatt = feil.tidligereSøknad.mottatt),
+                                )
+                            }
+
+                            KunneIkkeMottaNySøknad.KunneIkkeLagreSøknad -> {
+                                metricsCollector.antallFeiledeInnsendingerCounter.increment()
+                                call.respondText(
+                                    text = "Internal server error",
+                                    contentType = ContentType.Text.Plain,
+                                    status = HttpStatusCode.InternalServerError,
+                                )
+                            }
+                        }
                     },
                     {
                         // Dette kan flyttes ut til funksjoner med try/catch og logging
