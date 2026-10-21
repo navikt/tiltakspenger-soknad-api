@@ -10,6 +10,7 @@ import no.nav.tiltakspenger.libs.common.withWireMockServer
 import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.FakeHttpTransport
 import no.nav.tiltakspenger.libs.httpklient.infra.transport.HttpTransport
+import no.nav.tiltakspenger.libs.json.objectMapper
 import no.nav.tiltakspenger.soknad.api.soknad.validering.søknad
 import no.nav.tiltakspenger.soknad.api.util.Detect.IMAGE_JPEG
 import no.nav.tiltakspenger.soknad.api.util.Detect.IMAGE_PNG
@@ -50,7 +51,7 @@ class PdfClientTest {
                     clock = fixedClock,
                 )
 
-                val hovedPdf = klient.genererPdf(søknad()).getOrFail()
+                val hovedPdf = klient.genererPdf(søknad(), saksnummer = null).getOrFail()
 
                 hovedPdf shouldBe pdf
             }
@@ -62,7 +63,7 @@ class PdfClientTest {
         val transport = FakeHttpTransport()
         transport.leggIKøBytes(pdf, contentType = "application/pdf")
 
-        klient(transport).genererPdf(søknad()).getOrFail()
+        klient(transport).genererPdf(søknad(), saksnummer = null).getOrFail()
 
         val kall = transport.mottatteKall.single()
         kall.uri.toString() shouldBe "http://pdfgenrs/$PDFGEN_PATH/$SOKNAD_TEMPLATE"
@@ -73,11 +74,24 @@ class PdfClientTest {
     }
 
     @Test
+    fun `sender saksnummeret ved siden av søknadsfeltene`() = runTest {
+        val transport = FakeHttpTransport()
+        transport.leggIKøBytes(pdf, contentType = "application/pdf")
+
+        klient(transport).genererPdf(søknad(), saksnummer = "202501011001").getOrFail()
+
+        val body = objectMapper.readTree(transport.mottatteKall.single().bodyTekst)
+        body.get("saksnummer").asString() shouldBe "202501011001"
+        body.has("personopplysninger") shouldBe true
+        body.has("søknad") shouldBe false
+    }
+
+    @Test
     fun `feil fra pdfgenrs gir Left`() = runTest {
         val transport = FakeHttpTransport()
         transport.leggIKøStatus(404, body = "finnes ikke")
 
-        val feil = klient(transport).genererPdf(søknad()).leftOrNull()!!
+        val feil = klient(transport).genererPdf(søknad(), saksnummer = null).leftOrNull()!!
 
         feil.shouldBeInstanceOf<HttpKlientError.UventetStatus>().statusCode shouldBe 404
     }

@@ -59,7 +59,7 @@ class JournalforingService(
             vedleggsnavn = vedlegg.map { it.filnavn },
         )
 
-        val pdf = pdfService.lagPdf(søknad).mapLeft { feil ->
+        val pdf = pdfService.lagPdf(søknad, saksnummer).mapLeft { feil ->
             feil.loggFeil(log, "generering av søknadspdf", kontekst, sikkerlogg)
             KunneIkkeOpprettDokumenter.PdfGenereringFeilet
         }.bind()

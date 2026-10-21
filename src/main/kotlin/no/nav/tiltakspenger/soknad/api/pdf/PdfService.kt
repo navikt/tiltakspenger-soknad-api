@@ -6,7 +6,8 @@ import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 interface PdfService {
-    suspend fun lagPdf(søknad: Søknad): Either<HttpKlientError, ByteArray>
+    /** @param saksnummer vises i footeren på søknads-PDF-en; arena-søknader har ikke saksnummer. */
+    suspend fun lagPdf(søknad: Søknad, saksnummer: String?): Either<HttpKlientError, ByteArray>
 
     suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>>
 }

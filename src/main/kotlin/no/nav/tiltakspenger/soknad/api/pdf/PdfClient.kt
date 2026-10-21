@@ -2,6 +2,7 @@ package no.nav.tiltakspenger.soknad.api.pdf
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.fasterxml.jackson.annotation.JsonUnwrapped
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.tiltakspenger.libs.httpklient.HttpKlientError
 import no.nav.tiltakspenger.libs.httpklient.infra.HttpKlient
@@ -66,13 +67,13 @@ class PdfClient(
     private val pdfgenrsSøknadUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_PATH/$SOKNAD_TEMPLATE")
     private val bildeUri = URI.create("$pdfgenrsEndpoint/$PDFGEN_IMAGE_PATH")
 
-    override suspend fun genererPdf(søknad: Søknad): Either<HttpKlientError, ByteArray> {
+    override suspend fun genererPdf(søknad: Søknad, saksnummer: String?): Either<HttpKlientError, ByteArray> {
         log.info { "Starter generering av søknadspdf for søknadId ${søknad.id}" }
 
-        return genererPdf(søknad, pdfgenrsSøknadUri)
+        return genererPdf(SøknadTilPdf(søknad, saksnummer), pdfgenrsSøknadUri)
     }
 
-    private suspend fun genererPdf(søknad: Søknad, uri: URI): Either<HttpKlientError, ByteArray> =
+    private suspend fun genererPdf(søknad: SøknadTilPdf, uri: URI): Either<HttpKlientError, ByteArray> =
         httpKlient.postJsonMotPdf(
             uri = uri,
             body = søknad,
@@ -114,3 +115,12 @@ class PdfClient(
             headere = listOf(NavHeadere.xCorrelationId(UUID.randomUUID().toString())),
         ).map { it.body }
 }
+
+/**
+ * Søknaden slik pdfgenrs får den, med saksnummeret som footeren viser.
+ * Saksnummeret ligger ikke i [Søknad], fordi den lagres og arkiveres som original-JSON i dokarkiv.
+ */
+private data class SøknadTilPdf(
+    @JsonUnwrapped val søknad: Søknad,
+    val saksnummer: String?,
+)

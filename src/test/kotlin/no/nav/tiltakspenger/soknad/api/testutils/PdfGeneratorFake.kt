@@ -19,7 +19,7 @@ class PdfGeneratorFake : PdfGenerator {
     private val genererte = Atomic(emptyList<Søknad>())
     val antallGenererte: Int get() = genererte.get().size
 
-    override suspend fun genererPdf(søknad: Søknad): Either<HttpKlientError, ByteArray> {
+    override suspend fun genererPdf(søknad: Søknad, saksnummer: String?): Either<HttpKlientError, ByteArray> {
         genererte.update { it + søknad }
         return enkelPdf().right()
     }

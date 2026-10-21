@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.soknad.api.domain.Søknad
 import no.nav.tiltakspenger.soknad.api.vedlegg.Vedlegg
 
 interface PdfGenerator {
-    suspend fun genererPdf(søknad: Søknad): Either<HttpKlientError, ByteArray>
+    suspend fun genererPdf(søknad: Søknad, saksnummer: String?): Either<HttpKlientError, ByteArray>
 
     suspend fun konverterVedlegg(vedlegg: List<Vedlegg>): Either<KunneIkkeKonvertereVedlegg, List<Vedlegg>>
 }
