@@ -9,14 +9,17 @@ import java.time.LocalDateTime
  *
  * @property svar Svarene slik de ble sendt inn.
  * Vedleggene er ikke med.
+ * @property behandlingsutfall Siste kjente utfall fra saksbehandling-api, eller null om vi ikke har fått noe utfall.
  */
 data class TidligereSøknad(
     val id: SøknadId,
     val mottatt: LocalDateTime,
     val svar: SpørsmålsbesvarelserDTO,
+    val behandlingsutfall: Behandlingsutfall?,
 ) {
     val aktivitetId: String get() = svar.tiltak.aktivitetId
     val periode: Periode get() = svar.tiltak.periode
+    val erFerdigBehandlet: Boolean get() = behandlingsutfall?.resultat?.erFerdigBehandlet ?: false
 
     /** Om [nyeSvar] har de samme svarene som denne søknaden, se [sammenlignbareSvar]. */
     fun harSammeSvarSom(nyeSvar: SpørsmålsbesvarelserDTO): Boolean = svar.sammenlignbareSvar() == nyeSvar.sammenlignbareSvar()
@@ -33,14 +36,14 @@ fun List<TidligereSøknad>.søknadSomDekker(aktivitetId: String, periode: Period
 /**
  * Den tidligere søknaden en ny søknad med [nyeSvar] er en duplikat av, eller null om den ikke er en duplikat.
  *
- * Bruker kan søke på nytt for samme tiltaksdeltakelse og periode, men bare med nye eller endrede opplysninger.
+ * Så lenge søknaden er under behandling, kan bruker søke på nytt for samme tiltaksdeltakelse og periode bare med nye eller endrede opplysninger.
+ * Når søknaden er ferdig behandlet (innvilget, avslått eller avbrutt), kan bruker sende den samme søknaden på nytt.
  * Vi sammenligner med den sist mottatte søknaden som dekker perioden ([søknadSomDekker]).
  * Vedlegg teller ikke; de kan ettersendes.
- * Vi vet ikke her om søknaden er behandlet, så sperren gjelder uansett utfall.
  */
 fun List<TidligereSøknad>.duplikatAv(nyeSvar: SpørsmålsbesvarelserDTO): TidligereSøknad? =
     søknadSomDekker(aktivitetId = nyeSvar.tiltak.aktivitetId, periode = nyeSvar.tiltak.periode)
-        ?.takeIf { it.harSammeSvarSom(nyeSvar) }
+        ?.takeIf { !it.erFerdigBehandlet && it.harSammeSvarSom(nyeSvar) }
 
 /**
  * Bare svarene brukeren faktisk har gitt, normalisert slik at to like besvarelser blir like.

@@ -24,6 +24,12 @@ interface SøknadRepo {
 
     fun oppdater(mottattSøknad: MottattSøknad)
 
+    /**
+     * Lagrer utfallet av behandlingen av søknaden.
+     * Et utfall fra et eldre vedtak enn det som allerede er lagret, overskriver ikke.
+     */
+    fun lagreBehandlingsutfall(søknadId: SøknadId, behandlingsutfall: Behandlingsutfall): Either<SøknadFinnesIkke, Unit>
+
     /** Tiltakspenger-søknader som ennå ikke har fått tildelt saksnummer fra saksbehandling-api. */
     fun hentSøknaderUtenSaksnummer(): List<MottattSøknad>
 

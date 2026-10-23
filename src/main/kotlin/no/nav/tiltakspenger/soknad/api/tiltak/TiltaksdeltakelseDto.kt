@@ -3,6 +3,8 @@ package no.nav.tiltakspenger.soknad.api.tiltak
 import no.nav.tiltakspenger.libs.tiltak.TiltakResponsDTO.TiltakTypeDTO
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.Tiltaksdeltakelse
 import no.nav.tiltakspenger.libs.tiltaksdeltakelse.TiltakstypeSomGirRett
+import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsresultat
+import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsutfall
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
@@ -22,11 +24,39 @@ data class Deltakelsesperiode(
  *
  * @property svar Svarene i den tidligere søknaden, i samme form som frontenden sender dem inn.
  * Frontenden viser dem før bruker søker på nytt, fyller ut den nye søknaden med dem og markerer hva som er endret.
+ * @property behandlingsutfall Utfallet av behandlingen, eller null om søknaden ikke er ferdig behandlet.
+ * En ferdig behandlet søknad kan sendes inn på nytt med de samme svarene.
+ * En gjenåpnet søknad er under behandling igjen, og har derfor ikke noe utfall her.
  */
 data class TidligereSøknadDto(
     val mottatt: LocalDateTime,
     val svar: SpørsmålsbesvarelserDTO,
+    val behandlingsutfall: BehandlingsutfallDto?,
 )
+
+/**
+ * @property tidspunkt Når vedtaket ble opprettet, eller når søknaden ble avbrutt.
+ */
+data class BehandlingsutfallDto(
+    val resultat: BehandlingsresultatDto,
+    val tidspunkt: LocalDateTime,
+)
+
+enum class BehandlingsresultatDto {
+    INNVILGELSE,
+    AVSLAG,
+    AVBRUTT,
+}
+
+private fun Behandlingsutfall.toDto(): BehandlingsutfallDto? {
+    val resultat = when (resultat) {
+        Behandlingsresultat.INNVILGELSE -> BehandlingsresultatDto.INNVILGELSE
+        Behandlingsresultat.AVSLAG -> BehandlingsresultatDto.AVSLAG
+        Behandlingsresultat.AVBRUTT -> BehandlingsresultatDto.AVBRUTT
+        Behandlingsresultat.GJENÅPNET -> return null
+    }
+    return BehandlingsutfallDto(resultat = resultat, tidspunkt = tidspunkt)
+}
 
 /**
  * En tiltaksdeltakelse slik søknadsfrontenden får den servert på `/tiltak`.
@@ -56,7 +86,13 @@ data class TiltaksdeltakelseDto(
         val til = arenaRegistrertPeriode.til ?: return this
         val tidligere = tidligereSøknader.søknadSomDekker(aktivitetId, Periode(fra = fra, til = til)) ?: return this
         val svar = tidligere.svar.copy(tiltak = tidligere.svar.tiltak.medBeskrivelseFra(this))
-        return copy(tidligereSøknad = TidligereSøknadDto(mottatt = tidligere.mottatt, svar = svar))
+        return copy(
+            tidligereSøknad = TidligereSøknadDto(
+                mottatt = tidligere.mottatt,
+                svar = svar,
+                behandlingsutfall = tidligere.behandlingsutfall?.toDto(),
+            ),
+        )
     }
 
     /**

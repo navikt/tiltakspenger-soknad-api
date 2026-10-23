@@ -16,12 +16,14 @@ import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.validering.spørsmålsbesvarelser
 import no.nav.tiltakspenger.soknad.api.soknad.validering.tiltak
 import no.nav.tiltakspenger.soknad.api.soknad.validering.toJsonString
+import no.nav.tiltakspenger.soknad.api.testutils.behandlingsutfallJson
 import no.nav.tiltakspenger.soknad.api.testutils.jsonKlient
 import no.nav.tiltakspenger.soknad.api.testutils.kometDeltakelse
 import no.nav.tiltakspenger.soknad.api.testutils.leggIKøStatusForAlleForsøk
 import no.nav.tiltakspenger.soknad.api.testutils.medTestApplikasjon
 import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import no.nav.tiltakspenger.soknad.api.testutils.pdlIdenterRespons
+import no.nav.tiltakspenger.soknad.api.testutils.postBehandlingsutfall
 import no.nav.tiltakspenger.soknad.api.testutils.søkerRespons
 import no.nav.tiltakspenger.soknad.api.testutils.tiltakshistorikkRespons
 import no.nav.tiltakspenger.soknad.api.testutils.ukjentDeltakelsesform
@@ -96,6 +98,94 @@ class TiltakRoutesTest {
             val tidligere = tidligereSøknader.getValue("0190c9a2-2222-7000-8000-000000000002")!!
             tidligere.mottatt shouldBe mottatt
             tidligere.svar.copy(tiltak = tidligereSøknad.søknadSpm.tiltak).toJsonString() shouldBe tidligereSøknad.søknadSpm.toJsonString()
+            tidligere.behandlingsutfall shouldBe null
+        }
+    }
+
+    @Test
+    fun `get på tiltak-endepunkt viser utfallet når den tidligere søknaden er ferdig behandlet`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            tac.pdlTransport.leggIKøJson(søkerRespons())
+            tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+            tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+            val tidligereSøknad = genererMottattSøknadForTest(
+                fnr = testFødselsnummer,
+                eier = Applikasjonseier.Tiltakspenger,
+                søknadSpm = spørsmålsbesvarelser(
+                    tiltak = tiltak(
+                        aktivitetId = "0190c9a2-2222-7000-8000-000000000002",
+                        periode = Periode(fra = LocalDate.of(2024, 12, 1), til = LocalDate.of(2025, 2, 28)),
+                    ),
+                ),
+            )
+            tac.søknadRepo.lagre(tidligereSøknad)
+            postBehandlingsutfall(
+                token = tac.texasClient.leggTilAzureToken(),
+                body = behandlingsutfallJson(søknadId = tidligereSøknad.id, utfall = "INNVILGELSE", tidspunkt = "2025-01-10T09:15:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+
+            response.status shouldBe HttpStatusCode.OK
+            response.body<TiltakDto>().tiltak.single().tidligereSøknad!!.behandlingsutfall shouldBe BehandlingsutfallDto(
+                resultat = BehandlingsresultatDto.INNVILGELSE,
+                tidspunkt = LocalDateTime.of(2025, 1, 10, 9, 15),
+            )
+        }
+    }
+
+    @Test
+    fun `get på tiltak-endepunkt viser siste utfall av den tidligere søknaden, men ikke noe utfall når den er gjenåpnet`() {
+        medTestApplikasjon { tac ->
+            val token = tac.texasClient.leggTilBrukertoken(testFødselsnummer)
+            val tidligereSøknad = genererMottattSøknadForTest(
+                fnr = testFødselsnummer,
+                eier = Applikasjonseier.Tiltakspenger,
+                søknadSpm = spørsmålsbesvarelser(
+                    tiltak = tiltak(
+                        aktivitetId = "0190c9a2-2222-7000-8000-000000000002",
+                        periode = Periode(fra = LocalDate.of(2024, 12, 1), til = LocalDate.of(2025, 2, 28)),
+                    ),
+                ),
+            )
+            tac.søknadRepo.lagre(tidligereSøknad)
+            suspend fun hentBehandlingsutfall(): BehandlingsutfallDto? {
+                tac.pdlTransport.leggIKøJson(søkerRespons())
+                tac.pdlIdentTransport.leggIKøJson(pdlIdenterRespons(testFødselsnummer))
+                tac.tiltakshistorikkTransport.leggIKøJson(tiltakshistorikkRespons(kometDeltakelse(fnr = testFødselsnummer)))
+                val response = jsonKlient().get(TILTAK_PATH) { header("Authorization", "Bearer $token") }
+                response.status shouldBe HttpStatusCode.OK
+                return response.body<TiltakDto>().tiltak.single().tidligereSøknad!!.behandlingsutfall
+            }
+
+            postBehandlingsutfall(
+                token = tac.texasClient.leggTilAzureToken(),
+                body = behandlingsutfallJson(søknadId = tidligereSøknad.id, utfall = "AVSLAG", tidspunkt = "2025-01-09T09:15:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            hentBehandlingsutfall() shouldBe BehandlingsutfallDto(
+                resultat = BehandlingsresultatDto.AVSLAG,
+                tidspunkt = LocalDateTime.of(2025, 1, 9, 9, 15),
+            )
+
+            // Søknaden behandles på nytt etter avslaget, og den nye behandlingen avbrytes.
+            postBehandlingsutfall(
+                token = tac.texasClient.leggTilAzureToken(),
+                body = behandlingsutfallJson(søknadId = tidligereSøknad.id, utfall = "AVBRUTT", tidspunkt = "2025-01-10T09:15:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            hentBehandlingsutfall() shouldBe BehandlingsutfallDto(
+                resultat = BehandlingsresultatDto.AVBRUTT,
+                tidspunkt = LocalDateTime.of(2025, 1, 10, 9, 15),
+            )
+
+            postBehandlingsutfall(
+                token = tac.texasClient.leggTilAzureToken(),
+                body = behandlingsutfallJson(søknadId = tidligereSøknad.id, utfall = "GJENÅPNET", tidspunkt = "2025-01-11T09:15:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            hentBehandlingsutfall() shouldBe null
         }
     }
 
