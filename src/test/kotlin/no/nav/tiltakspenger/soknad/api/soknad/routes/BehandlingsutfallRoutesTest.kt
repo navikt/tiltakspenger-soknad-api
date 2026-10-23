@@ -33,11 +33,47 @@ class BehandlingsutfallRoutesTest {
 
             tac.søknadRepo.hentBehandlingsutfall(første.id) shouldBe Behandlingsutfall(
                 resultat = Behandlingsresultat.AVSLAG,
+                tidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
                 vedtakId = "vedtak_1",
-                vedtakstidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
             )
             postSøknad(brukertoken, søknadJson = søknad).status shouldBe HttpStatusCode.Created
             tac.søknadRepo.alle.size shouldBe 2
+        }
+    }
+
+    @Test
+    fun `en avbrutt søknad kan sendes på nytt, men ikke etter at den er gjenåpnet`() {
+        medTestApplikasjon { tac ->
+            val brukertoken = tac.texasClient.leggTilBrukertoken(nyttTestFødselsnummer())
+            val azureToken = tac.texasClient.leggTilAzureToken()
+            val søknad = spørsmålsbesvarelser().toJsonString()
+            postSøknad(brukertoken, søknadJson = søknad).status shouldBe HttpStatusCode.Created
+            val første = tac.søknadRepo.alle.single()
+
+            postBehandlingsutfall(
+                token = azureToken,
+                body = behandlingsutfallJson(søknadId = første.id, utfall = "GJENÅPNET", tidspunkt = "2025-02-02T12:00:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+            postBehandlingsutfall(
+                token = azureToken,
+                body = behandlingsutfallJson(søknadId = første.id, utfall = "AVBRUTT", tidspunkt = "2025-02-01T12:00:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            // Avbruddet er eldre enn gjenåpningen, så søknaden er fortsatt under behandling.
+            tac.søknadRepo.hentBehandlingsutfall(første.id) shouldBe Behandlingsutfall(
+                resultat = Behandlingsresultat.GJENÅPNET,
+                tidspunkt = LocalDateTime.of(2025, 2, 2, 12, 0),
+                vedtakId = null,
+            )
+            postSøknad(brukertoken, søknadJson = søknad).status shouldBe HttpStatusCode.Conflict
+
+            postBehandlingsutfall(
+                token = azureToken,
+                body = behandlingsutfallJson(søknadId = første.id, utfall = "AVBRUTT", tidspunkt = "2025-02-03T12:00:00"),
+            ).status shouldBe HttpStatusCode.NoContent
+
+            tac.søknadRepo.hentBehandlingsutfall(første.id)!!.resultat shouldBe Behandlingsresultat.AVBRUTT
+            postSøknad(brukertoken, søknadJson = søknad).status shouldBe HttpStatusCode.Created
         }
     }
 
@@ -58,6 +94,8 @@ class BehandlingsutfallRoutesTest {
 
             postBehandlingsutfall(token, body = behandlingsutfallJson(søknadId = SøknadId.random(), utfall = "UKJENT")).status shouldBe HttpStatusCode.BadRequest
             postBehandlingsutfall(token, body = """{"søknadId":"ikke-en-id"}""").status shouldBe HttpStatusCode.BadRequest
+            postBehandlingsutfall(token, body = behandlingsutfallJson(søknadId = SøknadId.random(), utfall = "AVBRUTT", vedtakId = "vedtak_1")).status shouldBe HttpStatusCode.BadRequest
+            postBehandlingsutfall(token, body = behandlingsutfallJson(søknadId = SøknadId.random(), utfall = "INNVILGELSE", vedtakId = null)).status shouldBe HttpStatusCode.BadRequest
         }
     }
 

@@ -373,7 +373,7 @@ class SøknadPostgresRepoTest {
         private val innvilgelse = Behandlingsutfall(
             resultat = Behandlingsresultat.INNVILGELSE,
             vedtakId = "vedtak_1",
-            vedtakstidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
+            tidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
         )
 
         @Test
@@ -396,7 +396,7 @@ class SøknadPostgresRepoTest {
             val eldreAvslag = Behandlingsutfall(
                 resultat = Behandlingsresultat.AVSLAG,
                 vedtakId = "vedtak_0",
-                vedtakstidspunkt = innvilgelse.vedtakstidspunkt.minusDays(1),
+                tidspunkt = innvilgelse.tidspunkt.minusDays(1),
             )
 
             søknadRepo.lagreBehandlingsutfall(søknad.id, innvilgelse) shouldBe Unit.right()
@@ -413,13 +413,29 @@ class SøknadPostgresRepoTest {
             val nyereAvslag = Behandlingsutfall(
                 resultat = Behandlingsresultat.AVSLAG,
                 vedtakId = "vedtak_2",
-                vedtakstidspunkt = innvilgelse.vedtakstidspunkt.plusDays(1),
+                tidspunkt = innvilgelse.tidspunkt.plusDays(1),
             )
 
             søknadRepo.lagreBehandlingsutfall(søknad.id, innvilgelse) shouldBe Unit.right()
             søknadRepo.lagreBehandlingsutfall(søknad.id, nyereAvslag) shouldBe Unit.right()
 
             søknadRepo.hentTidligereSøknader(fnr).single().behandlingsutfall shouldBe nyereAvslag
+        }
+
+        @Test
+        fun `et avbrudd uten vedtak lagres og leses tilbake`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val søknad = genererMottattSøknadForTest(fnr = fnr, eier = Applikasjonseier.Tiltakspenger)
+            søknadRepo.lagre(søknad)
+            val avbrudd = Behandlingsutfall(
+                resultat = Behandlingsresultat.AVBRUTT,
+                tidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
+                vedtakId = null,
+            )
+
+            søknadRepo.lagreBehandlingsutfall(søknad.id, avbrudd) shouldBe Unit.right()
+
+            søknadRepo.hentTidligereSøknader(fnr).single().behandlingsutfall shouldBe avbrudd
         }
 
         @Test

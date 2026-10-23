@@ -6,7 +6,7 @@ import no.nav.tiltakspenger.libs.common.SøknadId
 
 /**
  * Tar imot utfallet av behandlingen av en søknad fra saksbehandling-api.
- * En søknad med utfall er ferdig behandlet, og bruker kan da sende den samme søknaden på nytt (se [duplikatAv]).
+ * Når søknaden er ferdig behandlet, kan bruker sende den samme søknaden på nytt (se [duplikatAv] og [Behandlingsresultat.erFerdigBehandlet]).
  */
 class BehandlingsutfallService(
     private val søknadRepo: SøknadRepo,

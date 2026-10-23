@@ -11,14 +11,14 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.SAKSBEHANDLING_PATH
 
-/** JSON-en saksbehandling-api sender når et søknadsvedtak er iverksatt. */
+/** JSON-en saksbehandling-api sender når et søknadsvedtak er iverksatt, eller når søknaden avbrytes eller gjenåpnes. */
 fun behandlingsutfallJson(
     søknadId: SøknadId,
     utfall: String = "INNVILGELSE",
-    vedtakId: String = "vedtak_01J0000000000000000000000",
-    vedtakstidspunkt: String = "2025-02-01T12:00:00",
+    vedtakId: String? = if (utfall in listOf("INNVILGELSE", "AVSLAG")) "vedtak_01J0000000000000000000000" else null,
+    tidspunkt: String = "2025-02-01T12:00:00",
 ): String =
-    """{"søknadId":"$søknadId","vedtakId":"$vedtakId","utfall":"$utfall","vedtakstidspunkt":"$vedtakstidspunkt"}"""
+    """{"søknadId":"$søknadId","vedtakId":${vedtakId?.let { "\"$it\"" }},"utfall":"$utfall","tidspunkt":"$tidspunkt"}"""
 
 /** Sender et behandlingsutfall inn på ruta saksbehandling-api kaller. */
 suspend fun ApplicationTestBuilder.postBehandlingsutfall(

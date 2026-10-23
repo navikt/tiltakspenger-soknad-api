@@ -26,6 +26,7 @@ data class Deltakelsesperiode(
  * Frontenden viser dem før bruker søker på nytt, fyller ut den nye søknaden med dem og markerer hva som er endret.
  * @property behandlingsutfall Utfallet av behandlingen, eller null om søknaden ikke er ferdig behandlet.
  * En ferdig behandlet søknad kan sendes inn på nytt med de samme svarene.
+ * En gjenåpnet søknad er under behandling igjen, og har derfor ikke noe utfall her.
  */
 data class TidligereSøknadDto(
     val mottatt: LocalDateTime,
@@ -33,12 +34,29 @@ data class TidligereSøknadDto(
     val behandlingsutfall: BehandlingsutfallDto?,
 )
 
+/**
+ * @property tidspunkt Når vedtaket ble opprettet, eller når søknaden ble avbrutt.
+ */
 data class BehandlingsutfallDto(
-    val resultat: Behandlingsresultat,
-    val vedtakstidspunkt: LocalDateTime,
+    val resultat: BehandlingsresultatDto,
+    val tidspunkt: LocalDateTime,
 )
 
-private fun Behandlingsutfall.toDto() = BehandlingsutfallDto(resultat = resultat, vedtakstidspunkt = vedtakstidspunkt)
+enum class BehandlingsresultatDto {
+    INNVILGELSE,
+    AVSLAG,
+    AVBRUTT,
+}
+
+private fun Behandlingsutfall.toDto(): BehandlingsutfallDto? {
+    val resultat = when (resultat) {
+        Behandlingsresultat.INNVILGELSE -> BehandlingsresultatDto.INNVILGELSE
+        Behandlingsresultat.AVSLAG -> BehandlingsresultatDto.AVSLAG
+        Behandlingsresultat.AVBRUTT -> BehandlingsresultatDto.AVBRUTT
+        Behandlingsresultat.GJENÅPNET -> return null
+    }
+    return BehandlingsutfallDto(resultat = resultat, tidspunkt = tidspunkt)
+}
 
 /**
  * En tiltaksdeltakelse slik søknadsfrontenden får den servert på `/tiltak`.

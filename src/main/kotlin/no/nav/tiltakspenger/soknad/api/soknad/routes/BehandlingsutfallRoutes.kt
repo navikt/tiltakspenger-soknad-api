@@ -21,7 +21,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.SøknadFinnesIkke
 import java.time.LocalDateTime
 
 /**
- * Tar imot utfallet av en søknadsbehandling fra saksbehandling-api når vedtaket er iverksatt.
+ * Tar imot utfallet av en søknadsbehandling fra saksbehandling-api når vedtaket er iverksatt, og når søknaden avbrytes eller gjenåpnes.
  * Skal ligge bak Azure AD-autentisering; nais-manifestet slipper bare saksbehandling-api inn.
  * Bare systemtokens slipper gjennom, ikke tokens for innloggede ansatte.
  *
@@ -61,13 +61,15 @@ fun Route.behandlingsutfallRoutes(
 
 private data class BehandlingsutfallRequest(
     val søknadId: String,
-    val vedtakId: String,
+    val vedtakId: String?,
     val utfall: UtfallDto,
-    val vedtakstidspunkt: LocalDateTime,
+    val tidspunkt: LocalDateTime,
 ) {
     enum class UtfallDto {
         INNVILGELSE,
         AVSLAG,
+        AVBRUTT,
+        GJENÅPNET,
     }
 
     fun tilDomene(): Pair<SøknadId, Behandlingsutfall> =
@@ -75,8 +77,10 @@ private data class BehandlingsutfallRequest(
             resultat = when (utfall) {
                 UtfallDto.INNVILGELSE -> Behandlingsresultat.INNVILGELSE
                 UtfallDto.AVSLAG -> Behandlingsresultat.AVSLAG
+                UtfallDto.AVBRUTT -> Behandlingsresultat.AVBRUTT
+                UtfallDto.GJENÅPNET -> Behandlingsresultat.GJENÅPNET
             },
+            tidspunkt = tidspunkt,
             vedtakId = vedtakId,
-            vedtakstidspunkt = vedtakstidspunkt,
         )
 }

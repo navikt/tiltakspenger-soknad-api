@@ -66,19 +66,26 @@ class TidligereSøknadTest {
         }
 
         @Test
-        fun `en ferdig behandlet søknad med de samme svarene er ikke en duplikat`() {
-            Behandlingsresultat.entries.forEach { resultat ->
-                val ferdigBehandlet = tidligere(
-                    behandlingsutfall = Behandlingsutfall(
-                        resultat = resultat,
-                        vedtakId = "vedtak",
-                        vedtakstidspunkt = LocalDateTime.of(2025, 1, 10, 10, 0),
-                    ),
-                )
+        fun `en innvilget, avslått eller avbrutt søknad med de samme svarene er ikke en duplikat`() {
+            listOf(Behandlingsresultat.INNVILGELSE, Behandlingsresultat.AVSLAG, Behandlingsresultat.AVBRUTT).forEach { resultat ->
+                val ferdigBehandlet = tidligere(behandlingsutfall = behandlingsutfall(resultat))
 
                 listOf(ferdigBehandlet).duplikatAv(svar) shouldBe null
             }
         }
+
+        @Test
+        fun `en gjenåpnet søknad med de samme svarene er en duplikat, fordi den er under behandling igjen`() {
+            val gjenåpnet = tidligere(behandlingsutfall = behandlingsutfall(Behandlingsresultat.GJENÅPNET))
+
+            listOf(gjenåpnet).duplikatAv(svar) shouldBe gjenåpnet
+        }
+
+        private fun behandlingsutfall(resultat: Behandlingsresultat) = Behandlingsutfall(
+            resultat = resultat,
+            tidspunkt = LocalDateTime.of(2025, 1, 10, 10, 0),
+            vedtakId = if (resultat.harVedtak) "vedtak" else null,
+        )
 
         @Test
         fun `et endret svar er ikke en duplikat`() {

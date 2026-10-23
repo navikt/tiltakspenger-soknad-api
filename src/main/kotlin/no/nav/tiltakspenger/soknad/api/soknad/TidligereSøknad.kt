@@ -9,7 +9,7 @@ import java.time.LocalDateTime
  *
  * @property svar Svarene slik de ble sendt inn.
  * Vedleggene er ikke med.
- * @property behandlingsutfall Utfallet fra saksbehandling-api, eller null om søknaden ikke er ferdig behandlet.
+ * @property behandlingsutfall Siste kjente utfall fra saksbehandling-api, eller null om vi ikke har fått noe utfall.
  */
 data class TidligereSøknad(
     val id: SøknadId,
@@ -19,7 +19,7 @@ data class TidligereSøknad(
 ) {
     val aktivitetId: String get() = svar.tiltak.aktivitetId
     val periode: Periode get() = svar.tiltak.periode
-    val erFerdigBehandlet: Boolean get() = behandlingsutfall != null
+    val erFerdigBehandlet: Boolean get() = behandlingsutfall?.resultat?.erFerdigBehandlet ?: false
 
     /** Om [nyeSvar] har de samme svarene som denne søknaden, se [sammenlignbareSvar]. */
     fun harSammeSvarSom(nyeSvar: SpørsmålsbesvarelserDTO): Boolean = svar.sammenlignbareSvar() == nyeSvar.sammenlignbareSvar()
@@ -37,7 +37,7 @@ fun List<TidligereSøknad>.søknadSomDekker(aktivitetId: String, periode: Period
  * Den tidligere søknaden en ny søknad med [nyeSvar] er en duplikat av, eller null om den ikke er en duplikat.
  *
  * Så lenge søknaden er under behandling, kan bruker søke på nytt for samme tiltaksdeltakelse og periode bare med nye eller endrede opplysninger.
- * Når søknaden er ferdig behandlet (innvilget eller avslått), kan bruker sende den samme søknaden på nytt.
+ * Når søknaden er ferdig behandlet (innvilget, avslått eller avbrutt), kan bruker sende den samme søknaden på nytt.
  * Vi sammenligner med den sist mottatte søknaden som dekker perioden ([søknadSomDekker]).
  * Vedlegg teller ikke; de kan ettersendes.
  */

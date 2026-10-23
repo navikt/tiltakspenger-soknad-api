@@ -49,7 +49,7 @@ class FakeSøknadRepo : SøknadRepo {
     override fun lagreBehandlingsutfall(søknadId: SøknadId, behandlingsutfall: Behandlingsutfall): Either<SøknadFinnesIkke, Unit> {
         if (!søknader.containsKey(søknadId)) return SøknadFinnesIkke.left()
         this.behandlingsutfall.merge(søknadId, behandlingsutfall) { lagret, nytt ->
-            if (nytt.vedtakstidspunkt >= lagret.vedtakstidspunkt) nytt else lagret
+            if (nytt.tidspunkt >= lagret.tidspunkt) nytt else lagret
         }
         return Unit.right()
     }
