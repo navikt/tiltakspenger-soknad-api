@@ -6,7 +6,9 @@ import arrow.core.right
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsutfall
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadFinnesIkke
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.duplikatAv
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class FakeSøknadRepo : SøknadRepo {
     private val søknader = ConcurrentHashMap<SøknadId, MottattSøknad>()
+    private val behandlingsutfall = ConcurrentHashMap<SøknadId, Behandlingsutfall>()
 
     /** Settes av tester som skal øve feilstien når lagring feiler. */
     var kastVedLagring: Throwable? = null
@@ -36,7 +39,20 @@ class FakeSøknadRepo : SøknadRepo {
     }
 
     override fun hentTidligereSøknader(fnr: String): List<TidligereSøknad> =
-        alle.filter { it.fnr == fnr }.map { TidligereSøknad(id = it.id, mottatt = it.opprettet, svar = it.søknadSpm) }
+        alle.filter { it.fnr == fnr }.map {
+            TidligereSøknad(id = it.id, mottatt = it.opprettet, svar = it.søknadSpm, behandlingsutfall = behandlingsutfall[it.id])
+        }
+
+    fun hentBehandlingsutfall(søknadId: SøknadId): Behandlingsutfall? = behandlingsutfall[søknadId]
+
+    @Synchronized
+    override fun lagreBehandlingsutfall(søknadId: SøknadId, behandlingsutfall: Behandlingsutfall): Either<SøknadFinnesIkke, Unit> {
+        if (!søknader.containsKey(søknadId)) return SøknadFinnesIkke.left()
+        this.behandlingsutfall.merge(søknadId, behandlingsutfall) { lagret, nytt ->
+            if (nytt.vedtakstidspunkt >= lagret.vedtakstidspunkt) nytt else lagret
+        }
+        return Unit.right()
+    }
 
     override fun oppdater(mottattSøknad: MottattSøknad) {
         søknader[mottattSøknad.id] = mottattSøknad

@@ -27,6 +27,7 @@ import no.nav.tiltakspenger.soknad.api.pdl.client.PdlClient
 import no.nav.tiltakspenger.soknad.api.pdl.client.PersonKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingApiKlient
 import no.nav.tiltakspenger.soknad.api.saksbehandlingApi.SaksbehandlingKlient
+import no.nav.tiltakspenger.soknad.api.soknad.BehandlingsutfallService
 import no.nav.tiltakspenger.soknad.api.soknad.NySøknadService
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import no.nav.tiltakspenger.soknad.api.soknad.jobb.SøknadJobbService
@@ -162,6 +163,7 @@ open class ApplicationContext(
     open val tiltakService: TiltakService by lazy { TiltakService(tiltakshistorikkHenter, søknadRepo, clock, sikkerlogg) }
     open val avService: AvService by lazy { AvService(avKlient, sikkerlogg) }
     open val nySøknadService: NySøknadService by lazy { NySøknadService(søknadRepo) }
+    open val behandlingsutfallService: BehandlingsutfallService by lazy { BehandlingsutfallService(søknadRepo) }
     open val identhendelseService: IdenthendelseService by lazy { IdenthendelseService(søknadRepo) }
     open val identhendelseConsumer: IdenthendelseConsumer by lazy {
         IdenthendelseConsumer(

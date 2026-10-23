@@ -57,7 +57,7 @@ class SøknadPostgresRepo(
             queryOf(
                 //language=SQL
                 """
-                    SELECT id, opprettet, søknadSpm
+                    SELECT id, opprettet, søknadSpm, behandlingsutfall, behandlingsutfall_vedtak_id, behandlingsutfall_vedtakstidspunkt
                     FROM søknad
                     WHERE fnr = :fnr
                 """.trimIndent(),
@@ -67,10 +67,59 @@ class SøknadPostgresRepo(
                     id = SøknadId.fromString(row.string("id")),
                     mottatt = row.localDateTime("opprettet"),
                     svar = row.string("søknadSpm").toSpørsmålsbesvarelserDbJson(),
+                    behandlingsutfall = row.stringOrNull("behandlingsutfall")?.let { resultat ->
+                        Behandlingsutfall(
+                            resultat = resultat.tilBehandlingsresultat(),
+                            vedtakId = row.string("behandlingsutfall_vedtak_id"),
+                            vedtakstidspunkt = row.localDateTime("behandlingsutfall_vedtakstidspunkt"),
+                        )
+                    },
                 )
             }.asList,
         )
     }
+
+    override fun lagreBehandlingsutfall(søknadId: SøknadId, behandlingsutfall: Behandlingsutfall): Either<SøknadFinnesIkke, Unit> {
+        return sessionOf(dataSource).use {
+            it.transaction { transaction ->
+                val finnes = transaction.run(
+                    queryOf(
+                        """SELECT 1 FROM søknad WHERE id = :id FOR UPDATE""",
+                        mapOf("id" to søknadId.toString()),
+                    ).map { true }.asSingle,
+                ) ?: false
+                if (!finnes) return@transaction SøknadFinnesIkke.left()
+                transaction.run(
+                    queryOf(
+                        //language=SQL
+                        """
+                            UPDATE søknad SET
+                                behandlingsutfall = :resultat,
+                                behandlingsutfall_vedtak_id = :vedtakId,
+                                behandlingsutfall_vedtakstidspunkt = :vedtakstidspunkt
+                            WHERE id = :id
+                            AND (behandlingsutfall_vedtakstidspunkt IS NULL OR behandlingsutfall_vedtakstidspunkt <= :vedtakstidspunkt)
+                        """.trimIndent(),
+                        mapOf(
+                            "id" to søknadId.toString(),
+                            "resultat" to behandlingsutfall.resultat.toDb(),
+                            "vedtakId" to behandlingsutfall.vedtakId,
+                            "vedtakstidspunkt" to behandlingsutfall.vedtakstidspunkt,
+                        ),
+                    ).asUpdate,
+                )
+                Unit.right()
+            }
+        }
+    }
+
+    private fun Behandlingsresultat.toDb(): String = when (this) {
+        Behandlingsresultat.INNVILGELSE -> "INNVILGELSE"
+        Behandlingsresultat.AVSLAG -> "AVSLAG"
+    }
+
+    private fun String.tilBehandlingsresultat(): Behandlingsresultat =
+        Behandlingsresultat.entries.single { it.toDb() == this }
 
     private fun Session.lagre(mottattSøknad: MottattSøknad) {
         run(

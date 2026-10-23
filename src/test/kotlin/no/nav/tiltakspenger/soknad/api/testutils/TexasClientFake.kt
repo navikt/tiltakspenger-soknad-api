@@ -18,7 +18,17 @@ class TexasClientFake(
 ) : TexasClient {
     private val gyldigeTokens = ConcurrentHashMap<String, Claims>()
 
-    private data class Claims(val fnr: String, val acr: String)
+    private sealed interface Claims {
+        val identityProvider: IdentityProvider
+
+        data class Bruker(val fnr: String, val acr: String) : Claims {
+            override val identityProvider = IdentityProvider.TOKENX
+        }
+
+        data class Azure(val azpName: String, val erSystembruker: Boolean) : Claims {
+            override val identityProvider = IdentityProvider.AZUREAD
+        }
+    }
 
     /**
      * Lager et test-token for [fnr] og registrerer det som gyldig.
@@ -26,7 +36,20 @@ class TexasClientFake(
      */
     fun leggTilBrukertoken(fnr: String, acr: String = "idporten-loa-high"): String {
         val token = lagTestToken(mapOf("acr" to acr, "pid" to fnr)).serialize()
-        gyldigeTokens[token] = Claims(fnr = fnr, acr = acr)
+        gyldigeTokens[token] = Claims.Bruker(fnr = fnr, acr = acr)
+        return token
+    }
+
+    /**
+     * Lager et Azure AD-token for en annen app, som saksbehandling-api, og registrerer det som gyldig.
+     * Med [erSystembruker] lik false later tokenet som det tilhører en innlogget ansatt.
+     */
+    fun leggTilAzureToken(
+        azpName: String = "dev-gcp:tpts:tiltakspenger-saksbehandling-api",
+        erSystembruker: Boolean = true,
+    ): String {
+        val token = lagTestToken(mapOf("azp_name" to azpName, "idtyp" to if (erSystembruker) "app" else "user")).serialize()
+        gyldigeTokens[token] = Claims.Azure(azpName = azpName, erSystembruker = erSystembruker)
         return token
     }
 
@@ -34,13 +57,27 @@ class TexasClientFake(
         token: String,
         identityProvider: IdentityProvider,
     ): TexasIntrospectionResponse {
-        val claims = gyldigeTokens[token] ?: return TexasIntrospectionResponse(
+        val claims = gyldigeTokens[token]?.takeIf { it.identityProvider == identityProvider } ?: return TexasIntrospectionResponse(
             active = false,
             error = "Ugyldig token",
             groups = null,
             roles = null,
         )
-        return getGyldigTexasIntrospectionResponse(fnr = claims.fnr, acr = claims.acr)
+        return when (claims) {
+            is Claims.Bruker -> getGyldigTexasIntrospectionResponse(fnr = claims.fnr, acr = claims.acr)
+
+            is Claims.Azure -> TexasIntrospectionResponse(
+                active = true,
+                error = null,
+                groups = null,
+                roles = emptyList(),
+                other = buildMap {
+                    put("azp_name", claims.azpName)
+                    put("azp", "${claims.azpName}-id")
+                    if (claims.erSystembruker) put("idtyp", "app")
+                },
+            )
+        }
     }
 
     override suspend fun getSystemToken(

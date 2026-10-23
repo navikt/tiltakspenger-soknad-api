@@ -18,7 +18,8 @@ class TidligereSøknadTest {
     private fun tidligere(
         svar: SpørsmålsbesvarelserDTO = this.svar,
         mottatt: LocalDateTime = LocalDateTime.of(2025, 1, 2, 10, 0),
-    ) = TidligereSøknad(id = SøknadId.random(), mottatt = mottatt, svar = svar)
+        behandlingsutfall: Behandlingsutfall? = null,
+    ) = TidligereSøknad(id = SøknadId.random(), mottatt = mottatt, svar = svar, behandlingsutfall = behandlingsutfall)
 
     @Nested
     inner class SøknadSomDekker {
@@ -62,6 +63,21 @@ class TidligereSøknadTest {
             val søknad = tidligere()
 
             listOf(søknad).duplikatAv(svar) shouldBe søknad
+        }
+
+        @Test
+        fun `en ferdig behandlet søknad med de samme svarene er ikke en duplikat`() {
+            Behandlingsresultat.entries.forEach { resultat ->
+                val ferdigBehandlet = tidligere(
+                    behandlingsutfall = Behandlingsutfall(
+                        resultat = resultat,
+                        vedtakId = "vedtak",
+                        vedtakstidspunkt = LocalDateTime.of(2025, 1, 10, 10, 0),
+                    ),
+                )
+
+                listOf(ferdigBehandlet).duplikatAv(svar) shouldBe null
+            }
         }
 
         @Test

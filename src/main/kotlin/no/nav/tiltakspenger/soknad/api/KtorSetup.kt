@@ -23,6 +23,7 @@ import no.nav.tiltakspenger.libs.texas.IdentityProvider
 import no.nav.tiltakspenger.libs.texas.TexasAuthenticationProvider
 import no.nav.tiltakspenger.soknad.api.metrics.metricRoutes
 import no.nav.tiltakspenger.soknad.api.pdl.routes.pdlRoutes
+import no.nav.tiltakspenger.soknad.api.soknad.routes.behandlingsutfallRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.routes.søknadRoutes
 import no.nav.tiltakspenger.soknad.api.soknad.validateSøknad
 import no.nav.tiltakspenger.soknad.api.tiltak.tiltakRoutes
@@ -57,6 +58,15 @@ fun Application.setupRouting(
                 ),
             ),
         )
+        register(
+            TexasAuthenticationProvider(
+                TexasAuthenticationProvider.Config(
+                    name = IdentityProvider.AZUREAD.value,
+                    texasClient = context.texasClient,
+                    identityProvider = IdentityProvider.AZUREAD,
+                ),
+            ),
+        )
     }
 
     routing {
@@ -77,6 +87,9 @@ fun Application.setupRouting(
                 metricsCollector = context.metricsCollector,
                 pdlService = context.pdlService,
             )
+        }
+        authenticate(IdentityProvider.AZUREAD.value) {
+            behandlingsutfallRoutes(behandlingsutfallService = context.behandlingsutfallService)
         }
         healthRoutes { readiness.erKlar() }
         metricRoutes(context.meterRegistry)
@@ -109,7 +122,8 @@ fun Application.installCallLogging() {
             val path = call.request.path()
             path.startsWith(SØKNAD_PATH) ||
                 path.startsWith(PERSONALIA_PATH) ||
-                path.startsWith(TILTAK_PATH)
+                path.startsWith(TILTAK_PATH) ||
+                path.startsWith(SAKSBEHANDLING_PATH)
         }
         format { call ->
             val status = call.response.status()

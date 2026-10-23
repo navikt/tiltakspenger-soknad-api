@@ -1,20 +1,25 @@
 package no.nav.tiltakspenger.soknad.api.repository
 
+import arrow.core.left
 import arrow.core.right
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.JournalpostId
+import no.nav.tiltakspenger.libs.common.SøknadId
 import no.nav.tiltakspenger.libs.common.fixedClock
 import no.nav.tiltakspenger.libs.common.nå
 import no.nav.tiltakspenger.libs.common.random
 import no.nav.tiltakspenger.soknad.api.db.testDatabaseManager
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
+import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsresultat
+import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsutfall
 import no.nav.tiltakspenger.soknad.api.soknad.Oppholdssted
 import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.RegistrertBarn
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
+import no.nav.tiltakspenger.soknad.api.soknad.SøknadFinnesIkke
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadPostgresRepo
 import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.validering.barnetillegg
@@ -26,6 +31,7 @@ import no.nav.tiltakspenger.soknad.api.util.genererMottattSøknadForTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -306,8 +312,8 @@ class SøknadPostgresRepoTest {
             søknadRepo.lagre(søknad(fnr = nyttTestFødselsnummer()))
 
             søknadRepo.hentTidligereSøknader(fnr).sortedBy { it.aktivitetId } shouldBe listOf(
-                TidligereSøknad(id = tiltakspengesøknad.id, mottatt = tiltakspengesøknad.opprettet, svar = tiltakspengesøknad.søknadSpm),
-                TidligereSøknad(id = arenasøknad.id, mottatt = arenasøknad.opprettet, svar = arenasøknad.søknadSpm),
+                TidligereSøknad(id = tiltakspengesøknad.id, mottatt = tiltakspengesøknad.opprettet, svar = tiltakspengesøknad.søknadSpm, behandlingsutfall = null),
+                TidligereSøknad(id = arenasøknad.id, mottatt = arenasøknad.opprettet, svar = arenasøknad.søknadSpm, behandlingsutfall = null),
             )
         }
 
@@ -359,6 +365,66 @@ class SøknadPostgresRepoTest {
             } finally {
                 executor.shutdownNow()
             }
+        }
+    }
+
+    @Nested
+    inner class LagreBehandlingsutfall {
+        private val innvilgelse = Behandlingsutfall(
+            resultat = Behandlingsresultat.INNVILGELSE,
+            vedtakId = "vedtak_1",
+            vedtakstidspunkt = LocalDateTime.of(2025, 2, 1, 12, 0),
+        )
+
+        @Test
+        fun `en ferdig behandlet søknad kan sendes inn på nytt med de samme svarene`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val søknad = genererMottattSøknadForTest(fnr = fnr, eier = Applikasjonseier.Tiltakspenger)
+            søknadRepo.lagre(søknad)
+
+            søknadRepo.lagreBehandlingsutfall(søknad.id, innvilgelse) shouldBe Unit.right()
+
+            søknadRepo.hentTidligereSøknader(fnr).single().behandlingsutfall shouldBe innvilgelse
+            søknadRepo.lagreHvisIkkeDuplikat(genererMottattSøknadForTest(fnr = fnr, eier = Applikasjonseier.Tiltakspenger, søknadSpm = søknad.søknadSpm)) shouldBe Unit.right()
+        }
+
+        @Test
+        fun `et utfall fra et eldre vedtak overskriver ikke et nyere`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val søknad = genererMottattSøknadForTest(fnr = fnr, eier = Applikasjonseier.Tiltakspenger)
+            søknadRepo.lagre(søknad)
+            val eldreAvslag = Behandlingsutfall(
+                resultat = Behandlingsresultat.AVSLAG,
+                vedtakId = "vedtak_0",
+                vedtakstidspunkt = innvilgelse.vedtakstidspunkt.minusDays(1),
+            )
+
+            søknadRepo.lagreBehandlingsutfall(søknad.id, innvilgelse) shouldBe Unit.right()
+            søknadRepo.lagreBehandlingsutfall(søknad.id, eldreAvslag) shouldBe Unit.right()
+
+            søknadRepo.hentTidligereSøknader(fnr).single().behandlingsutfall shouldBe innvilgelse
+        }
+
+        @Test
+        fun `et utfall fra et nyere vedtak overskriver et eldre`() = withCleanDb { søknadRepo ->
+            val fnr = nyttTestFødselsnummer()
+            val søknad = genererMottattSøknadForTest(fnr = fnr, eier = Applikasjonseier.Tiltakspenger)
+            søknadRepo.lagre(søknad)
+            val nyereAvslag = Behandlingsutfall(
+                resultat = Behandlingsresultat.AVSLAG,
+                vedtakId = "vedtak_2",
+                vedtakstidspunkt = innvilgelse.vedtakstidspunkt.plusDays(1),
+            )
+
+            søknadRepo.lagreBehandlingsutfall(søknad.id, innvilgelse) shouldBe Unit.right()
+            søknadRepo.lagreBehandlingsutfall(søknad.id, nyereAvslag) shouldBe Unit.right()
+
+            søknadRepo.hentTidligereSøknader(fnr).single().behandlingsutfall shouldBe nyereAvslag
+        }
+
+        @Test
+        fun `utfall for en søknad vi ikke har gir SøknadFinnesIkke`() = withCleanDb { søknadRepo ->
+            søknadRepo.lagreBehandlingsutfall(SøknadId.random(), innvilgelse) shouldBe SøknadFinnesIkke.left()
         }
     }
 }
