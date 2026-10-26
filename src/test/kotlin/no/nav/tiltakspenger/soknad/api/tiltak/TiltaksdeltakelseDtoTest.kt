@@ -20,6 +20,7 @@ class TiltaksdeltakelseDtoTest {
         gjennomforingId = "gjennomforingId",
         visningsnavn = null,
         tidligereSøknad = null,
+        sisteVedtak = null,
     )
 
     @Test

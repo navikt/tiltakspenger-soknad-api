@@ -9,6 +9,7 @@ import no.nav.tiltakspenger.soknad.api.soknad.Periode
 import no.nav.tiltakspenger.soknad.api.soknad.SpørsmålsbesvarelserDTO
 import no.nav.tiltakspenger.soknad.api.soknad.TidligereSøknad
 import no.nav.tiltakspenger.soknad.api.soknad.Tiltak
+import no.nav.tiltakspenger.soknad.api.soknad.sisteVedtakSomDekker
 import no.nav.tiltakspenger.soknad.api.soknad.søknadSomDekker
 import java.time.Clock
 import java.time.LocalDate
@@ -42,6 +43,18 @@ data class BehandlingsutfallDto(
     val tidspunkt: LocalDateTime,
 )
 
+/**
+ * Det nyeste vedtaket på en søknad for deltakelsen, se [TiltaksdeltakelseDto.medTidligereSøknad].
+ *
+ * @property søknadMottatt Når vi mottok søknaden vedtaket gjelder.
+ * Det er alltid en eldre søknad enn [TiltaksdeltakelseDto.tidligereSøknad].
+ * @property behandlingsutfall Vedtaket, alltid innvilgelse eller avslag.
+ */
+data class SisteVedtakDto(
+    val søknadMottatt: LocalDateTime,
+    val behandlingsutfall: BehandlingsutfallDto,
+)
+
 enum class BehandlingsresultatDto {
     INNVILGELSE,
     AVSLAG,
@@ -73,11 +86,14 @@ data class TiltaksdeltakelseDto(
     val gjennomforingId: String,
     val visningsnavn: String?,
     val tidligereSøknad: TidligereSøknadDto?,
+    val sisteVedtak: SisteVedtakDto?,
 ) {
     /**
      * Søknaden setter søkt periode lik deltakelsens registrerte periode.
      * Er den perioden allerede dekket av en tidligere søknad for samme deltakelse, får deltakelsen med seg den sist mottatte av dem.
      * En ny søknad sammenlignes med akkurat den, og avvises om svarene er de samme (se [no.nav.tiltakspenger.soknad.api.soknad.duplikatAv]).
+     * Har ikke den søknaden fått vedtak, får deltakelsen i tillegg med det nyeste vedtaket på de eldre søknadene som dekker perioden, som [sisteVedtak].
+     * Da er søknaden under behandling, avbrutt eller gjenåpnet, og bruker skal fortsatt se vedtaket som gjelder.
      * En deltakelse uten fullstendig periode kan ikke søkes digitalt, og får derfor aldri [tidligereSøknad].
      * Beskrivelsen av tiltaket i svarene erstattes med deltakelsens, se [medBeskrivelseFra].
      */
@@ -92,6 +108,12 @@ data class TiltaksdeltakelseDto(
                 svar = svar,
                 behandlingsutfall = tidligere.behandlingsutfall?.toDto(),
             ),
+            sisteVedtak = if (tidligere.behandlingsutfall?.resultat?.harVedtak == true) {
+                null
+            } else {
+                tidligereSøknader.sisteVedtakSomDekker(aktivitetId, Periode(fra = fra, til = til))
+                    ?.let { søknad -> søknad.behandlingsutfall?.toDto()?.let { SisteVedtakDto(søknadMottatt = søknad.mottatt, behandlingsutfall = it) } }
+            },
         )
     }
 
@@ -151,6 +173,7 @@ fun List<Tiltaksdeltakelse.GirRett>.toTiltakDto(maskerArrangørnavn: Boolean): L
         gjennomforingId = it.gjennomføringId?.verdi ?: "",
         visningsnavn = if (maskerArrangørnavn) it.tiltakstypenavn else it.tittel?.verdi,
         tidligereSøknad = null,
+        sisteVedtak = null,
     )
 }
 

@@ -30,8 +30,20 @@ data class TidligereSøknad(
  * En periode som går utenfor det som allerede er søkt, for eksempel ved forlengelse av deltakelsen, er ikke dekket.
  */
 fun List<TidligereSøknad>.søknadSomDekker(aktivitetId: String, periode: Periode): TidligereSøknad? =
-    filter { it.aktivitetId == aktivitetId && periode.erInnenfor(it.periode) }
+    filter { it.dekker(aktivitetId, periode) }
         .maxByOrNull { it.mottatt }
+
+/**
+ * Søknaden med det nyeste vedtaket blant søknadene for samme tiltaksdeltakelse som dekker hele [periode].
+ * Søknadene som dekker perioden er de samme som for [søknadSomDekker].
+ * En søknad som har fått vedtak blir ikke behandlet på nytt, så vedtaket er alltid søknadens [TidligereSøknad.behandlingsutfall].
+ */
+fun List<TidligereSøknad>.sisteVedtakSomDekker(aktivitetId: String, periode: Periode): TidligereSøknad? =
+    filter { it.dekker(aktivitetId, periode) && it.behandlingsutfall?.resultat?.harVedtak == true }
+        .maxByOrNull { it.behandlingsutfall!!.tidspunkt }
+
+private fun TidligereSøknad.dekker(aktivitetId: String, periode: Periode): Boolean =
+    this.aktivitetId == aktivitetId && periode.erInnenfor(this.periode)
 
 /**
  * Den tidligere søknaden en ny søknad med [nyeSvar] er en duplikat av, eller null om den ikke er en duplikat.

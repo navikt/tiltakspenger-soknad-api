@@ -21,6 +21,9 @@ class TidligereSøknadTest {
         behandlingsutfall: Behandlingsutfall? = null,
     ) = TidligereSøknad(id = SøknadId.random(), mottatt = mottatt, svar = svar, behandlingsutfall = behandlingsutfall)
 
+    private fun vedtak(resultat: Behandlingsresultat, tidspunkt: LocalDateTime) =
+        Behandlingsutfall(resultat = resultat, tidspunkt = tidspunkt, vedtakId = "vedtak_$tidspunkt")
+
     @Nested
     inner class SøknadSomDekker {
         @Test
@@ -53,6 +56,38 @@ class TidligereSøknadTest {
             val siste = tidligere(mottatt = LocalDateTime.of(2025, 1, 5, 10, 0))
 
             listOf(siste, første).søknadSomDekker("aktivitet", januar) shouldBe siste
+        }
+    }
+
+    @Nested
+    inner class SisteVedtakSomDekker {
+        @Test
+        fun `velger det nyeste vedtaket, også når det er på en eldre søknad`() {
+            val innvilget = tidligere(
+                mottatt = LocalDateTime.of(2025, 1, 2, 10, 0),
+                behandlingsutfall = vedtak(Behandlingsresultat.INNVILGELSE, LocalDateTime.of(2025, 1, 20, 10, 0)),
+            )
+            val avslått = tidligere(
+                mottatt = LocalDateTime.of(2025, 1, 3, 10, 0),
+                behandlingsutfall = vedtak(Behandlingsresultat.AVSLAG, LocalDateTime.of(2025, 1, 10, 10, 0)),
+            )
+            val avbrutt = tidligere(
+                mottatt = LocalDateTime.of(2025, 1, 21, 10, 0),
+                behandlingsutfall = Behandlingsutfall(Behandlingsresultat.AVBRUTT, tidspunkt = LocalDateTime.of(2025, 1, 22, 10, 0), vedtakId = null),
+            )
+            val underBehandling = tidligere(mottatt = LocalDateTime.of(2025, 1, 25, 10, 0))
+
+            listOf(avslått, avbrutt, underBehandling, innvilget).sisteVedtakSomDekker("aktivitet", januar) shouldBe innvilget
+        }
+
+        @Test
+        fun `ser bort fra vedtak på søknader som ikke dekker perioden`() {
+            val annenDeltakelse = tidligere(
+                svar = spørsmålsbesvarelser(tiltak = tiltak(aktivitetId = "annen aktivitet", periode = januar)),
+                behandlingsutfall = vedtak(Behandlingsresultat.INNVILGELSE, LocalDateTime.of(2025, 1, 20, 10, 0)),
+            )
+
+            listOf(annenDeltakelse, tidligere()).sisteVedtakSomDekker("aktivitet", januar) shouldBe null
         }
     }
 
