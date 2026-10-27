@@ -117,10 +117,24 @@ class PdfClient(
 }
 
 /**
- * Søknaden slik pdfgenrs får den, med saksnummeret som footeren viser.
- * Saksnummeret ligger ikke i [Søknad], fordi den lagres og arkiveres som original-JSON i dokarkiv.
+ * Søknaden slik pdfgenrs får den, med saksnummeret og personinfoen som hodet viser.
+ * De ligger ikke i [Søknad], fordi den lagres og arkiveres som original-JSON i dokarkiv.
+ * [personalia] har samme form som personinfoen saksbehandling-api sender til brevene.
  */
 private data class SøknadTilPdf(
     @JsonUnwrapped val søknad: Søknad,
     val saksnummer: String?,
+) {
+    @Suppress("unused")
+    val personalia: PersonaliaTilPdf = PersonaliaTilPdf(
+        ident = søknad.personopplysninger.ident,
+        fornavn = søknad.personopplysninger.fornavn,
+        etternavn = søknad.personopplysninger.etternavn,
+    )
+}
+
+private data class PersonaliaTilPdf(
+    val ident: String,
+    val fornavn: String,
+    val etternavn: String,
 )

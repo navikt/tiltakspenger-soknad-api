@@ -84,6 +84,9 @@ class PdfClientTest {
         body.get("saksnummer").asString() shouldBe "202501011001"
         body.has("personopplysninger") shouldBe true
         body.has("søknad") shouldBe false
+        body.get("personalia").get("ident").asString() shouldBe body.get("personopplysninger").get("ident").asString()
+        body.get("personalia").get("fornavn").asString() shouldBe body.get("personopplysninger").get("fornavn").asString()
+        body.get("personalia").get("etternavn").asString() shouldBe body.get("personopplysninger").get("etternavn").asString()
     }
 
     @Test
