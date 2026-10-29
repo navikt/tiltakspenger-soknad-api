@@ -1,8 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.soknad
 
 import arrow.core.Either
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 
 /**
  * Lagring av mottatte søknader.

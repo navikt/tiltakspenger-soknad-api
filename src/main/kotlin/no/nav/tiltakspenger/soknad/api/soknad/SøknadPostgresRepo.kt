@@ -7,9 +7,9 @@ import kotliquery.Row
 import kotliquery.Session
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.JournalpostId
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.domain.toDbJson
 import no.nav.tiltakspenger.soknad.api.domain.toSøknadDbJson
 import no.nav.tiltakspenger.soknad.api.vedlegg.toDbJson

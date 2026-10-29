@@ -2,7 +2,7 @@ package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
-import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.libs.personklient.infra.pdl.dto.PdlPersonBolkCode
 import no.nav.tiltakspenger.soknad.api.testutils.nyttTestFødselsnummer
 import org.junit.jupiter.api.Test

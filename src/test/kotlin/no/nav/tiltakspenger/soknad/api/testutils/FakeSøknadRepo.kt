@@ -3,8 +3,8 @@ package no.nav.tiltakspenger.soknad.api.testutils
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.SøknadId
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.soknad.Applikasjonseier
 import no.nav.tiltakspenger.soknad.api.soknad.Behandlingsutfall
 import no.nav.tiltakspenger.soknad.api.soknad.MottattSøknad

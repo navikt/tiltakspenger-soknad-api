@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.pdl.client.dto
 
 import io.ktor.util.toUpperCasePreservingASCIIRules
-import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.Adressebeskyttelse
 import no.nav.tiltakspenger.soknad.api.pdl.Person
 import no.nav.tiltakspenger.soknad.api.pdl.avklarGradering

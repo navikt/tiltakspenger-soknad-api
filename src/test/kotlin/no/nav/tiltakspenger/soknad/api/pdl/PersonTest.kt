@@ -1,8 +1,8 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
 import io.mockk.mockkClass
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.fixedClock
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.EndringsMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.FolkeregisterMetadata
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon

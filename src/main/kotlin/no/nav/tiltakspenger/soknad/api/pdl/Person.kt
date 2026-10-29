@@ -1,6 +1,6 @@
 package no.nav.tiltakspenger.soknad.api.pdl
 
-import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.isSameOrBefore
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjon
 import no.nav.tiltakspenger.soknad.api.pdl.client.dto.ForelderBarnRelasjonRolle

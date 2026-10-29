@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.testutils
 
-import no.nav.tiltakspenger.libs.common.Fnr
 import no.nav.tiltakspenger.libs.common.FnrGenerator
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 
 /**
  * Delt, trådsikker generator for fødselsnumre i tester, se [FnrGenerator].

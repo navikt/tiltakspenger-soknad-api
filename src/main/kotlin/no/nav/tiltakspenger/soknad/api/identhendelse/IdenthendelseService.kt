@@ -1,7 +1,7 @@
 package no.nav.tiltakspenger.soknad.api.identhendelse
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.tiltakspenger.libs.common.Fnr
+import no.nav.tiltakspenger.libs.common.personopplysning.Fnr
 import no.nav.tiltakspenger.soknad.api.soknad.SøknadRepo
 import java.util.UUID
 
