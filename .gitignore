@@ -104,3 +104,6 @@ build
 .worktrees/
 .worktree/
 worktrees/
+
+# Kotlin-daemonens øktfiler og cache (Kotlin 2.x)
+.kotlin/
