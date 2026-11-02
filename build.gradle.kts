@@ -23,6 +23,18 @@ fun isNonStable(version: String): Boolean {
     return isStable.not()
 }
 
+// Låser sårbare avhengigheter som pluginene drar inn på buildscript-classpathen.
+// Ingenting av det havner i imaget.
+buildscript {
+    dependencies {
+        constraints {
+            // Kover drar inn freemarker 2.3.32 med path traversal (CVE-2026-84939); fikset i 2.3.35.
+            // Låsen fjernes når Kover drar freemarker 2.3.35 eller nyere.
+            add("classpath", "org.freemarker:freemarker:2.3.35")
+        }
+    }
+}
+
 plugins {
     application
     distribution
@@ -55,6 +67,8 @@ dependencies {
         // implementasjonene kan krasje JVM-en på ugyldige byte-intervaller (GHSA-xx22-p4ch-683r).
         // Transitiv-only, derfor constraint og ikke en deklarert avhengighet.
         implementation("at.yawk.lz4:lz4-java:$lz4Version")
+        // kafka-clients 4.4.0 (via libs:kafka) drar inn snappy-java 1.1.10.7 med bufferoverflyt og tjenestenekt (CVE-2026-93451, CVE-2026-108106, CVE-2026-116590); fikset i 1.1.10.9.
+        implementation("org.xerial.snappy:snappy-java:1.1.10.12")
     }
 
     implementation("ch.qos.logback:logback-classic:1.6.3")
