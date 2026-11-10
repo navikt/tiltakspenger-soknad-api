@@ -8,3 +8,5 @@ sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: true
   tier: db-custom-1-3840
+# Token-generatorene i nais finnes bare i dev; regelen skal aldri slås på i prod.
+tokengeneratorer: false

@@ -8,3 +8,5 @@ sqlInstances:
   diskAutoresize: true
   pointInTimeRecovery: false
   tier: db-f1-micro
+# Slipper inn token-generatorene i nais, så vi kan teste mot API-ene i dev. Skal aldri inn i prod.yml.
+tokengeneratorer: true

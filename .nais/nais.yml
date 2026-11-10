@@ -13,6 +13,11 @@ metadata:
 spec:
   image: {{ image }}
   port: 8080
+  {{#if tokengeneratorer}}
+  ingresses:
+    - https://tiltakspenger-soknad-api.intern.dev.nav.no
+    - https://tiltakspenger-soknad-api.ansatt.dev.nav.no
+  {{/if}}
   azure:
     application:
       enabled: true
@@ -72,6 +77,10 @@ spec:
         - application: tiltakspenger-saksbehandling-api
           namespace: tpts
           cluster: {{ cluster }}
+      {{#if tokengeneratorer}}
+        - application: azure-token-generator
+          namespace: nais
+      {{/if}}
     outbound:
       rules:
         - application: tiltakshistorikk
